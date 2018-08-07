@@ -2,6 +2,18 @@
   "version": 3,
   "targets": {
     ".NETCoreApp,Version=v2.1": {
+      "Microsoft.Extensions.CommandLineUtils/1.1.1": {
+        "type": "package",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1"
+        },
+        "compile": {
+          "lib/netstandard1.3/Microsoft.Extensions.CommandLineUtils.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/Microsoft.Extensions.CommandLineUtils.dll": {}
+        }
+      },
       "Microsoft.NETCore.App/2.1.0": {
         "type": "package",
         "dependencies": {
@@ -211,6 +223,19 @@
     }
   },
   "libraries": {
+    "Microsoft.Extensions.CommandLineUtils/1.1.1": {
+      "sha512": "vsI1L6Bx602aQ/8051nrRbAWGxCQQX7IKT/9XApnEYfzLPBX7LcCZuwnDyD1bHTm2D8GcMweVSPr1H2rAfAgbA==",
+      "type": "package",
+      "path": "microsoft.extensions.commandlineutils/1.1.1",
+      "files": [
+        "lib/net451/Microsoft.Extensions.CommandLineUtils.dll",
+        "lib/net451/Microsoft.Extensions.CommandLineUtils.xml",
+        "lib/netstandard1.3/Microsoft.Extensions.CommandLineUtils.dll",
+        "lib/netstandard1.3/Microsoft.Extensions.CommandLineUtils.xml",
+        "microsoft.extensions.commandlineutils.1.1.1.nupkg.sha512",
+        "microsoft.extensions.commandlineutils.nuspec"
+      ]
+    },
     "Microsoft.NETCore.App/2.1.0": {
       "sha512": "AvT774nTFgU8cYcGO9j1EMwuayKslxqYTurg32HGpWa2hEYNuW2+XgYVVNcZe6Ndbr84QX6fwaOZfd5n+1m2OA==",
       "type": "package",
@@ -677,33 +702,37 @@
   },
   "projectFileDependencyGroups": {
     ".NETCoreApp,Version=v2.1": [
+      "Microsoft.Extensions.CommandLineUtils >= 1.1.1",
       "Microsoft.NETCore.App >= 2.1.0"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\liphv\\.nuget\\packages\\": {},
+    "C:\\Users\\neovero\\.nuget\\packages\\": {},
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\liphv\\Documents\\Github\\devmaide\\devmaide.csproj",
+      "projectUniqueName": "c:\\Users\\neovero\\Documents\\devmaide\\devmaide.csproj",
       "projectName": "devmaide",
-      "projectPath": "C:\\Users\\liphv\\Documents\\Github\\devmaide\\devmaide.csproj",
-      "packagesPath": "C:\\Users\\liphv\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\liphv\\Documents\\Github\\devmaide\\obj\\",
+      "projectPath": "c:\\Users\\neovero\\Documents\\devmaide\\devmaide.csproj",
+      "packagesPath": "C:\\Users\\neovero\\.nuget\\packages\\",
+      "outputPath": "c:\\Users\\neovero\\Documents\\devmaide\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
       ],
       "configFilePaths": [
-        "C:\\Users\\liphv\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\neovero\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "netcoreapp2.1"
       ],
       "sources": {
-        "https://api.nuget.org/v3/index.json": {}
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {},
+        "https://neovero.pkgs.visualstudio.com/_packaging/Neovero/nuget/v3/index.json": {}
       },
       "frameworks": {
         "netcoreapp2.1": {
@@ -719,6 +748,10 @@
     "frameworks": {
       "netcoreapp2.1": {
         "dependencies": {
+          "Microsoft.Extensions.CommandLineUtils": {
+            "target": "Package",
+            "version": "[1.1.1, )"
+          },
           "Microsoft.NETCore.App": {
             "target": "Package",
             "version": "[2.1.0, )",
