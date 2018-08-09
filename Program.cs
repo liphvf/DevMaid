@@ -92,6 +92,29 @@ namespace devmaide
                 }
             );
 
+            app.Command("wfl", (command) =>
+                {
+                    //description and help text of the command.
+                    command.Description = "Listar Windows Features";
+                    command.ExtendedHelpText = "Listando";
+                    command.HelpOption("-?|-h|--help");
+
+                    command.OnExecute(() =>
+                    {
+                        string strCmdText;
+                        strCmdText= @"DISM /online /get-features /format:table | find “Enabled” | more";
+                        System.Diagnostics.Process.Start("CMD.exe", strCmdText);
+                        // Console.WriteLine("simple-command is executing");
+
+                        //Do the command's work here, or via another object/method
+
+                        // Console.WriteLine("simple-command has finished.");
+                        return 0; //return 0 on a successful execution
+                    });
+
+                }
+            );
+
             app.Command("complex-command", (command) =>
             {
                 // This is a command that has it's own options.
