@@ -14,13 +14,12 @@ namespace devmaide
 
             // This should be the name of the executable itself.
             // the help text line "Usage: ConsoleArgs" uses this
-            app.Name = "ConsoleArgs";
-            app.Description = ".NET Core console app with argument parsing.";
-            app.ExtendedHelpText = "This is a sample console app to demostrate the usage of Microsoft.Extensions.CommandLineUtils."
-                + Environment.NewLine + "Depending on your OS, you may need to execute the application as ConsoleArgs.exe or 'dotnet ConsoleArgs.dll'";
+            app.Name = "DevMaide";
+            app.Description = ".NET Core console app for developers helps";
+            app.ExtendedHelpText = "Thanks!";
 
             // Set the arguments to display the description and help text
-            app.HelpOption("-?|-h|--help");
+            app.HelpOption("-h|--help");
 
             // This is a helper/shortcut method to display version info - it is creating a regular Option, with some defaults.
             // The default help text is "Show version Information"
