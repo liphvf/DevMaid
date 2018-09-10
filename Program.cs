@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using devmaide.Commands;
 using Microsoft.Extensions.CommandLineUtils;
 
 namespace devmaide
@@ -104,9 +105,9 @@ namespace devmaide
                     command.OnExecute(() =>
                     {
                         string strCmdText;
-                        strCmdText= @"/K DISM /online /get-features /format:table | find “Enabled” | more";
+                        strCmdText = @"/K DISM /online /get-features /format:table | find “Enabled” | more";
 
-                        
+
                         Process cmd = new Process();
                         cmd.StartInfo.FileName = "CMD.exe";
                         // cmd.StartInfo.RedirectStandardInput = true;
@@ -129,6 +130,23 @@ namespace devmaide
 
                 }
             );
+
+            app.Command("csvtoclass", (command) =>
+                {
+                    //description and help text of the command.
+                    command.Description = "Convert arquivo.csv para .class";
+                    command.ExtendedHelpText = "Convert arquivo.csv para .class";
+                    command.HelpOption("-?|-h|--help");
+
+                    command.OnExecute(() =>
+                    {
+                        Geral.CsvToClass();
+                        return 0; //return 0 on a successful execution
+                    });
+
+                }
+            );
+
 
             app.Command("complex-command", (command) =>
             {
