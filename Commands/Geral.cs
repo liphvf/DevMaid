@@ -7,9 +7,14 @@ namespace devmaide.Commands
 {
     public static class Geral
     {
-        public static void CsvToClass() {
+        public static void CsvToClass(string inputFile = @"./arquivo.csv")
+        {
+            if (!File.Exists(inputFile))
+            {
+                throw new System.ArgumentException("Can`t find the input file");
+            }
 
-            string[] lines = System.IO.File.ReadAllLines(@"./arquivo.csv");
+            string[] lines = File.ReadAllLines(inputFile);
 
             /*
              * select column_name, data_type, is_nullable from information_schema.columns where table_name = '';
@@ -78,7 +83,7 @@ namespace devmaide.Commands
                     file.WriteLine(strbuild.ToString());
                     //file.WriteLine("\n");
                 }
-}
+            }
         }
     }
 }

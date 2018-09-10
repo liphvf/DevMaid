@@ -127,16 +127,33 @@ namespace devmaide
                 }
             );
 
-            app.Command("csvtoclass", (command) =>
+            app.Command("csv-to-class", (command) =>
                 {
                     //description and help text of the command.
-                    command.Description = "Convert arquivo.csv para .class";
+                    command.Description = "Convert pre-format .csv file to .class";
                     command.ExtendedHelpText = "Convert arquivo.csv para .class";
                     command.HelpOption("-?|-h|--help");
 
+                    var inputFileArgument = command.Argument("inputFile", "An Input Csv File.");
+
+                    var inputFileOption = command.Option("-i|--input <value>",
+                    "Input File",
+                    CommandOptionType.SingleValue);
+
                     command.OnExecute(() =>
                     {
-                        Geral.CsvToClass();
+                        if (inputFileOption.HasValue())
+                        {
+                            Geral.CsvToClass(inputFileOption.Value());
+                        }
+                        else if (!string.IsNullOrWhiteSpace(inputFileArgument.Value))
+                        {
+                            Geral.CsvToClass(inputFileArgument.Value);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid Input File");
+                        }
                         return 0; //return 0 on a successful execution
                     });
 
@@ -216,7 +233,7 @@ namespace devmaide
             try
             {
                 // This begins the actual execution of the application
-                Console.WriteLine("ConsoleArgs app executing...");
+                // Console.WriteLine("ConsoleArgs app executing...");
                 app.Execute(args);
             }
             catch (CommandParsingException ex)
