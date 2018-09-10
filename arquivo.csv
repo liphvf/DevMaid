@@ -1,0 +1,73 @@
+column_name,data_type,is_nullable
+
+cod_requisicaoos_serial,numeric,NO
+
+cod_empresa_serial,numeric,NO
+
+cod_usuario_serial,numeric,NO
+
+cod_ocorrencia_serial,numeric,YES
+
+cod_equipamento_serial,numeric,NO
+
+cod_tipomanutencao_serial,numeric,NO
+
+observacao,text,YES
+
+dataparada,date,YES
+
+prioridade,numeric,YES
+
+datadesejada,date,YES
+
+horadesejada,"character varying",YES
+
+situacao,character,YES
+
+cod_os_serial,numeric,YES
+
+dataabertura,date,YES
+
+horaabertura,"character varying",YES
+
+datafechamento,date,YES
+
+horafechamento,"character varying",YES
+
+dataultimoevento,date,YES
+
+horaultimoevento,"character varying",YES
+
+qualidade,numeric,YES
+
+ocultar,character,NO
+
+__seqalteracao,numeric,YES
+
+comentarioavaliacao,text,YES
+
+cod_oficina_serial,numeric,NO
+
+datalimiteatend,date,YES
+
+horalimiteatend,"character varying",YES
+
+datalimitesol,date,YES
+
+horalimitesol,"character varying",YES
+
+serviconaorealizado,character,YES
+
+cod_setor_serial,numeric,YES
+
+situacao_int,numeric,YES
+
+ocultar_int,numeric,YES
+
+serviconaorealizado_int,numeric,YES
+
+cod_motivocancelamentorequisicao_serial,numeric,YES
+
+cod_areatecnica_serial,numeric,NO
+
+horaparada,"character varying",YES
