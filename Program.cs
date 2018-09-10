@@ -93,7 +93,7 @@ namespace devmaide
 
                 }
             );
-
+            /// https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-8.1-and-8/hh824822(v=win.10)
             app.Command("wfl", (command) =>
                 {
                     System.Diagnostics.Debugger.Break();
@@ -114,7 +114,6 @@ namespace devmaide
                         // cmd.StartInfo = new ProcessStartInfo();
                         cmd.StartInfo.Arguments = @"/K DISM /online /get-features /format:table | find ""Habilitado"" ";
                         cmd.Start();
-                        Console.WriteLine("Cheou aqui");
                         // var resposta = Process.Start("CMD.exe", strCmdText);
                         // Console.WriteLine(resposta);
                         // Console.WriteLine("simple-command is executing");
