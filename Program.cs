@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Extensions.CommandLineUtils;
 
@@ -94,6 +95,7 @@ namespace devmaide
 
             app.Command("wfl", (command) =>
                 {
+                    System.Diagnostics.Debugger.Break();
                     //description and help text of the command.
                     command.Description = "Listar Windows Features";
                     command.ExtendedHelpText = "Listando";
@@ -102,8 +104,21 @@ namespace devmaide
                     command.OnExecute(() =>
                     {
                         string strCmdText;
-                        strCmdText= @"DISM /online /get-features /format:table | find “Enabled” | more";
-                        System.Diagnostics.Process.Start("CMD.exe", strCmdText);
+                        strCmdText= @"/K DISM /online /get-features /format:table | find “Enabled” | more";
+
+                        
+                        Process cmd = new Process();
+                        cmd.StartInfo.FileName = "CMD.exe";
+                        // cmd.StartInfo.RedirectStandardInput = true;
+                        // cmd.StartInfo.RedirectStandardOutput = true;
+                        // cmd.StartInfo.CreateNoWindow = true;
+                        // cmd.StartInfo.UseShellExecute = false;
+                        // cmd.StartInfo = new ProcessStartInfo();
+                        cmd.StartInfo.Arguments = strCmdText;
+                        cmd.Start();
+                        Console.WriteLine("Cheou aqui");
+                        // var resposta = Process.Start("CMD.exe", strCmdText);
+                        // Console.WriteLine(resposta);
                         // Console.WriteLine("simple-command is executing");
 
                         //Do the command's work here, or via another object/method
