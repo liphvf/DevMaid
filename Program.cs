@@ -104,18 +104,15 @@ namespace devmaide
 
                     command.OnExecute(() =>
                     {
-                        string strCmdText;
-                        strCmdText = @"/K DISM /online /get-features /format:table | find “Enabled” | more";
-
-
                         Process cmd = new Process();
                         cmd.StartInfo.FileName = "CMD.exe";
+                        cmd.StartInfo.Verb = "runas";
                         // cmd.StartInfo.RedirectStandardInput = true;
                         // cmd.StartInfo.RedirectStandardOutput = true;
                         // cmd.StartInfo.CreateNoWindow = true;
                         // cmd.StartInfo.UseShellExecute = false;
                         // cmd.StartInfo = new ProcessStartInfo();
-                        cmd.StartInfo.Arguments = strCmdText;
+                        cmd.StartInfo.Arguments = @"/K DISM /online /get-features /format:table | find ""Habilitado"" ";
                         cmd.Start();
                         Console.WriteLine("Cheou aqui");
                         // var resposta = Process.Start("CMD.exe", strCmdText);
