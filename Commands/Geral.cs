@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using Npgsql;
 
 namespace DevMaid.Commands
 {
@@ -84,6 +87,33 @@ namespace DevMaid.Commands
                     //file.WriteLine("\n");
                 }
             }
+        }
+
+        public static dynamic RunQuery(string sqlQuery)
+        {
+            var connString = "Host=myserver;Username=mylogin;Password=mypass;Database=mydatabase";
+
+            using (var conn = new NpgsqlConnection(connString))
+            {
+                conn.Open();
+
+                // Insert some data
+                using (var cmd = new NpgsqlCommand())
+                {
+                    cmd.Connection = conn;
+                    cmd.CommandText = "INSERT INTO data (some_field) VALUES (@p)";
+                    cmd.Parameters.AddWithValue("p", "Hello world");
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Retrieve all rows
+                using (var cmd = new NpgsqlCommand("SELECT some_field FROM data", conn))
+                using (var reader = cmd.ExecuteReader())
+                    while (reader.Read())
+                        Console.WriteLine(reader.GetString(0));
+            }
+
+            return new ExpandoObject();
         }
     }
 }
