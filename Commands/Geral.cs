@@ -115,5 +115,6 @@ namespace DevMaid.Commands
 
             return new ExpandoObject();
         }
+        // Restore database: pg_restore -U <username> -d <dbname> -1 <filename>.dump
     }
 }
