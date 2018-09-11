@@ -3,7 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace devmaide.Commands
+namespace DevMaid.Commands
 {
     public static class Geral
     {

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using devmaide.Commands;
+using DevMaid.Commands;
 using Microsoft.Extensions.CommandLineUtils;
 
-namespace devmaide
+namespace DevMaid
 {
     class Program
     {
@@ -16,7 +16,7 @@ namespace devmaide
 
             // This should be the name of the executable itself.
             // the help text line "Usage: ConsoleArgs" uses this
-            app.Name = "DevMaide";
+            app.Name = "DevMaid";
             app.Description = ".NET Core console app for developers helps";
             app.ExtendedHelpText = "Thanks!";
 
