@@ -10,8 +10,8 @@
     <Product>DevMaid</Product>
     <Copyright>GNU General Public License v3.0</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/liphvf/devmaide/commandline/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/liphvf/devmaide/blob/commandline/README.md</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/liphvf/DevMaid/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/liphvf/DevMaid</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <DebugType>embedded</DebugType>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -19,6 +19,9 @@
     <PackAsTool>true</PackAsTool>
     <TieredCompilation>true</TieredCompilation>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageTags>Tools</PackageTags>
+    <RepositoryUrl>https://github.com/liphvf/DevMaid</RepositoryUrl>
+    <RepositoryType>GIT</RepositoryType>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
