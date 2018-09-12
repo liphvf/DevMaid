@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/devmaide.csproj"
+                "${workspaceFolder}/DevMaid.csproj"
             ],
             "problemMatcher": "$msCompile"
         }

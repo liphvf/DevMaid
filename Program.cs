@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading.Tasks;
 using DevMaid.Commands;
 using Microsoft.Extensions.CommandLineUtils;
 
@@ -30,73 +31,22 @@ namespace DevMaid
                 return string.Format("Version {0}", Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
             });
 
-            // The first argument is the option template.
-            // It starts with a pipe-delimited list of option flags/names to use
-            // Optionally, It is then followed by a space and a short description of the value to specify.
-            // e.g. here we could also just use "-o|--option"
-            var basicOption = app.Option("-o|--option <optionvalue>",
-                    "Some option value",
-                    CommandOptionType.SingleValue);
-
-            // Arguments are basic arguments, that are parsed in the order they are given
-            // e.g ConsoleArgs "first value" "second value"
-            // This is OK for really simple tasks, but generally you're better off using Options
-            // since they avoid confusion
-            var argOne = app.Argument("argOne", "App argument one");
-            var argTwo = app.Argument("argTwo", "App argument two");
-
             // When no commands are specified, this block will execute.
             // This is the main "command"
             app.OnExecute(() =>
             {
-                Console.WriteLine("Argument value one: {0}", argOne.Value ?? "null");
-                Console.WriteLine("Argument value two: {0}", argTwo.Value ?? "null");
 
-                //You can also use the Arguments collection to iterate through the supplied arguments
-                foreach (CommandArgument arg in app.Arguments)
+                if (app.Arguments.Count == 0)
                 {
-                    Console.WriteLine("Arguments collection value: {0}", arg.Value ?? "null");
-                }
-
-                // Use the HasValue() method to check if the option was specified
-                if (basicOption.HasValue())
-                {
-                    Console.WriteLine("Option was selected, value: {0}", basicOption.Value());
-                }
-                else
-                {
-                    Console.WriteLine("No options specified.");
-                    // ShowHint() will display: "Specify --help for a list of available options and commands."
-                    app.ShowHint();
+                    app.ShowHelp();
                 }
 
                 return 0;
             });
 
-            // This is a command with no arguments - it just does default action.
-            app.Command("simple-command", (command) =>
-                {
-                    //description and help text of the command.
-                    command.Description = "This is the description for simple-command.";
-                    command.ExtendedHelpText = "This is the extended help text for simple-command.";
-                    command.HelpOption("-?|-h|--help");
-
-                    command.OnExecute(() =>
-                    {
-                        Console.WriteLine("simple-command is executing");
-
-                        //Do the command's work here, or via another object/method
-
-                        Console.WriteLine("simple-command has finished.");
-                        return 0; //return 0 on a successful execution
-                    });
-
-                }
-            );
             /// https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-8.1-and-8/hh824822(v=win.10)
             app.Command("wfl", (command) =>
                 {
-                    System.Diagnostics.Debugger.Break();
                     //description and help text of the command.
                     command.Description = "Listar Windows Features";
                     command.ExtendedHelpText = "Listando";
@@ -161,79 +111,44 @@ namespace DevMaid
             );
 
 
-            app.Command("complex-command", (command) =>
-            {
-                // This is a command that has it's own options.
-                command.ExtendedHelpText = "This is the extended help text for complex-command.";
-                command.Description = "This is the description for complex-command.";
-                command.HelpOption("-?|-h|--help");
-
-                // There are 3 possible option types:
-                // NoValue
-                // SingleValue
-                // MultipleValue
-
-                // MultipleValue options can be supplied as one or multiple arguments
-                // e.g. -m valueOne -m valueTwo -m valueThree
-                var multipleValueOption = command.Option("-m|--multiple-option <value>",
-                    "A multiple-value option that can be specified multiple times",
-                    CommandOptionType.MultipleValue);
-
-                // SingleValue: A basic Option with a single value
-                // e.g. -s sampleValue
-                var singleValueOption = command.Option("-s|--single-option <value>",
-                    "A basic single-value option",
-                    CommandOptionType.SingleValue);
-
-                // NoValue are basically booleans: true if supplied, false otherwise
-                var booleanOption = command.Option("-b|--boolean-option",
-                    "A true-false, no value option",
-                    CommandOptionType.NoValue);
-
-                command.OnExecute(() =>
+            app.Command("table-to-class", (command) =>
                 {
-                    Console.WriteLine("complex-command is executing");
+                    //description and help text of the command.
+                    command.Description = "Convert table to .cs";
+                    command.ExtendedHelpText = "Convert table to .cs";
+                    command.HelpOption("-?|-h|--help");
 
-                    // Do the command's work here, or via another object/method                    
+                    var inputFileArgument = command.Argument("inputFile", "An Input Csv File.");
 
-                    // Grab the values of the various options. when not specified, they will be null.
+                    var dbUser = command.Option("-u|--user <value>",
+                    "Database user", CommandOptionType.SingleValue);
 
-                    // The NoValue type has no Value property, just the HasValue() method.
-                    bool booleanOptionValue = booleanOption.HasValue();
+                    // var dbUserPassword = string.Empty;
 
-                    // MultipleValue returns a List<string>
-                    List<string> multipleOptionValues = multipleValueOption.Values;
+                    var dbName = command.Option("-d|--database <value>",
+                    "Database name", CommandOptionType.SingleValue);
 
-                    // SingleValue returns a single string
-                    string singleOptionValue = singleValueOption.Value();
+                    var dbTable = command.Option("-t|--table <value>",
+                    "Database name", CommandOptionType.SingleValue);
 
-                    // Check if the various options have values and display them.
-                    // Here we're checking HasValue() to see if there is a value before displaying the output.
-                    // Alternatively, you could just handle nulls from the Value properties
-                    if (booleanOption.HasValue())
+                    var dbHost = command.Option("-h|--host <value>",
+                    "Database name", CommandOptionType.SingleValue);
+
+                    command.OnExecute(async () =>
                     {
-                        Console.WriteLine("booleanOption option: {0}", booleanOptionValue.ToString());
-                    }
+                        var dbUserPassword = Geral.GetConsoleSecurePassword();
+                        var connectionString = Geral.GetConnectionString(dbHost.Value(), dbName.Value(), dbUser.Value(), dbUserPassword);
 
-                    if (multipleValueOption.HasValue())
-                    {
-                        Console.WriteLine("multipleValueOption option(s): {0}", string.Join(",", multipleOptionValues));
-                    }
+                        await Geral.TableToClass(connectionString, dbTable.Value());
+                        return 0;
+                    });
 
-                    if (singleValueOption.HasValue())
-                    {
-                        Console.WriteLine("singleValueOption option: {0}", singleOptionValue ?? "null");
-                    }
-
-                    Console.WriteLine("complex-command has finished.");
-                    return 0; // return 0 on a successful execution
-                });
-            });
+                }
+            );
 
             try
             {
                 // This begins the actual execution of the application
-                // Console.WriteLine("ConsoleArgs app executing...");
                 app.Execute(args);
             }
             catch (CommandParsingException ex)
