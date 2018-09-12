@@ -284,32 +284,47 @@ namespace DevMaid.Commands
         {
             if (outputFilePath == null)
             {
-                outputFilePath = Directory.GetCurrentDirectory();
-            }
-            else
-            {
-                outputFilePath = Path.GetDirectoryName(outputFilePath);
+                outputFilePath = Path.Join(Directory.GetCurrentDirectory(), "outputfile.txt");
             }
 
             var pattern = Path.GetFileName(inputDirectoryPathWithPattern);
             var directory = Path.GetDirectoryName(inputDirectoryPathWithPattern);
+            var GetAllFileText = string.Empty;
+            var currentEncoding = Encoding.UTF8;
 
-            string[] inputFilePaths = Directory.GetFiles(directory, pattern);
+            var inputFilePaths = Directory.GetFiles(directory, pattern);
             Console.WriteLine("Number of files: {0}.", inputFilePaths.Length);
-            using (var outputStream = File.Create(Path.Join(outputFilePath, "outputFilePath.sql")))
+            if (!inputFilePaths.Any())
             {
-                var streamWriter = new StreamWriter(outputStream, Encoding.Default);
-                foreach (var inputFilePath in inputFilePaths)
-                {
-                    using (var inputStream = File.OpenRead(inputFilePath))
-                    {
-                        // Buffer size can be passed as the second argument.
-                        streamWriter.Write(Environment.NewLine);
-                        inputStream.CopyTo(outputStream);
-                    }
-                    Console.WriteLine("The file {0} has been processed.", inputFilePath);
-                }
+                throw new Exception("Files not Found");
             }
+
+            foreach (var inputFilePath in inputFilePaths)
+            {
+                currentEncoding = GetCurrentFileEncoding(inputFilePath);
+                GetAllFileText = File.ReadAllText(inputFilePath, currentEncoding);
+
+                // Console.WriteLine(GetAllFileText);
+
+                Console.WriteLine("The file {0} has been processed.", inputFilePath);
+            }
+            Console.WriteLine($"outputFilePath: {outputFilePath}");
+            Console.WriteLine($"currentEncoding: {currentEncoding}");
+            File.WriteAllText(outputFilePath, $"{GetAllFileText}{Environment.NewLine}", currentEncoding);
+        }
+
+        public static Encoding GetCurrentFileEncoding(string filePath)
+        {
+            using (StreamReader sr = new StreamReader(filePath, true))
+            {
+                while (sr.Peek() >= 0)
+                {
+                    sr.Read();
+                }
+                //Test for the encoding after reading, or at least after the first read.
+                return sr.CurrentEncoding;
+            }
+
         }
     }
 }
