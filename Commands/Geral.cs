@@ -6,6 +6,8 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using Npgsql;
@@ -93,9 +95,9 @@ namespace DevMaid.Commands
             }
         }
 
-        public static async Task TableToClass()
+        public static async Task TableToClass(string connectionString, string tableName)
         {
-            var tableColumns = await GetColumnsInfo();
+            var tableColumns = await GetColumnsInfo(connectionString, tableName);
             if (tableColumns.Count <= 0)
             {
                 throw new System.ArgumentException("Erro ao obter informações da tabela.");
@@ -158,14 +160,39 @@ namespace DevMaid.Commands
             }
         }
 
-        public static async Task<List<dynamic>> GetColumnsInfo(string sqlQuery = "")
+        public static string GetConnectionString(string host, string db, string user, SecureString password)
         {
-            sqlQuery = @"SELECT column_name, data_type, is_nullable FROM information_schema.columns where table_name = 'Test';";
-            // var connString = "Host=myserver;Username=mylogin;Password=mypass;Database=mydatabase";
-            var connString = "Host=baasu.db.elephantsql.com;Username=wzemlogc;Password=Izzk4VtPDnkz0y5gdgWzH6WL6Vf6vyXc;Database=wzemlogc";
+            var strPassword = SecureStringToString(password);
+            if (string.IsNullOrEmpty(db))
+            {
+                throw new ArgumentException("Miss database name.");
+            }
+            else if (string.IsNullOrEmpty(user))
+            {
+                throw new ArgumentException("Miss user name.");
+            }
+            else if (string.IsNullOrEmpty(strPassword))
+            {
+                throw new ArgumentException("Miss password.");
+            }
+            if (string.IsNullOrEmpty(host))
+            {
+                host = "localhost";
+            }
+            return $"Host={host};Username={user};Password={strPassword};Database={db}";
+        }
+
+        public static async Task<List<dynamic>> GetColumnsInfo(string connectionString, string tableName)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new ArgumentException("Miss Connections String.");
+            }
+            var sqlQuery = $@"SELECT column_name, data_type, is_nullable FROM information_schema.columns where table_name = '{tableName}';";
+            // var connectionString = "Host=baasu.db.elephantsql.com;Username=wzemlogc;Password=Izzk4VtPDnkz0y5gdgWzH6WL6Vf6vyXc;Database=wzemlogc";
 
             var parametros = new List<NpgsqlParameter>();
-            using (var conn = new NpgsqlConnection(connString))
+            using (var conn = new NpgsqlConnection(connectionString))
             {
                 conn.Open();
 
@@ -194,6 +221,45 @@ namespace DevMaid.Commands
                 }
             }
         }
+
+        public static SecureString GetConsoleSecurePassword()
+        {
+            Console.Write("Password: ");
+            SecureString pwd = new SecureString();
+            while (true)
+            {
+                ConsoleKeyInfo i = Console.ReadKey(true);
+                if (i.Key == ConsoleKey.Enter)
+                {
+                    break;
+                }
+                else if (i.Key == ConsoleKey.Backspace)
+                {
+                    pwd.RemoveAt(pwd.Length - 1);
+                    Console.Write("\b \b");
+                }
+                else
+                {
+                    pwd.AppendChar(i.KeyChar);
+                    Console.Write("*");
+                }
+            }
+            return pwd;
+        }
         // Restore database: pg_restore -U <username> -d <dbname> -1 <filename>.dump
+
+        public static String SecureStringToString(SecureString value)
+        {
+            IntPtr valuePtr = IntPtr.Zero;
+            try
+            {
+                valuePtr = Marshal.SecureStringToGlobalAllocUnicode(value);
+                return Marshal.PtrToStringUni(valuePtr);
+            }
+            finally
+            {
+                Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
+            }
+        }
     }
 }
