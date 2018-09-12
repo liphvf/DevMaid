@@ -146,6 +146,28 @@ namespace DevMaid
                 }
             );
 
+            app.Command("combine", (command) =>
+                {
+                    //description and help text of the command.
+                    command.Description = "Combine any files in one.";
+                    command.ExtendedHelpText = "Combine any files in one.";
+                    command.HelpOption("-?|-h|--help");
+
+                    var inputDirectoryPathWithPattern = command.Argument("inputDirectoryPathWithPattern","inputDirectoryPathWithPattern");
+                    var outputFilePath = command.Argument("outputFilePath","outputFilePath");
+
+                    command.OnExecute(() =>
+                    {
+                        Console.WriteLine(inputDirectoryPathWithPattern.Value);
+                        Console.WriteLine(outputFilePath.Value);
+
+                        Geral.CombineMultipleFilesIntoSingleFile(inputDirectoryPathWithPattern.Value, outputFilePath.Value);
+                        return 0;
+                    });
+
+                }
+            );
+
             try
             {
                 // This begins the actual execution of the application

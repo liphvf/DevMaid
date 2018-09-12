@@ -261,5 +261,55 @@ namespace DevMaid.Commands
                 Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
             }
         }
+
+        public static void CombineMultipleFilesIntoSingleFile(string inputDirectoryPath, string inputFileNamePattern, string outputFilePath = "./")
+        {
+            string[] inputFilePaths = Directory.GetFiles(inputDirectoryPath, inputFileNamePattern);
+            Console.WriteLine("Number of files: {0}.", inputFilePaths.Length);
+            using (var outputStream = File.Create(outputFilePath))
+            {
+                foreach (var inputFilePath in inputFilePaths)
+                {
+                    using (var inputStream = File.OpenRead(inputFilePath))
+                    {
+                        // Buffer size can be passed as the second argument.
+                        inputStream.CopyTo(outputStream);
+                    }
+                    Console.WriteLine("The file {0} has been processed.", inputFilePath);
+                }
+            }
+        }
+
+        public static void CombineMultipleFilesIntoSingleFile(string inputDirectoryPathWithPattern, string outputFilePath = null)
+        {
+            if (outputFilePath == null)
+            {
+                outputFilePath = Directory.GetCurrentDirectory();
+            }
+            else
+            {
+                outputFilePath = Path.GetDirectoryName(outputFilePath);
+            }
+
+            var pattern = Path.GetFileName(inputDirectoryPathWithPattern);
+            var directory = Path.GetDirectoryName(inputDirectoryPathWithPattern);
+
+            string[] inputFilePaths = Directory.GetFiles(directory, pattern);
+            Console.WriteLine("Number of files: {0}.", inputFilePaths.Length);
+            using (var outputStream = File.Create(Path.Join(outputFilePath, "outputFilePath.sql")))
+            {
+                var streamWriter = new StreamWriter(outputStream, Encoding.Default);
+                foreach (var inputFilePath in inputFilePaths)
+                {
+                    using (var inputStream = File.OpenRead(inputFilePath))
+                    {
+                        // Buffer size can be passed as the second argument.
+                        streamWriter.Write(Environment.NewLine);
+                        inputStream.CopyTo(outputStream);
+                    }
+                    Console.WriteLine("The file {0} has been processed.", inputFilePath);
+                }
+            }
+        }
     }
 }
