@@ -1,9 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Dynamic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Npgsql;
 
 namespace DevMaid.Commands
@@ -89,31 +93,106 @@ namespace DevMaid.Commands
             }
         }
 
-        public static dynamic RunQuery(string sqlQuery)
+        public static async Task TableToClass()
         {
-            var connString = "Host=myserver;Username=mylogin;Password=mypass;Database=mydatabase";
+            var tableColumns = await GetColumnsInfo();
+            if (tableColumns.Count <= 0)
+            {
+                throw new System.ArgumentException("Erro ao obter informações da tabela.");
+            }
 
+            foreach (var tableColumn in tableColumns)
+            {
+                var tiposDoBanco = new Dictionary<string, string>
+                {
+                    { "bigint" , "long"  },
+                    { "binary" , "byte[]"  },
+                    { "bit" , "bool"  },
+                    { "char" , "string"  },
+                    { "date" , "DateTime"  },
+                    { "datetime" , "DateTime"  },
+                    { "datetime2" , "DateTime"  },
+                    { "datetimeoffset" , "DateTimeOffset"  },
+                    { "decimal" , "decimal"  },
+                    { "float" , "float"  },
+                    { "image" , "byte[]"  },
+                    { "int" , "int"  },
+                    { "money" , "decimal"  },
+                    { "nchar" , "char"  },
+                    { "ntext" , "string"  },
+                    { "numeric" , "decimal"  },
+                    { "nvarchar" , "string"  },
+                    { "real" , "double"  },
+                    { "smalldatetime" , "DateTime"  },
+                    { "smallint" , "short"  },
+                    { "smallmoney" , "decimal"  },
+                    { "text" , "string"  },
+                    { "time" , "TimeSpan"  },
+                    { "timestamp" , "DateTime"  },
+                    { "tinyint" , "byte"  },
+                    { "uniqueidentifier" , "Guid"  },
+                    { "\"character varying\"", "string" },
+                    { "character", "string" },
+                    {"integer", "int"}
+                };
+
+                var strbuild = new StringBuilder();
+
+                strbuild.Append($"[Column(\"{tableColumn.column_name}\")]");
+                strbuild.Append("\n");
+                var tipo = tiposDoBanco.GetValueOrDefault(tableColumn.data_type as string);
+                strbuild.Append($"public {tipo}");
+                if (tipo != "string")
+                {
+                    var nulo = tableColumn.is_nullable == "YES" ? "?" : "";
+                    strbuild.Append($"{ nulo }");
+                }
+                strbuild.Append($" {CultureInfo.CurrentCulture.TextInfo.ToTitleCase(tableColumn.column_name)} " + "{ get; set; }");
+                strbuild.Append("\n");
+
+
+                using (System.IO.StreamWriter file = new StreamWriter(@"./tabela.class", true))
+                {
+                    file.WriteLine(strbuild.ToString());
+                }
+            }
+        }
+
+        public static async Task<List<dynamic>> GetColumnsInfo(string sqlQuery = "")
+        {
+            sqlQuery = @"SELECT column_name, data_type, is_nullable FROM information_schema.columns where table_name = 'Test';";
+            // var connString = "Host=myserver;Username=mylogin;Password=mypass;Database=mydatabase";
+            var connString = "Host=baasu.db.elephantsql.com;Username=wzemlogc;Password=Izzk4VtPDnkz0y5gdgWzH6WL6Vf6vyXc;Database=wzemlogc";
+
+            var parametros = new List<NpgsqlParameter>();
             using (var conn = new NpgsqlConnection(connString))
             {
                 conn.Open();
 
-                // Insert some data
-                using (var cmd = new NpgsqlCommand())
+                using (var command = new NpgsqlCommand())
                 {
-                    cmd.Connection = conn;
-                    cmd.CommandText = "INSERT INTO data (some_field) VALUES (@p)";
-                    cmd.Parameters.AddWithValue("p", "Hello world");
-                    cmd.ExecuteNonQuery();
+                    command.CommandText = sqlQuery;
+                    command.Connection = conn;
+                    command.Parameters.AddRange(parametros.ToArray());
+                    var lista = new List<dynamic>();
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        var names = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToList();
+                        foreach (IDataRecord record in reader as IEnumerable)
+                        {
+                            var expando = new ExpandoObject() as IDictionary<string, object>;
+                            int i = 0;
+                            foreach (var name in names)
+                            {
+                                expando.Add(name, record.IsDBNull(i) ? null : record[name]);
+                                i++;
+                            }
+                            lista.Add(expando);
+                        }
+                    }
+                    return lista;
                 }
-
-                // Retrieve all rows
-                using (var cmd = new NpgsqlCommand("SELECT some_field FROM data", conn))
-                using (var reader = cmd.ExecuteReader())
-                    while (reader.Read())
-                        Console.WriteLine(reader.GetString(0));
             }
-
-            return new ExpandoObject();
         }
         // Restore database: pg_restore -U <username> -d <dbname> -1 <filename>.dump
     }

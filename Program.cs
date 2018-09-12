@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading.Tasks;
 using DevMaid.Commands;
 using Microsoft.Extensions.CommandLineUtils;
 
@@ -30,44 +31,15 @@ namespace DevMaid
                 return string.Format("Version {0}", Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
             });
 
-            // The first argument is the option template.
-            // It starts with a pipe-delimited list of option flags/names to use
-            // Optionally, It is then followed by a space and a short description of the value to specify.
-            // e.g. here we could also just use "-o|--option"
-            var basicOption = app.Option("-o|--option <optionvalue>",
-                    "Some option value",
-                    CommandOptionType.SingleValue);
-
-            // Arguments are basic arguments, that are parsed in the order they are given
-            // e.g ConsoleArgs "first value" "second value"
-            // This is OK for really simple tasks, but generally you're better off using Options
-            // since they avoid confusion
-            var argOne = app.Argument("argOne", "App argument one");
-            var argTwo = app.Argument("argTwo", "App argument two");
-
             // When no commands are specified, this block will execute.
             // This is the main "command"
-            app.OnExecute(() =>
+            app.OnExecute(async () =>
             {
-                Console.WriteLine("Argument value one: {0}", argOne.Value ?? "null");
-                Console.WriteLine("Argument value two: {0}", argTwo.Value ?? "null");
+                await Geral.TableToClass();
 
-                //You can also use the Arguments collection to iterate through the supplied arguments
-                foreach (CommandArgument arg in app.Arguments)
+                if (app.Arguments.Count == 0)
                 {
-                    Console.WriteLine("Arguments collection value: {0}", arg.Value ?? "null");
-                }
-
-                // Use the HasValue() method to check if the option was specified
-                if (basicOption.HasValue())
-                {
-                    Console.WriteLine("Option was selected, value: {0}", basicOption.Value());
-                }
-                else
-                {
-                    Console.WriteLine("No options specified.");
-                    // ShowHint() will display: "Specify --help for a list of available options and commands."
-                    app.ShowHint();
+                    app.ShowHelp();
                 }
 
                 return 0;
@@ -76,7 +48,6 @@ namespace DevMaid
             /// https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-8.1-and-8/hh824822(v=win.10)
             app.Command("wfl", (command) =>
                 {
-                    System.Diagnostics.Debugger.Break();
                     //description and help text of the command.
                     command.Description = "Listar Windows Features";
                     command.ExtendedHelpText = "Listando";
