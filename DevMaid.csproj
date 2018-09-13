@@ -22,6 +22,7 @@
     <PackageTags>Tools</PackageTags>
     <RepositoryUrl>https://github.com/liphvf/DevMaid</RepositoryUrl>
     <RepositoryType>GIT</RepositoryType>
+    <PackageIconUrl>https://raw.githubusercontent.com/liphvf/DevMaid/master/icon.png</PackageIconUrl>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
