@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using DevMaid.Commands;
@@ -153,15 +154,29 @@ namespace DevMaid
                     command.ExtendedHelpText = "Combine any files in one.";
                     command.HelpOption("-?|-h|--help");
 
-                    var inputDirectoryPathWithPattern = command.Argument("inputDirectoryPathWithPattern","inputDirectoryPathWithPattern");
-                    var outputFilePath = command.Argument("outputFilePath","outputFilePath");
+
+                    // var inputDirectoryPathWithPattern = command.Argument("inputDirectoryPathWithPattern","inputDirectoryPathWithPattern");
+                    // var outputFilePath = command.Argument("outputFilePath","outputFilePath");
+
+                    var inputArguments = command.Argument("Args", "Args", true);
 
                     command.OnExecute(() =>
                     {
-                        Console.WriteLine(inputDirectoryPathWithPattern.Value);
-                        Console.WriteLine(outputFilePath.Value);
+                        var inputDirectoryPathWithPattern = string.Empty;
+                        var outputFilePath = string.Empty;
+                        var strArguments = string.Join(" ", inputArguments.Values);
+                        if (strArguments.Contains(">"))
+                        {
+                            var argumentSplit = strArguments.Split(">");
+                            inputDirectoryPathWithPattern = argumentSplit[0].Trim();
+                            outputFilePath = argumentSplit[1].Trim();
+                        }
+                        else
+                        {
+                            inputDirectoryPathWithPattern = strArguments.Trim();
+                        }
 
-                        Geral.CombineMultipleFilesIntoSingleFile(inputDirectoryPathWithPattern.Value, outputFilePath.Value);
+                        Geral.CombineMultipleFilesIntoSingleFile(inputDirectoryPathWithPattern, outputFilePath);
                         return 0;
                     });
 

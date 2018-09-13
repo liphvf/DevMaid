@@ -263,7 +263,7 @@ namespace DevMaid.Commands
 
         public static void CombineMultipleFilesIntoSingleFile(string inputDirectoryPathWithPattern, string outputFilePath = null)
         {
-            if (outputFilePath == null)
+            if (String.IsNullOrWhiteSpace(outputFilePath))
             {
                 outputFilePath = Path.Join(Directory.GetCurrentDirectory(), "outputfile.txt");
             }
