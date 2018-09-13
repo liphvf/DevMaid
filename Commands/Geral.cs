@@ -246,7 +246,6 @@ namespace DevMaid.Commands
             }
             return pwd;
         }
-        // Restore database: pg_restore -U <username> -d <dbname> -1 <filename>.dump
 
         public static String SecureStringToString(SecureString value)
         {
@@ -304,7 +303,6 @@ namespace DevMaid.Commands
                 //Test for the encoding after reading, or at least after the first read.
                 return sr.CurrentEncoding;
             }
-
         }
     }
 }
