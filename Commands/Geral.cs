@@ -284,12 +284,13 @@ namespace DevMaid.Commands
             foreach (var inputFilePath in inputFilePaths)
             {
                 currentEncoding = GetCurrentFileEncoding(inputFilePath);
-                GetAllFileText = File.ReadAllText(inputFilePath, currentEncoding);
+                GetAllFileText += File.ReadAllText(inputFilePath, currentEncoding);
+                GetAllFileText += Environment.NewLine;
 
                 Console.WriteLine("The file {0} has been processed.", inputFilePath);
             }
 
-            File.WriteAllText(outputFilePath, $"{GetAllFileText}{Environment.NewLine}", currentEncoding);
+            File.WriteAllText(outputFilePath, $"{GetAllFileText}", currentEncoding);
         }
 
         public static Encoding GetCurrentFileEncoding(string filePath)
