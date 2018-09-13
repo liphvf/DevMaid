@@ -5,7 +5,7 @@
     <!-- <RuntimeIdentifier>win10-x64</RuntimeIdentifier> -->
     <Description>DevTools for help you.</Description>
     <LangVersion>Latest</LangVersion>
-    <VersionPrefix>0.0.3</VersionPrefix>
+    <VersionPrefix>0.0.4</VersionPrefix>
     <Authors>Filiphe Vilar Figueiredo</Authors>
     <Product>DevMaid</Product>
     <Copyright>GNU General Public License v3.0</Copyright>
