@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using DevMaid.Commands;
@@ -140,6 +141,42 @@ namespace DevMaid
                         var connectionString = Geral.GetConnectionString(dbHost.Value(), dbName.Value(), dbUser.Value(), dbUserPassword);
 
                         await Geral.TableToClass(connectionString, dbTable.Value());
+                        return 0;
+                    });
+
+                }
+            );
+
+            app.Command("combine", (command) =>
+                {
+                    //description and help text of the command.
+                    command.Description = "Combine any files in one.";
+                    command.ExtendedHelpText = "Combine any files in one.";
+                    command.HelpOption("-?|-h|--help");
+
+
+                    // var inputDirectoryPathWithPattern = command.Argument("inputDirectoryPathWithPattern","inputDirectoryPathWithPattern");
+                    // var outputFilePath = command.Argument("outputFilePath","outputFilePath");
+
+                    var inputArguments = command.Argument("Args", "Args", true);
+
+                    command.OnExecute(() =>
+                    {
+                        var inputDirectoryPathWithPattern = string.Empty;
+                        var outputFilePath = string.Empty;
+                        var strArguments = string.Join(" ", inputArguments.Values);
+                        if (strArguments.Contains(">"))
+                        {
+                            var argumentSplit = strArguments.Split(">");
+                            inputDirectoryPathWithPattern = argumentSplit[0].Trim();
+                            outputFilePath = argumentSplit[1].Trim();
+                        }
+                        else
+                        {
+                            inputDirectoryPathWithPattern = strArguments.Trim();
+                        }
+
+                        Geral.CombineMultipleFilesIntoSingleFile(inputDirectoryPathWithPattern, outputFilePath);
                         return 0;
                     });
 

@@ -246,7 +246,6 @@ namespace DevMaid.Commands
             }
             return pwd;
         }
-        // Restore database: pg_restore -U <username> -d <dbname> -1 <filename>.dump
 
         public static String SecureStringToString(SecureString value)
         {
@@ -259,6 +258,50 @@ namespace DevMaid.Commands
             finally
             {
                 Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
+            }
+        }
+
+        public static void CombineMultipleFilesIntoSingleFile(string inputDirectoryPathWithPattern, string outputFilePath = null)
+        {
+            if (String.IsNullOrWhiteSpace(outputFilePath))
+            {
+                outputFilePath = Path.Join(Directory.GetCurrentDirectory(), "outputfile.txt");
+            }
+
+            var pattern = Path.GetFileName(inputDirectoryPathWithPattern);
+            var directory = Path.GetDirectoryName(inputDirectoryPathWithPattern);
+            var GetAllFileText = string.Empty;
+            var currentEncoding = Encoding.UTF8;
+
+            var inputFilePaths = Directory.GetFiles(directory, pattern);
+            Console.WriteLine("Number of files: {0}.", inputFilePaths.Length);
+
+            if (!inputFilePaths.Any())
+            {
+                throw new Exception("Files not Found");
+            }
+
+            foreach (var inputFilePath in inputFilePaths)
+            {
+                currentEncoding = GetCurrentFileEncoding(inputFilePath);
+                GetAllFileText = File.ReadAllText(inputFilePath, currentEncoding);
+
+                Console.WriteLine("The file {0} has been processed.", inputFilePath);
+            }
+
+            File.WriteAllText(outputFilePath, $"{GetAllFileText}{Environment.NewLine}", currentEncoding);
+        }
+
+        public static Encoding GetCurrentFileEncoding(string filePath)
+        {
+            using (StreamReader sr = new StreamReader(filePath, true))
+            {
+                while (sr.Peek() >= 0)
+                {
+                    sr.Read();
+                }
+                //Test for the encoding after reading, or at least after the first read.
+                return sr.CurrentEncoding;
             }
         }
     }
