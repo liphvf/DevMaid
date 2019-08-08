@@ -142,7 +142,7 @@ namespace DevMaid.Commands
 
                 strbuild.Append($"[Column(\"{tableColumn.column_name}\")]");
                 strbuild.Append("\n");
-                var tipo = tiposDoBanco.GetValueOrDefault(tableColumn.data_type as string);
+                var tipo = tiposDoBanco.GetValueOrDefault((tableColumn.data_type as string).ToLower());
                 strbuild.Append($"public {tipo}");
                 if (tipo != "string")
                 {
