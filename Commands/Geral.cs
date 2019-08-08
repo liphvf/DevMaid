@@ -103,9 +103,7 @@ namespace DevMaid.Commands
                 throw new System.ArgumentException("Erro ao obter informações da tabela.");
             }
 
-            foreach (var tableColumn in tableColumns)
-            {
-                var tiposDoBanco = new Dictionary<string, string>
+            var tiposDoBanco = new Dictionary<string, string>
                 {
                     { "bigint" , "long"  },
                     { "binary" , "byte[]"  },
@@ -134,14 +132,19 @@ namespace DevMaid.Commands
                     { "tinyint" , "byte"  },
                     { "uniqueidentifier" , "Guid"  },
                     { "\"character varying\"", "string" },
+                    {"character varying", "string"},
                     { "character", "string" },
-                    {"integer", "int"}
+                    {"integer", "int"},
+                    {"boolean", "bool"}
                 };
 
+            foreach (var tableColumn in tableColumns)
+            {
                 var strbuild = new StringBuilder();
 
                 strbuild.Append($"[Column(\"{tableColumn.column_name}\")]");
                 strbuild.Append("\n");
+                
                 var tipo = tiposDoBanco.GetValueOrDefault((tableColumn.data_type as string).ToLower());
                 strbuild.Append($"public {tipo}");
                 if (tipo != "string")
