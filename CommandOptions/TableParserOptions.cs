@@ -2,7 +2,7 @@ using CommandLine;
 
 namespace DevMaid.CommandOptions
 {
-    [Verb("TableParser", HelpText = "Copy dashboards between databases.")]
+    [Verb("TableParser", HelpText = "Convert a database table in C# propreties class")]
     public class TableParserOptions
     {
         [Option('u', "User", Required = false, HelpText = "Set database user.")]
@@ -17,8 +17,12 @@ namespace DevMaid.CommandOptions
         [Option('h', "host", Required = false, HelpText = "Set database host.")]
         public string Host { get; set; } = "localhost";
 
-        [Option('o', "output", Required = false, HelpText = "Dashboard source guid")]
+        [Option('o', "output", Required = false, HelpText = "Set output file")]
         public string Output { get; set; } = "./Table.class";
+
+
+        [Option('t', "table", Required = false, HelpText = "Table Name")]
+        public string Table { get; internal set; }
 
         public string ConnectionStringDatabase => Utils.GetConnectionString(Host, Database, User, Password);
     }

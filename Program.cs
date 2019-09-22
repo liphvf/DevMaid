@@ -13,9 +13,6 @@ namespace DevMaid
         static void Main(string[] args)
         {
 
-            var x = @"File -i C:\Users\liphv\Documents\test\*.txt";
-            args = x.Split(" ");
-
             var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var neoveroCLIConfigurationFolder = Path.Combine(localAppData, "DevMaid");
             Directory.CreateDirectory(neoveroCLIConfigurationFolder);

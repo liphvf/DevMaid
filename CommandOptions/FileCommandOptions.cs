@@ -2,7 +2,7 @@ using CommandLine;
 
 namespace DevMaid.CommandOptions
 {
-    [Verb("File", HelpText = "Copy dashboards between databases.")]
+    [Verb("Combine", HelpText = "Copy dashboards between databases.")]
     public class FileCommandOptions
     {
         [Option('i', "input", Required = true, HelpText = "Input Directory.")]
