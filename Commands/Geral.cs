@@ -16,85 +16,6 @@ namespace DevMaid.Commands
 {
     public static class Geral
     {
-        public static void CsvToClass(string inputFile = @"./arquivo.csv")
-        {
-            if (!File.Exists(inputFile))
-            {
-                throw new System.ArgumentException("Can`t find the input file");
-            }
-
-            string[] lines = File.ReadAllLines(inputFile);
-
-            /*
-             * select column_name, data_type, is_nullable from information_schema.columns where table_name = '';
-             */
-            foreach (string line in lines)
-            {
-                // Console.WriteLine(line);
-                var quebrando = line.Split(",");
-                if (quebrando.Length <= 0 || string.IsNullOrEmpty(line) || quebrando[0].Contains("column_name"))
-                {
-                    continue;
-                }
-
-                var tipos = new Dictionary<string, string>
-                {
-                    { "bigint" , "long"  },
-                    { "binary" , "byte[]"  },
-                    { "bit" , "bool"  },
-                    { "char" , "string"  },
-                    { "date" , "DateTime"  },
-                    { "datetime" , "DateTime"  },
-                    { "datetime2" , "DateTime"  },
-                    { "datetimeoffset" , "DateTimeOffset"  },
-                    { "decimal" , "decimal"  },
-                    { "float" , "float"  },
-                    { "image" , "byte[]"  },
-                    { "int" , "int"  },
-                    { "money" , "decimal"  },
-                    { "nchar" , "char"  },
-                    { "ntext" , "string"  },
-                    { "numeric" , "decimal"  },
-                    { "nvarchar" , "string"  },
-                    { "real" , "double"  },
-                    { "smalldatetime" , "DateTime"  },
-                    { "smallint" , "short"  },
-                    { "smallmoney" , "decimal"  },
-                    { "text" , "string"  },
-                    { "time" , "TimeSpan"  },
-                    { "timestamp" , "DateTime"  },
-                    { "tinyint" , "byte"  },
-                    { "uniqueidentifier" , "Guid"  },
-                    { "\"character varying\"", "string" },
-                    { "character", "string" }
-                };
-
-                var nulo = quebrando[2] == "YES" ? "?" : "";
-                var tabelainfo = new { coluna = quebrando[0], tipo = tipos.GetValueOrDefault(quebrando[1].Trim()), Nulo = nulo };
-                // quebrando[2] = quebrando[2].Replace("'","''");
-
-                var strbuild = new StringBuilder();
-
-                strbuild.Append($"[Column(\"{tabelainfo.coluna}\")]");
-                strbuild.Append("\n");
-                strbuild.Append($"public {tabelainfo.tipo}");
-                if (tabelainfo.tipo != "string")
-                {
-                    strbuild.Append($"{tabelainfo.Nulo}");
-                }
-                strbuild.Append($" {CultureInfo.CurrentCulture.TextInfo.ToTitleCase(tabelainfo.coluna)} " + "{ get; set; }");
-                strbuild.Append("\n");
-
-
-                using (System.IO.StreamWriter file = new StreamWriter(@"./saida.class", true))
-                {
-                    // Console.WriteLine(template);
-                    file.WriteLine(strbuild.ToString());
-                    //file.WriteLine("\n");
-                }
-            }
-        }
-
         public static async Task TableToClass(string connectionString, string tableName)
         {
             var tableColumns = await GetColumnsInfo(connectionString, tableName);
@@ -261,51 +182,6 @@ namespace DevMaid.Commands
             finally
             {
                 Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
-            }
-        }
-
-        public static void CombineMultipleFilesIntoSingleFile(string inputDirectoryPathWithPattern, string outputFilePath = null)
-        {
-            if (String.IsNullOrWhiteSpace(outputFilePath))
-            {
-                outputFilePath = Path.Join(Directory.GetCurrentDirectory(), "outputfile.txt");
-            }
-
-            var pattern = Path.GetFileName(inputDirectoryPathWithPattern);
-            var directory = Path.GetDirectoryName(inputDirectoryPathWithPattern);
-            var GetAllFileText = string.Empty;
-            var currentEncoding = Encoding.UTF8;
-
-            var inputFilePaths = Directory.GetFiles(directory, pattern);
-            Console.WriteLine("Number of files: {0}.", inputFilePaths.Length);
-
-            if (!inputFilePaths.Any())
-            {
-                throw new Exception("Files not Found");
-            }
-
-            foreach (var inputFilePath in inputFilePaths)
-            {
-                currentEncoding = GetCurrentFileEncoding(inputFilePath);
-                GetAllFileText += File.ReadAllText(inputFilePath, currentEncoding);
-                GetAllFileText += Environment.NewLine;
-
-                Console.WriteLine("The file {0} has been processed.", inputFilePath);
-            }
-
-            File.WriteAllText(outputFilePath, $"{GetAllFileText}", currentEncoding);
-        }
-
-        public static Encoding GetCurrentFileEncoding(string filePath)
-        {
-            using (StreamReader sr = new StreamReader(filePath, true))
-            {
-                while (sr.Peek() >= 0)
-                {
-                    sr.Read();
-                }
-                //Test for the encoding after reading, or at least after the first read.
-                return sr.CurrentEncoding;
             }
         }
     }
