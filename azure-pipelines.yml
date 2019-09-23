@@ -12,10 +12,6 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
-# - task: NuGetToolInstaller@1
-#   inputs:
-#     versionSpec: 4.1.1
-#     checkLatest: true
 
 # - task: NuGetCommand@2
 #   inputs:
@@ -30,15 +26,19 @@ steps:
     packageType: 'sdk'
     version: '3.0.100'
 
+- task: NuGetToolInstaller@1
+  inputs:
+    versionSpec: 4.1.1
+    checkLatest: true
+
 - script: dotnet build --configuration $(buildConfiguration)
   displayName: 'dotnet build $(buildConfiguration)'
   
-  
-# - task: NuGetCommand@2
-#   inputs:
-#     command: 'pack'
-#     packagesToPack: '**/*.csproj'
-#     versioningScheme: 'byBuildNumber'
+- task: NuGetCommand@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/*.csproj'
+    versioningScheme: 'byBuildNumber'
 
 - task: NuGetCommand@2
   inputs:
