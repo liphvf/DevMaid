@@ -12,26 +12,27 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
+# - task: NuGetToolInstaller@1
+#   inputs:
+#     versionSpec: 4.1.1
+#     checkLatest: true
+
+# - task: NuGetCommand@2
+#   inputs:
+#     command: 'restore'
+#     restoreSolution: '**/*.sln'
+#     feedsToUse: 'config'
+#     externalFeedCredentials: '6880d827-fec6-430c-b44b-e8466757dbe2'
+
 steps:
 - script: dotnet build --configuration $(buildConfiguration)
   displayName: 'dotnet build $(buildConfiguration)'
-
-- task: NuGetToolInstaller@1
-  inputs:
-    versionSpec: 4.1.1
-    checkLatest: true
-- task: NuGetCommand@2
-  inputs:
-    command: 'restore'
-    restoreSolution: '**/*.sln'
-    feedsToUse: 'config'
-    externalFeedCredentials: '6880d827-fec6-430c-b44b-e8466757dbe2'
-
-- task: NuGetCommand@2
-  inputs:
-    command: 'pack'
-    packagesToPack: '**/*.csproj'
-    versioningScheme: 'byBuildNumber'
+  
+# - task: NuGetCommand@2
+#   inputs:
+#     command: 'pack'
+#     packagesToPack: '**/*.csproj'
+#     versioningScheme: 'byBuildNumber'
 
 - task: NuGetCommand@2
   inputs:
