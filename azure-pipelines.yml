@@ -28,7 +28,7 @@ steps:
 
 - task: NuGetToolInstaller@1
   inputs:
-    versionSpec: 4.1.1
+    versionSpec: 5.2.0
     checkLatest: true
 
 - script: dotnet build --configuration $(buildConfiguration)
