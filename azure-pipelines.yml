@@ -18,7 +18,7 @@ variables:
 #     command: 'restore'
 #     restoreSolution: '**/*.sln'
 #     feedsToUse: 'config'
-#     externalFeedCredentials: '6880d827-fec6-430c-b44b-e8466757dbe2'
+#     externalFeedCredentials: '6880d827-fec6-430c-b44b-e8466757dbe2 '
 
 steps:
 - task: UseDotNet@2
@@ -42,11 +42,20 @@ steps:
     packagesToPack: '**/*.csproj'
     versioningScheme: 'off'
 
-- task: NuGetCommand@2
+
+- task: DotNetCoreCLI@2
   inputs:
     command: 'push'
-    feedsToUse: 'config'
-    externalFeedCredentials: 'DevMaid'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
     nuGetFeedType: 'external'
-    publishFeedCredentials: 'DevMaid'
+    # publishFeedCredentials: 'DevMaid'
+    arguments: -k $(NugetToken)
+
+# - task: NuGetCommand@2
+#   inputs:
+#     command: 'push'
+#     feedsToUse: 'config'
+#     externalFeedCredentials: 'DevMaid'
+#     packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+#     nuGetFeedType: 'external'
+#     publishFeedCredentials: 'DevMaid'
