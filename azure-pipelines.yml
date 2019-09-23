@@ -42,20 +42,11 @@ steps:
     packagesToPack: '**/*.csproj'
     versioningScheme: 'off'
 
-
-- task: DotNetCoreCLI@2
+- task: NuGetCommand@2
   inputs:
     command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    feedsToUse: 'config'
+    externalFeedCredentials: 'DevMaid'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
     nuGetFeedType: 'external'
-    # publishFeedCredentials: 'DevMaid'
-    arguments: -k $(NugetToken)
-
-# - task: NuGetCommand@2
-#   inputs:
-#     command: 'push'
-#     feedsToUse: 'config'
-#     externalFeedCredentials: 'DevMaid'
-#     packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
-#     nuGetFeedType: 'external'
-#     publishFeedCredentials: 'DevMaid'
+    publishFeedCredentials: 'DevMaid'
