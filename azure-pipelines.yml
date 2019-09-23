@@ -37,8 +37,10 @@ steps:
 - task: NuGetCommand@2
   inputs:
     command: 'pack'
+    feedsToUse: 'config'
+    externalFeedCredentials: 'DevMaid'
     packagesToPack: '**/*.csproj'
-    versioningScheme: 'byBuildNumber'
+    versioningScheme: 'off'
 
 - task: NuGetCommand@2
   inputs:
