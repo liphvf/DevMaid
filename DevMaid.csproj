@@ -1,11 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <!-- <RuntimeIdentifier>win10-x64</RuntimeIdentifier> -->
     <Description>DevTools for help you.</Description>
     <LangVersion>8.0</LangVersion>
-    <VersionPrefix>0.0.8</VersionPrefix>
+    <PackAsTool>true</PackAsTool>
+    <VersionPrefix>0.0.9</VersionPrefix>
     <Authors>Filiphe Vilar Figueiredo</Authors>
     <Product>DevMaid</Product>
     <Copyright>GNU General Public License v3.0</Copyright>
