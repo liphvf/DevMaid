@@ -2,30 +2,27 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>devmaid</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
     <!-- <RuntimeIdentifier>win10-x64</RuntimeIdentifier> -->
     <Description>DevTools for help you.</Description>
-    <LangVersion>8.0</LangVersion>
-    <PackAsTool>true</PackAsTool>
-    <VersionPrefix>0.0.9</VersionPrefix>
-    <Authors>Filiphe Vilar Figueiredo</Authors>
     <Product>DevMaid</Product>
+    <PackageId>devmaid</PackageId>
+    <VersionPrefix>0.0.10</VersionPrefix>
+    <Authors>Filiphe Vilar Figueiredo</Authors>
     <Copyright>GNU General Public License v3.0</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageLicense>https://github.com/liphvf/DevMaid/blob/master/LICENSE</PackageLicense>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/liphvf/DevMaid</PackageProjectUrl>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <DebugType>embedded</DebugType>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IsPackable>true</IsPackable>
-    <PackAsTool>true</PackAsTool>
-    <TieredCompilation>true</TieredCompilation>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageTags>Tools</PackageTags>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/liphvf/DevMaid</RepositoryUrl>
     <RepositoryType>GIT</RepositoryType>
-    <PackageIconUrl>https://raw.githubusercontent.com/liphvf/DevMaid/master/icon.png</PackageIconUrl>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
   <ItemGroup>
+     <None Include="icon.png" Pack="true" PackagePath="\"/>
+     <None Include="LICENSE" Pack="true" PackagePath="\"/>
     <PackageReference Include="CommandLineParser" Version="2.6.0" />
     <PackageReference Include="ConsoleTables" Version="2.3.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
