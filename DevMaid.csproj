@@ -6,10 +6,10 @@
     <ToolCommandName>devmaid</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <!-- <RuntimeIdentifier>win10-x64</RuntimeIdentifier> -->
-    <Description>DevTools for help you.</Description>
+    <VersionPrefix>0.0.11</VersionPrefix>
+    <!-- <Description>DevTools for help you.</Description>
     <Product>DevMaid</Product>
     <PackageId>devmaid</PackageId>
-    <VersionPrefix>0.0.10</VersionPrefix>
     <Authors>Filiphe Vilar Figueiredo</Authors>
     <Copyright>GNU General Public License v3.0</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -18,7 +18,7 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/liphvf/DevMaid</RepositoryUrl>
     <RepositoryType>GIT</RepositoryType>
-    <PackageIcon>icon.png</PackageIcon>
+    <PackageIcon>icon.png</PackageIcon> -->
   </PropertyGroup>
   <ItemGroup>
      <None Include="icon.png" Pack="true" PackagePath="\"/>
