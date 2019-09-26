@@ -6,7 +6,7 @@
     <ToolCommandName>devmaid</ToolCommandName>
     <!-- <PackageOutputPath>./nupkg</PackageOutputPath> -->
     <!-- <RuntimeIdentifier>win10-x64</RuntimeIdentifier> -->
-    <VersionPrefix>0.0.11</VersionPrefix>
+    <VersionPrefix>0.0.12</VersionPrefix>
     <!-- <Description>DevTools for help you.</Description>
     <Product>DevMaid</Product>
     <PackageId>devmaid</PackageId>
