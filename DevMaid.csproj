@@ -7,13 +7,15 @@
     <!-- <PackageOutputPath>./nupkg</PackageOutputPath> -->
     <!-- <RuntimeIdentifier>win10-x64</RuntimeIdentifier> -->
     <VersionPrefix>0.0.14</VersionPrefix>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <!-- <Description>DevTools for help you.</Description>
     <Product>DevMaid</Product>
     <PackageId>devmaid</PackageId>
     <Authors>Filiphe Vilar Figueiredo</Authors>
     <Copyright>GNU General Public License v3.0</Copyright>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/liphvf/DevMaid</PackageProjectUrl>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/liphvf/DevMaid</RepositoryUrl>
@@ -23,6 +25,7 @@
   <ItemGroup>
      <None Include="icon.png" Pack="true" PackagePath="\" />
      <None Include="LICENSE" Pack="true" PackagePath="\" />
+     <None Include="README.md" Pack="true" PackagePath="\" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="ConsoleTables" Version="2.5.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
