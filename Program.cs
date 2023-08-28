@@ -24,6 +24,8 @@ namespace DevMaid
 
             AppSettings = builder.Build();
 
+
+//test
             Parser.Default.ParseArguments<TableParserOptions, FileCommandOptions>(args)
             .WithParsed<TableParserOptions>(opts =>
             {
