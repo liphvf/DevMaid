@@ -29,7 +29,8 @@ internal static class Program
         {
             TableParserCommand.Build(),
             FileCommand.Build(),
-            ClaudeCodeCommand.Build()
+            ClaudeCodeCommand.Build(),
+            OpenCodeCommand.Build()
         };
 
         return rootCommand.Parse(args).Invoke();
