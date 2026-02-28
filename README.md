@@ -6,8 +6,8 @@ DevMaid e uma CLI em .NET para automatizar tarefas comuns de desenvolvimento.
 
 Hoje o DevMaid oferece estes comandos:
 
-- `TableParser`: le colunas de uma tabela PostgreSQL e gera propriedades C#.
-- `Combine`: combina varios arquivos em um unico arquivo de saida.
+- `table-parser`: le colunas de uma tabela PostgreSQL e gera propriedades C#.
+- `combine`: combina varios arquivos em um unico arquivo de saida.
 - `claude install`: instala o Claude Code via `winget`.
 - `claude settings mcp-database`: executa o cadastro do MCP toolbox no Claude.
 - `claude settings win-env`: atualiza `~/.claude.json` para usar `pwsh.exe` e liberar `edit/read/shell`.
@@ -38,14 +38,14 @@ devmaid --help
 
 ## Comandos
 
-### 1) TableParser
+### 1) table-parser
 
 Converte metadados de uma tabela em propriedades C#.
 
 Exemplo:
 
 ```bash
-devmaid TableParser -d meu_banco -t users -u postgres -H localhost -p minha_senha
+devmaid table-parser -d meu_banco -t users -u postgres -H localhost -p minha_senha
 ```
 
 Opcoes principais:
@@ -59,14 +59,14 @@ Opcoes principais:
 
 Obs.: na implementacao atual, o arquivo gerado e salvo em `./tabela.class`.
 
-### 2) Combine
+### 2) combine
 
 Combina varios arquivos em um arquivo unico.
 
 Exemplo:
 
 ```bash
-devmaid Combine -i "C:\\tmp\\*.sql" -o "C:\\tmp\\resultado.sql"
+devmaid combine -i "C:\\tmp\\*.sql" -o "C:\\tmp\\resultado.sql"
 ```
 
 Opcoes:
