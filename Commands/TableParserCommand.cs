@@ -74,10 +74,8 @@ namespace DevMaid.Commands
                 strbuild.Append("\n");
 
 
-                using (System.IO.StreamWriter file = new StreamWriter(@"./tabela.class", true))
-                {
-                    file.WriteLine(strbuild.ToString());
-                }
+                using StreamWriter file = new StreamWriter(@"./tabela.class", true);
+                file.WriteLine(strbuild.ToString());
             }
 
         }
