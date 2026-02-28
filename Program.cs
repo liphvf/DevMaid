@@ -6,12 +6,12 @@ using Microsoft.Extensions.Configuration;
 
 namespace DevMaid
 {
-    class Program
+    internal static class Program
     {
-        static public IConfigurationRoot AppSettings;
-        static int Main(string[] args)
-        {
+        public static IConfigurationRoot AppSettings { get; private set; } = null!;
 
+        private static int Main(string[] args)
+        {
             var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var neoveroCLIConfigurationFolder = Path.Combine(localAppData, "DevMaid");
             Directory.CreateDirectory(neoveroCLIConfigurationFolder);

@@ -8,18 +8,34 @@ namespace DevMaid.Commands
 {
     public static class FileCommand
     {
-        public static void Combine(FileCommandOptions Options)
+        public static void Combine(FileCommandOptions options)
         {
-            var pattern = Path.GetFileName(Options.Input);
-            var directory = Path.GetDirectoryName(Options.Input);
-            var extension = Path.GetExtension(Options.Input);
-
-            if (String.IsNullOrWhiteSpace(Options.Output))
+            if (string.IsNullOrWhiteSpace(options.Input))
             {
-                Options.Output = Path.Join(directory, $"CombineFiles{extension}");
+                throw new ArgumentException("Input pattern is required.");
             }
 
-            var GetAllFileText = string.Empty;
+            var pattern = Path.GetFileName(options.Input);
+            if (string.IsNullOrWhiteSpace(pattern))
+            {
+                throw new ArgumentException("Input pattern is invalid.");
+            }
+
+            var directory = Path.GetDirectoryName(options.Input);
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                directory = Directory.GetCurrentDirectory();
+            }
+
+            var extension = Path.GetExtension(options.Input);
+            var outputPath = options.Output;
+
+            if (string.IsNullOrWhiteSpace(outputPath))
+            {
+                outputPath = Path.Join(directory, $"CombineFiles{extension}");
+            }
+
+            var allFileText = new StringBuilder();
             var currentEncoding = Encoding.UTF8;
 
             var inputFilePaths = Directory.GetFiles(directory, pattern);
@@ -33,14 +49,13 @@ namespace DevMaid.Commands
             foreach (var inputFilePath in inputFilePaths)
             {
                 currentEncoding = Utils.GetCurrentFileEncoding(inputFilePath);
-                GetAllFileText += File.ReadAllText(inputFilePath, currentEncoding);
-                GetAllFileText += Environment.NewLine;
+                allFileText.Append(File.ReadAllText(inputFilePath, currentEncoding));
+                allFileText.AppendLine();
 
                 Console.WriteLine("The file {0} has been processed.", inputFilePath);
             }
 
-            File.WriteAllText(Options.Output, $"{GetAllFileText}", currentEncoding);
-
+            File.WriteAllText(outputPath, allFileText.ToString(), currentEncoding);
         }
     }
 }

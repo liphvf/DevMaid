@@ -16,7 +16,7 @@ namespace DevMaid.CliCommands
                 Description = "Input Directory.",
                 Required = true
             };
-            var outputOption = new Option<string>("--output", "-o")
+            var outputOption = new Option<string?>("--output", "-o")
             {
                 Description = "Input Directory."
             };

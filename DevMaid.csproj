@@ -2,12 +2,16 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>devmaid</ToolCommandName>
     <!-- <PackageOutputPath>./nupkg</PackageOutputPath> -->
     <!-- <RuntimeIdentifier>win10-x64</RuntimeIdentifier> -->
     <VersionPrefix>0.0.14</VersionPrefix>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild Condition="'$(PublishAot)' != 'true'">true</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <!-- <Description>DevTools for help you.</Description>

@@ -11,7 +11,7 @@ namespace DevMaid.CliCommands
             var command = new Command("TableParser", "Convert a database table in C# propreties class");
             command.Aliases.Add("tableparser");
 
-            var userOption = new Option<string>("--user", "-u", "--User")
+            var userOption = new Option<string?>("--user", "-u", "--User")
             {
                 Description = "Set database user."
             };
@@ -20,19 +20,19 @@ namespace DevMaid.CliCommands
                 Description = "Set source database.",
                 Required = true
             };
-            var passwordOption = new Option<string>("--password", "-p", "--Password")
+            var passwordOption = new Option<string?>("--password", "-p", "--Password")
             {
                 Description = "Set user password."
             };
-            var hostOption = new Option<string>("--host", "-H")
+            var hostOption = new Option<string?>("--host", "-H")
             {
                 Description = "Set database host."
             };
-            var outputOption = new Option<string>("--output", "-o")
+            var outputOption = new Option<string?>("--output", "-o")
             {
                 Description = "Set output file"
             };
-            var tableOption = new Option<string>("--table", "-t")
+            var tableOption = new Option<string?>("--table", "-t")
             {
                 Description = "Table Name"
             };

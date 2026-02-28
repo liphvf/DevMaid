@@ -8,47 +8,54 @@ namespace DevMaid
 {
     public static class Utils
     {
-        public static string GetConnectionString(string host, string db, string user, string password)
+        public static string GetConnectionString(string? host, string? db, string? user, string? password)
         {
-            if (string.IsNullOrEmpty(db))
+            if (string.IsNullOrWhiteSpace(db))
             {
                 throw new ArgumentException("Miss database name.");
             }
-            else if (string.IsNullOrEmpty(user))
+
+            if (string.IsNullOrWhiteSpace(user))
             {
                 throw new ArgumentException("Miss user name.");
             }
-            else if (string.IsNullOrEmpty(password))
+
+            if (string.IsNullOrWhiteSpace(password))
             {
                 throw new ArgumentException("Miss password.");
             }
-            else if (string.IsNullOrEmpty(host))
+
+            if (string.IsNullOrWhiteSpace(host))
             {
                 throw new ArgumentException("Miss host.");
             }
+
             return $"Host={host};Username={user};Password={password};Database={db}";
         }
 
         public static Encoding GetCurrentFileEncoding(string filePath)
         {
-            using (StreamReader sr = new StreamReader(filePath, true))
+            using var sr = new StreamReader(filePath, true);
+            while (sr.Peek() >= 0)
             {
-                while (sr.Peek() >= 0)
-                {
-                    sr.Read();
-                }
-                //Test for the encoding after reading, or at least after the first read.
-                return sr.CurrentEncoding;
+                sr.Read();
             }
+
+            return sr.CurrentEncoding;
         }
 
-        public static String SecureStringToString(SecureString value)
+        public static string SecureStringToString(SecureString value)
         {
-            IntPtr valuePtr = IntPtr.Zero;
+            if (value is null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            var valuePtr = IntPtr.Zero;
             try
             {
                 valuePtr = Marshal.SecureStringToGlobalAllocUnicode(value);
-                return Marshal.PtrToStringUni(valuePtr);
+                return Marshal.PtrToStringUni(valuePtr) ?? string.Empty;
             }
             finally
             {
@@ -67,10 +74,14 @@ namespace DevMaid
                 {
                     break;
                 }
-                else if (i.Key == ConsoleKey.Backspace)
+
+                if (i.Key == ConsoleKey.Backspace)
                 {
-                    pwd.RemoveAt(pwd.Length - 1);
-                    Console.Write("\b \b");
+                    if (pwd.Length > 0)
+                    {
+                        pwd.RemoveAt(pwd.Length - 1);
+                        Console.Write("\b \b");
+                    }
                 }
                 else
                 {
