@@ -17,6 +17,12 @@ public static class ClaudeCodeCommand
     {
         var command = new Command("claude", "Comandos para Claude Code");
 
+        command.SetAction(parseResult =>
+        {
+            var helpOption = new System.CommandLine.Help.HelpOption();
+            ((System.CommandLine.Help.HelpAction)helpOption.Action!).Invoke(parseResult);
+        });
+
         var installCommand = new Command("install", "Instala o Claude Code usando winget");
         installCommand.SetAction(_ =>
         {
