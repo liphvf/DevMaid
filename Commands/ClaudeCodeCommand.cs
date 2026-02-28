@@ -1,4 +1,5 @@
 using System;
+using System.CommandLine;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -11,6 +12,39 @@ namespace DevMaid.Commands
     {
         private const string McpDatabaseArguments = "mcp add --transport sse toolbox http://127.0.0.1:5000/mcp/sse --scope user";
         private const string WingetInstallArguments = "install --id Anthropic.ClaudeCode -e --accept-package-agreements --accept-source-agreements";
+
+        public static Command Build()
+        {
+            var command = new Command("claude", "Comandos para Claude Code");
+
+            var installCommand = new Command("install", "Instala o Claude Code usando winget");
+            installCommand.SetAction(_ =>
+            {
+                Install();
+            });
+
+            var settingsCommand = new Command("settings", "Configuracoes do Claude Code");
+
+            var mcpDatabaseCommand = new Command("mcp-database", "Executa o comando de cadastro do MCP database no Claude");
+            mcpDatabaseCommand.SetAction(_ =>
+            {
+                ConfigureMcpDatabase();
+            });
+
+            var winEnvCommand = new Command("win-env", "Configura o ~/.claude.json para usar pwsh e liberar edit/read/shell");
+            winEnvCommand.SetAction(_ =>
+            {
+                ConfigureWindowsEnvironment();
+            });
+
+            settingsCommand.Add(mcpDatabaseCommand);
+            settingsCommand.Add(winEnvCommand);
+
+            command.Add(installCommand);
+            command.Add(settingsCommand);
+
+            return command;
+        }
 
         public static void Install()
         {

@@ -1,4 +1,5 @@
 using System;
+using System.CommandLine;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,38 @@ namespace DevMaid.Commands
 {
     public static class FileCommand
     {
+        public static Command Build()
+        {
+            var command = new Command("Combine", "Copy dashboards between databases.");
+            command.Aliases.Add("combine");
+
+            var inputOption = new Option<string>("--input", "-i")
+            {
+                Description = "Input Directory.",
+                Required = true
+            };
+            var outputOption = new Option<string?>("--output", "-o")
+            {
+                Description = "Input Directory."
+            };
+
+            command.Add(inputOption);
+            command.Add(outputOption);
+
+            command.SetAction(parseResult =>
+            {
+                var options = new FileCommandOptions
+                {
+                    Input = parseResult.GetRequiredValue(inputOption),
+                    Output = parseResult.GetValue(outputOption)
+                };
+
+                Combine(options);
+            });
+
+            return command;
+        }
+
         public static void Combine(FileCommandOptions options)
         {
             if (string.IsNullOrWhiteSpace(options.Input))

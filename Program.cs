@@ -1,7 +1,7 @@
 using System;
 using System.CommandLine;
 using System.IO;
-using DevMaid.CliCommands;
+using DevMaid.Commands;
 using Microsoft.Extensions.Configuration;
 
 namespace DevMaid
@@ -25,9 +25,9 @@ namespace DevMaid
 
             var rootCommand = new RootCommand("DevMaid command line tools")
             {
-                TableParserCliCommand.Build(),
-                CombineCliCommand.Build(),
-                ClaudeCliCommand.Build()
+                TableParserCommand.Build(),
+                FileCommand.Build(),
+                ClaudeCodeCommand.Build()
             };
 
             return rootCommand.Parse(args).Invoke();

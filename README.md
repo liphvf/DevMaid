@@ -110,8 +110,7 @@ Atualiza `%USERPROFILE%\\.claude.json` com:
 ## Estrutura do projeto
 
 - `Program.cs`: inicializacao e registro dos comandos raiz.
-- `CliCommands/`: definicao da arvore de comandos da CLI.
-- `Commands/`: logica de negocio de cada comando.
+- `Commands/`: definicao da arvore de comandos (metodo `Build`) e logica de negocio.
 - `CommandOptions/`: DTOs de opcoes usadas pelos comandos.
 
 ## Contribuicao
