@@ -9,6 +9,8 @@
     <ToolCommandName>devmaid</ToolCommandName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
     <!-- <PackageOutputPath>./nupkg</PackageOutputPath> -->
     <!-- <RuntimeIdentifier>win10-x64</RuntimeIdentifier> -->
     <VersionPrefix>0.0.14</VersionPrefix>
