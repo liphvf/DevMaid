@@ -3,41 +3,35 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
-    <IsAotCompatible>true</IsAotCompatible>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>devmaid</ToolCommandName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <!-- <PackageOutputPath>./nupkg</PackageOutputPath> -->
-    <!-- <RuntimeIdentifier>win10-x64</RuntimeIdentifier> -->
-    <VersionPrefix>0.0.14</VersionPrefix>
-    <GeneratePackageOnBuild Condition="'$(PublishAot)' != 'true'">true</GeneratePackageOnBuild>
+
+    <!-- NuGet package settings -->
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <!-- <Description>DevTools for help you.</Description>
-    <Product>DevMaid</Product>
-    <PackageId>devmaid</PackageId>
-    <Authors>Filiphe Vilar Figueiredo</Authors>
-    <Copyright>GNU General Public License v3.0</Copyright>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageProjectUrl>https://github.com/liphvf/DevMaid</PackageProjectUrl>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <RepositoryUrl>https://github.com/liphvf/DevMaid</RepositoryUrl>
-    <RepositoryType>GIT</RepositoryType>
-    <PackageIcon>icon.png</PackageIcon> -->
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <!-- Profile for NuGet (dotnet tool install) -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
-     <None Include="icon.png" Pack="true" PackagePath="\" />
-     <None Include="LICENSE" Pack="true" PackagePath="\" />
-     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+    <None Include="LICENSE" Pack="true" PackagePath="\" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="System.CommandLine" Version="2.0.3" />
     <PackageReference Include="ConsoleTables" Version="2.7.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables"
+      Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.3" />
