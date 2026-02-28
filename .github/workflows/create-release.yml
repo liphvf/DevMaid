@@ -1,0 +1,35 @@
+name: Create GitHub Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          nupkg=$(find bin/Release -name "DevMaid.*.nupkg" 2>/dev/null | head -1)
+          if [ -n "$nupkg" ]; then
+            version=$(basename "$nupkg" | sed 's/DevMaid\.//' | sed 's/\.nupkg//')
+            echo "version=$version" >> $GITHUB_OUTPUT
+          else
+            echo "version=1.0.0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
