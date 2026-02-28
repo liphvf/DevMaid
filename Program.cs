@@ -26,7 +26,8 @@ namespace DevMaid
             var rootCommand = new RootCommand("DevMaid command line tools")
             {
                 TableParserCliCommand.Build(),
-                CombineCliCommand.Build()
+                CombineCliCommand.Build(),
+                ClaudeCliCommand.Build()
             };
 
             return rootCommand.Parse(args).Invoke();
