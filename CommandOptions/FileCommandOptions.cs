@@ -1,14 +1,8 @@
-using CommandLine;
+namespace DevMaid.CommandOptions;
 
-namespace DevMaid.CommandOptions
+public class FileCommandOptions
 {
-    [Verb("Combine", HelpText = "Copy dashboards between databases.")]
-    public class FileCommandOptions
-    {
-        [Option('i', "input", Required = true, HelpText = "Input Directory.")]
-        public string Input { get; set; } = "postgres";
+    public string Input { get; set; } = string.Empty;
 
-        [Option('o', "output", Required = false, HelpText = "Input Directory.")]
-        public string Output { get; set; }
-    }
+    public string? Output { get; set; }
 }
