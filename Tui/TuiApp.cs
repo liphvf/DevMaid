@@ -5,7 +5,7 @@ using System.Text;
 using NStack;
 using Terminal.Gui;
 
-namespace DevMaid.Commands;
+namespace DevMaid.Tui;
 
 public static class TuiApp
 {
@@ -16,14 +16,53 @@ public static class TuiApp
 
     private static bool _isDarkTerminal;
 
-    private static readonly List<(string Name, string Description, Action Action)> MenuItems = new()
+    private static readonly List<MenuItem> MainMenuItems = new()
     {
-        ("Table Parser", "Parse and convert table data (CSV, Markdown, JSON)", RunTableParser),
-        ("File Utils", "File management utilities (search, organize, etc.)", RunFileUtils),
-        ("Claude Code", "Claude Code CLI integration", RunClaudeCode),
-        ("OpenCode", "OpenCode CLI integration", RunOpenCode),
-        ("Winget", "Backup and restore winget packages", RunWinget),
-        ("Exit", "Exit TUI mode", () => Application.RequestStop())
+        new MenuItem("Table Parser", "Parse and convert table data (CSV, Markdown, JSON)", RunTableParser),
+        new MenuItem("File Utils", "File management utilities (search, organize, etc.)", RunFileUtils),
+        new MenuItem("Claude Code", "Claude Code CLI integration", RunClaudeCode),
+        new MenuItem("OpenCode", "OpenCode CLI integration", RunOpenCode),
+        new MenuItem("Winget", "Backup and restore winget packages", RunWinget),
+        new MenuItem("Exit", "Exit TUI mode", () => Application.RequestStop())
+    };
+
+    private static readonly List<MenuItem> TableParserItems = new()
+    {
+        new MenuItem("Parse CSV to Markdown", "Convert CSV file to Markdown table", () => RunCommand("devmaid table parse -i input.csv -o output.md")),
+        new MenuItem("Parse CSV to JSON", "Convert CSV file to JSON format", () => RunCommand("devmaid table parse -i input.csv -o output.json --format json")),
+        new MenuItem("Parse Markdown to CSV", "Convert Markdown table to CSV file", () => RunCommand("devmaid table parse -i input.md -o output.csv")),
+        new MenuItem("Back", "Return to main menu", () => { })
+    };
+
+    private static readonly List<MenuItem> FileUtilsItems = new()
+    {
+        new MenuItem("Search Files", "Search for files by name or pattern", () => RunCommand("devmaid file search")),
+        new MenuItem("Organize by Extension", "Organize files by their extension", () => RunCommand("devmaid file organize")),
+        new MenuItem("Find Duplicates", "Find duplicate files in directory", () => RunCommand("devmaid file duplicates")),
+        new MenuItem("Back", "Return to main menu", () => { })
+    };
+
+    private static readonly List<MenuItem> ClaudeCodeItems = new()
+    {
+        new MenuItem("Install Claude Code", "Install Claude Code CLI tool", () => RunCommand("devmaid claude install")),
+        new MenuItem("Check Status", "Check Claude Code installation status", () => RunCommand("devmaid claude status")),
+        new MenuItem("Configure", "Configure Claude Code settings", () => RunCommand("devmaid claude config")),
+        new MenuItem("Back", "Return to main menu", () => { })
+    };
+
+    private static readonly List<MenuItem> OpenCodeItems = new()
+    {
+        new MenuItem("Install OpenCode", "Install OpenCode CLI tool", () => RunCommand("devmaid opencode install")),
+        new MenuItem("Check Status", "Check OpenCode installation status", () => RunCommand("devmaid opencode status")),
+        new MenuItem("Configure", "Configure OpenCode settings", () => RunCommand("devmaid opencode config")),
+        new MenuItem("Back", "Return to main menu", () => { })
+    };
+
+    private static readonly List<MenuItem> WingetItems = new()
+    {
+        new MenuItem("Backup Packages", "Backup installed winget packages", () => RunCommand("devmaid winget backup")),
+        new MenuItem("Restore Packages", "Restore winget packages from backup", () => RunCommand("devmaid winget restore")),
+        new MenuItem("Back", "Return to main menu", () => { })
     };
 
     private static void DetectTerminalTheme()
@@ -104,26 +143,28 @@ public static class TuiApp
         {
             X = 2,
             Y = 2,
+            Width = Dim.Fill() - 4,
             ColorScheme = colorScheme
         };
 
-        _menuList = new ListView(MenuItems)
+        var menuNames = GetMenuNames(MainMenuItems);
+        _menuList = new ListView(menuNames)
         {
             X = 2,
             Y = 4,
-            Width = 25,
+            Width = 30,
             Height = Dim.Fill() - 8,
             AllowsMarking = false,
             ColorScheme = colorScheme
         };
-        _menuList.SelectedItemChanged += OnSelectedItemChanged;
-        _menuList.OpenSelectedItem += OnMenuItemActivated;
+        _menuList.SelectedItemChanged += OnMainMenuSelected;
+        _menuList.OpenSelectedItem += OnMainMenuActivated;
 
         _descriptionLabel = new Label("")
         {
-            X = 30,
+            X = 35,
             Y = 4,
-            Width = Dim.Fill() - 32,
+            Width = Dim.Fill() - 37,
             Height = 5,
             TextAlignment = TextAlignment.Left,
             ColorScheme = colorScheme
@@ -133,6 +174,7 @@ public static class TuiApp
         {
             X = 2,
             Y = Pos.Bottom(_menuList) + 1,
+            Width = Dim.Fill() - 4,
             ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(textColor, bgColor) }
         };
 
@@ -146,95 +188,76 @@ public static class TuiApp
         _mainWindow.Add(menuLabel, _menuList, _descriptionLabel, helpLabel, _statusLabel);
         Application.Top.Add(_mainWindow);
 
-        UpdateDescription();
+        UpdateMainDescription();
         Application.Run();
         Application.Shutdown();
     }
 
-    private static void OnSelectedItemChanged(ListViewItemEventArgs args)
+    private static string[] GetMenuNames(List<MenuItem> items)
     {
-        UpdateDescription();
+        var names = new string[items.Count];
+        for (int i = 0; i < items.Count; i++)
+        {
+            names[i] = items[i].Name;
+        }
+        return names;
     }
 
-    private static void OnMenuItemActivated(object? args)
+    private static void OnMainMenuSelected(ListViewItemEventArgs args)
+    {
+        UpdateMainDescription();
+    }
+
+    private static void OnMainMenuActivated(object? args)
     {
         if (_menuList != null)
         {
             var selectedIndex = _menuList.SelectedItem;
-            if (selectedIndex >= 0 && selectedIndex < MenuItems.Count)
+            if (selectedIndex >= 0 && selectedIndex < MainMenuItems.Count)
             {
-                MenuItems[selectedIndex].Action();
+                MainMenuItems[selectedIndex].Action();
             }
         }
     }
 
-    private static void UpdateDescription()
+    private static void UpdateMainDescription()
     {
         if (_menuList != null && _descriptionLabel != null)
         {
             var selectedIndex = _menuList.SelectedItem;
-            if (selectedIndex >= 0 && selectedIndex < MenuItems.Count)
+            if (selectedIndex >= 0 && selectedIndex < MainMenuItems.Count)
             {
-                _descriptionLabel.Text = MenuItems[selectedIndex].Description;
+                _descriptionLabel.Text = MainMenuItems[selectedIndex].Description;
             }
         }
     }
 
     private static void RunTableParser()
     {
-        ShowSubMenu("Table Parser", new List<(string Name, Action)>
-        {
-            ("Parse CSV to Markdown", () => RunCommand("devmaid table parse -i input.csv -o output.md")),
-            ("Parse CSV to JSON", () => RunCommand("devmaid table parse -i input.csv -o output.json --format json")),
-            ("Parse Markdown to CSV", () => RunCommand("devmaid table parse -i input.md -o output.csv")),
-            ("Back", () => { })
-        });
+        ShowSubMenu("Table Parser", TableParserItems);
     }
 
     private static void RunFileUtils()
     {
-        ShowSubMenu("File Utils", new List<(string Name, Action)>
-        {
-            ("Search Files", () => RunCommand("devmaid file search")),
-            ("Organize by Extension", () => RunCommand("devmaid file organize")),
-            ("Find Duplicates", () => RunCommand("devmaid file duplicates")),
-            ("Back", () => { })
-        });
+        ShowSubMenu("File Utils", FileUtilsItems);
     }
 
     private static void RunClaudeCode()
     {
-        ShowSubMenu("Claude Code", new List<(string Name, Action)>
-        {
-            ("Install Claude Code", () => RunCommand("devmaid claude install")),
-            ("Check Status", () => RunCommand("devmaid claude status")),
-            ("Configure", () => RunCommand("devmaid claude config")),
-            ("Back", () => { })
-        });
+        ShowSubMenu("Claude Code", ClaudeCodeItems);
     }
 
     private static void RunOpenCode()
     {
-        ShowSubMenu("OpenCode", new List<(string Name, Action)>
-        {
-            ("Install OpenCode", () => RunCommand("devmaid opencode install")),
-            ("Check Status", () => RunCommand("devmaid opencode status")),
-            ("Configure", () => RunCommand("devmaid opencode config")),
-            ("Back", () => { })
-        });
+        ShowSubMenu("OpenCode", OpenCodeItems);
     }
 
     private static void RunWinget()
     {
-        ShowSubMenu("Winget", new List<(string Name, Action)>
-        {
-            ("Backup Packages", () => RunCommand("devmaid winget backup")),
-            ("Restore Packages", () => RunCommand("devmaid winget restore")),
-            ("Back", () => { })
-        });
+        ShowSubMenu("Winget", WingetItems);
     }
 
-    private static void ShowSubMenu(string title, List<(string Name, Action Action)> items)
+    private static void ShowSubMenu(string title, List<MenuItem> items)
     {
         var colorScheme = GetColorScheme();
 
@@ -245,7 +268,8 @@ public static class TuiApp
             ColorScheme = colorScheme
         };
 
-        var listView = new ListView(items)
+        var menuNames = GetMenuNames(items);
+        var listView = new ListView(menuNames)
         {
             X = 1,
             Y = 1,
@@ -257,15 +281,19 @@ public static class TuiApp
 
         listView.OpenSelectedItem += (args) =>
         {
-            var selected = items[listView.SelectedItem];
-            if (selected.Name == "Back")
+            var selectedIndex = listView.SelectedItem;
+            if (selectedIndex >= 0 && selectedIndex < items.Count)
             {
-                Application.RequestStop();
-            }
-            else
-            {
-                Application.RequestStop();
-                selected.Action();
+                var selectedItem = items[selectedIndex];
+                if (selectedItem.Name == "Back")
+                {
+                    Application.RequestStop();
+                }
+                else
+                {
+                    Application.RequestStop();
+                    selectedItem.Action();
+                }
             }
         };
 
