@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 using NStack;
 using Terminal.Gui;
 
@@ -314,36 +315,124 @@ public static class TuiApp
     {
         _statusLabel!.Text = $"Running: {command}...";
 
-        try
+        var (dialog, outputText, exitCodeLabel) = ShowProgressDialog(command);
+
+        var outputBuilder = new StringBuilder();
+        var errorBuilder = new StringBuilder();
+
+        var process = new Process
         {
-            var process = new Process
+            StartInfo = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = $"/c {command}",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = Encoding.UTF8
-                }
-            };
+                FileName = "cmd.exe",
+                Arguments = $"/c {command}",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8
+            }
+        };
 
-            process.Start();
-
-            var output = process.StandardOutput.ReadToEnd();
-            var error = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-
-            ShowOutputDialog(command, output, error, process.ExitCode);
-        }
-        catch (Exception ex)
+        process.OutputDataReceived += (s, e) =>
         {
-            _statusLabel!.Text = $"Error: {ex.Message}";
-            MessageBox.ErrorQuery("Error", ex.Message, "OK");
-        }
+            if (e.Data != null)
+            {
+                outputBuilder.AppendLine(e.Data);
+                Application.MainLoop.Invoke(() =>
+                {
+                    outputText.Text = outputBuilder.ToString();
+                    outputText.MoveEnd();
+                });
+            }
+        };
+
+        process.ErrorDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+            {
+                errorBuilder.AppendLine(e.Data);
+                Application.MainLoop.Invoke(() =>
+                {
+                    outputText.Text = outputBuilder.ToString() + "\n[ERROR]\n" + errorBuilder.ToString();
+                    outputText.MoveEnd();
+                });
+            }
+        };
+
+        process.Start();
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
+        Task.Run(() =>
+        {
+            process.WaitForExit();
+            var exitCode = process.ExitCode;
+
+            Application.MainLoop.Invoke(() =>
+            {
+                exitCodeLabel.Text = $"Exit Code: {exitCode} ({(exitCode == 0 ? "Success" : "Failed")})";
+                exitCodeLabel.ColorScheme = new ColorScheme
+                {
+                    Normal = new Terminal.Gui.Attribute(exitCode == 0 ? Color.Green : Color.Red, GetBackgroundColor())
+                };
+
+                var closeButton = new Button("Close")
+                {
+                    X = Pos.Right(dialog) - 12,
+                    Y = Pos.Bottom(dialog) - 3,
+                    IsDefault = true
+                };
+                closeButton.Clicked += () => Application.RequestStop();
+                dialog.Add(closeButton);
+            });
+        });
+
+        Application.Run(dialog);
+    }
+
+    private static (Dialog dialog, TextView outputText, Label exitCodeLabel) ShowProgressDialog(string command)
+    {
+        var colorScheme = GetColorScheme();
+        var bgColor = GetBackgroundColor();
+
+        var dialog = new Dialog($"Running: {command}")
+        {
+            Width = Dim.Percent(80),
+            Height = Dim.Percent(60),
+            ColorScheme = colorScheme
+        };
+
+        var outputText = new TextView
+        {
+            X = 1,
+            Y = 1,
+            Width = Dim.Fill() - 2,
+            Height = Dim.Fill() - 6,
+            ReadOnly = false,
+            WordWrap = true,
+            ColorScheme = colorScheme
+        };
+
+        var exitCodeLabel = new Label("Exit Code: Running...")
+        {
+            X = 1,
+            Y = Pos.Bottom(outputText) + 1,
+            ColorScheme = colorScheme
+        };
+
+        var cancelButton = new Button("Press Esc to cancel")
+        {
+            X = Pos.Right(dialog) - 25,
+            Y = Pos.Bottom(dialog) - 3,
+            IsDefault = false
+        };
+
+        dialog.Add(outputText, exitCodeLabel, cancelButton);
+
+        Application.MainLoop.EventsPending(true);
+        
+        return (dialog, outputText, exitCodeLabel);
     }
 
     private static void ShowOutputDialog(string command, string output, string error, int exitCode)
