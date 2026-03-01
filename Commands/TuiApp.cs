@@ -162,7 +162,7 @@ public static class TuiApp
             AllowsMarking = false
         };
 
-        listView.SelectedItemChanged += (args) =>
+        listView.OpenSelectedItem += (args) =>
         {
             var selected = items[listView.SelectedItem];
             if (selected.Name == "Back")
@@ -192,7 +192,6 @@ public static class TuiApp
     private static void RunCommand(string command)
     {
         _statusLabel!.Text = $"Running: {command}...";
-        Application.Refresh();
 
         try
         {
@@ -217,8 +216,7 @@ public static class TuiApp
 
             process.WaitForExit();
 
-            Application.RequestStop();
-            ShowOutputWindow(command, output, error, process.ExitCode);
+            ShowOutputDialog(command, output, error, process.ExitCode);
         }
         catch (Exception ex)
         {
@@ -227,66 +225,49 @@ public static class TuiApp
         }
     }
 
-    private static void ShowOutputWindow(string command, string output, string error, int exitCode)
+    private static void ShowOutputDialog(string command, string output, string error, int exitCode)
     {
-        Application.Init();
+        var dialog = new Dialog($"Output: {command}", 70, 20);
 
-        var window = new Window($"Output: {command}")
+        var outputText = new TextView(new Rect(1, 1, 68, 12))
         {
-            Width = Dim.Fill(),
-            Height = Dim.Fill()
-        };
-
-        var outputLabel = new Label("Output:")
-        {
-            X = 1,
-            Y = 1
-        };
-
-        var outputText = new TextView
-        {
-            X = 1,
-            Y = 2,
-            Width = Dim.Fill() - 2,
-            Height = Dim.Fill() - 8,
             Text = string.IsNullOrEmpty(output) ? "(no output)" : output,
             ReadOnly = true,
             WordWrap = true
         };
 
-        var exitCodeLabel = new Label($"Exit Code: {exitCode}")
+        var exitCodeText = exitCode == 0 ? "Success" : "Failed";
+        var exitCodeLabel = new Label(1, 14, $"Exit Code: {exitCode} ({exitCodeText})")
         {
-            X = 1,
-            Y = Pos.Bottom(outputText) + 1,
             ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(exitCode == 0 ? Color.Green : Color.Red, Color.Black) }
         };
 
+        dialog.Add(outputText);
+
         if (!string.IsNullOrEmpty(error))
         {
-            var errorLabel = new Label($"Error: {error}")
+            var errorText = error.Length > 65 ? error.Substring(0, 62) + "..." : error;
+            var errorLabel = new Label(1, 15, $"Error: {errorText}")
             {
-                X = 1,
-                Y = Pos.Bottom(exitCodeLabel) + 1,
-                ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.Red, Color.Black) },
-                Text = ustring.Make(error.Length > 70 ? error.Substring(0, 67) + "..." : error)
+                ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.Red, Color.Black) }
             };
-            window.Add(outputLabel, outputText, exitCodeLabel, errorLabel);
+            dialog.Add(errorLabel);
+            dialog.Add(exitCodeLabel);
         }
         else
         {
-            window.Add(outputLabel, outputText, exitCodeLabel);
+            dialog.Add(exitCodeLabel);
         }
 
         var closeButton = new Button("Close")
         {
-            X = Pos.Right(window) - 12,
-            Y = Pos.Bottom(window) - 2,
+            X = Pos.Right(dialog) - 12,
+            Y = Pos.Bottom(dialog) - 3,
             IsDefault = true
         };
         closeButton.Clicked += () => Application.RequestStop();
 
-        window.Add(closeButton);
-        Application.Top.Add(window);
-        Application.Run();
+        dialog.Add(closeButton);
+        Application.Run(dialog);
     }
 }
