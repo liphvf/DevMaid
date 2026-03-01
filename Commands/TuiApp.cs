@@ -28,29 +28,51 @@ public static class TuiApp
     {
         Application.Init();
 
-        _mainWindow = new Window(new Rect(0, 0, 80, 25), "DevMaid - Terminal User Interface");
-
-        var menuLabel = new Label(2, 2, "Select an option:");
-
-        _menuList = new ListView(new Rect(2, 4, 25, 15), MenuItems)
+        _mainWindow = new Window("DevMaid - Terminal User Interface")
         {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill()
+        };
+
+        var menuLabel = new Label("Select an option:")
+        {
+            X = 2,
+            Y = 2
+        };
+
+        _menuList = new ListView(MenuItems)
+        {
+            X = 2,
+            Y = 4,
+            Width = 25,
+            Height = Dim.Fill() - 8,
             AllowsMarking = false
         };
         _menuList.SelectedItemChanged += OnSelectedItemChanged;
         _menuList.OpenSelectedItem += OnMenuItemActivated;
 
-        _descriptionLabel = new Label(new Rect(30, 4, 48, 5), "")
+        _descriptionLabel = new Label("")
         {
+            X = 30,
+            Y = 4,
+            Width = Dim.Fill() - 32,
+            Height = 5,
             TextAlignment = TextAlignment.Left
         };
 
-        var helpLabel = new Label(2, 20, "Keys: Enter Run  Esc Exit")
+        var helpLabel = new Label("Keys: Enter Run  Esc Exit")
         {
+            X = 2,
+            Y = Pos.Bottom(_menuList) + 1,
             ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black) }
         };
 
-        _statusLabel = new Label(2, 23, "Ready")
+        _statusLabel = new Label("Ready")
         {
+            X = 2,
+            Y = Pos.Bottom(_mainWindow) - 1,
             ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.Green, Color.Black) }
         };
 
@@ -227,18 +249,28 @@ public static class TuiApp
 
     private static void ShowOutputDialog(string command, string output, string error, int exitCode)
     {
-        var dialog = new Dialog($"Output: {command}", 70, 20);
-
-        var outputText = new TextView(new Rect(1, 1, 68, 12))
+        var dialog = new Dialog($"Output: {command}")
         {
+            Width = Dim.Percent(80),
+            Height = Dim.Percent(60)
+        };
+
+        var outputText = new TextView
+        {
+            X = 1,
+            Y = 1,
+            Width = Dim.Fill() - 2,
+            Height = Dim.Fill() - 6,
             Text = string.IsNullOrEmpty(output) ? "(no output)" : output,
             ReadOnly = true,
             WordWrap = true
         };
 
         var exitCodeText = exitCode == 0 ? "Success" : "Failed";
-        var exitCodeLabel = new Label(1, 14, $"Exit Code: {exitCode} ({exitCodeText})")
+        var exitCodeLabel = new Label($"Exit Code: {exitCode} ({exitCodeText})")
         {
+            X = 1,
+            Y = Pos.Bottom(outputText) + 1,
             ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(exitCode == 0 ? Color.Green : Color.Red, Color.Black) }
         };
 
@@ -247,8 +279,10 @@ public static class TuiApp
         if (!string.IsNullOrEmpty(error))
         {
             var errorText = error.Length > 65 ? error.Substring(0, 62) + "..." : error;
-            var errorLabel = new Label(1, 15, $"Error: {errorText}")
+            var errorLabel = new Label($"Error: {errorText}")
             {
+                X = 1,
+                Y = Pos.Bottom(exitCodeLabel),
                 ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.Red, Color.Black) }
             };
             dialog.Add(errorLabel);
