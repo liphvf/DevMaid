@@ -14,6 +14,8 @@ public static class TuiApp
     private static Label? _statusLabel;
     private static Label? _descriptionLabel;
 
+    private static bool _isDarkTerminal;
+
     private static readonly List<(string Name, string Description, Action Action)> MenuItems = new()
     {
         ("Table Parser", "Parse and convert table data (CSV, Markdown, JSON)", RunTableParser),
@@ -24,22 +26,85 @@ public static class TuiApp
         ("Exit", "Exit TUI mode", () => Application.RequestStop())
     };
 
+    private static void DetectTerminalTheme()
+    {
+        var term = Environment.GetEnvironmentVariable("TERM") ?? "";
+        var colorTerm = Environment.GetEnvironmentVariable("COLORTERM") ?? "";
+        var wtSession = Environment.GetEnvironmentVariable("WT_SESSION");
+        
+        if (term.Contains("light") || colorTerm.Contains("truecolor") || colorTerm.Contains("24bit"))
+        {
+            _isDarkTerminal = false;
+        }
+        else if (!string.IsNullOrEmpty(wtSession))
+        {
+            _isDarkTerminal = true;
+        }
+        else
+        {
+            _isDarkTerminal = true;
+        }
+    }
+
+    private static ColorScheme GetColorScheme()
+    {
+        if (_isDarkTerminal)
+        {
+            return new ColorScheme
+            {
+                Normal = new Terminal.Gui.Attribute(Color.White, Color.Black),
+                Focus = new Terminal.Gui.Attribute(Color.White, Color.DarkGray),
+                HotNormal = new Terminal.Gui.Attribute(Color.BrightCyan, Color.Black),
+                HotFocus = new Terminal.Gui.Attribute(Color.BrightCyan, Color.DarkGray)
+            };
+        }
+        else
+        {
+            return new ColorScheme
+            {
+                Normal = new Terminal.Gui.Attribute(Color.Black, Color.White),
+                Focus = new Terminal.Gui.Attribute(Color.Black, Color.Gray),
+                HotNormal = new Terminal.Gui.Attribute(Color.Blue, Color.White),
+                HotFocus = new Terminal.Gui.Attribute(Color.Blue, Color.Gray)
+            };
+        }
+    }
+
+    private static Color GetTextColor(bool bright = false)
+    {
+        return _isDarkTerminal ? (bright ? Color.White : Color.Gray) : (bright ? Color.Black : Color.DarkGray);
+    }
+
+    private static Color GetBackgroundColor()
+    {
+        return _isDarkTerminal ? Color.Black : Color.White;
+    }
+
     public static void Run()
     {
         Application.Init();
+
+        DetectTerminalTheme();
+
+        var colorScheme = GetColorScheme();
+        var textColor = GetTextColor();
+        var brightText = GetTextColor(true);
+        var bgColor = GetBackgroundColor();
 
         _mainWindow = new Window("DevMaid - Terminal User Interface")
         {
             X = 0,
             Y = 0,
             Width = Dim.Fill(),
-            Height = Dim.Fill()
+            Height = Dim.Fill(),
+            ColorScheme = colorScheme
         };
 
         var menuLabel = new Label("Select an option:")
         {
             X = 2,
-            Y = 2
+            Y = 2,
+            ColorScheme = colorScheme
         };
 
         _menuList = new ListView(MenuItems)
@@ -48,7 +113,8 @@ public static class TuiApp
             Y = 4,
             Width = 25,
             Height = Dim.Fill() - 8,
-            AllowsMarking = false
+            AllowsMarking = false,
+            ColorScheme = colorScheme
         };
         _menuList.SelectedItemChanged += OnSelectedItemChanged;
         _menuList.OpenSelectedItem += OnMenuItemActivated;
@@ -59,21 +125,22 @@ public static class TuiApp
             Y = 4,
             Width = Dim.Fill() - 32,
             Height = 5,
-            TextAlignment = TextAlignment.Left
+            TextAlignment = TextAlignment.Left,
+            ColorScheme = colorScheme
         };
 
         var helpLabel = new Label("Keys: Enter Run  Esc Exit")
         {
             X = 2,
             Y = Pos.Bottom(_menuList) + 1,
-            ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.DarkGray, Color.Black) }
+            ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(textColor, bgColor) }
         };
 
         _statusLabel = new Label("Ready")
         {
             X = 2,
             Y = Pos.Bottom(_mainWindow) - 1,
-            ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.Green, Color.Black) }
+            ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(brightText, bgColor) }
         };
 
         _mainWindow.Add(menuLabel, _menuList, _descriptionLabel, helpLabel, _statusLabel);
@@ -169,10 +236,13 @@ public static class TuiApp
 
     private static void ShowSubMenu(string title, List<(string Name, Action Action)> items)
     {
+        var colorScheme = GetColorScheme();
+
         var dialog = new Dialog(title)
         {
             Width = 50,
-            Height = 15
+            Height = 15,
+            ColorScheme = colorScheme
         };
 
         var listView = new ListView(items)
@@ -181,7 +251,8 @@ public static class TuiApp
             Y = 1,
             Width = Dim.Fill() - 1,
             Height = Dim.Fill() - 3,
-            AllowsMarking = false
+            AllowsMarking = false,
+            ColorScheme = colorScheme
         };
 
         listView.OpenSelectedItem += (args) =>
@@ -249,10 +320,14 @@ public static class TuiApp
 
     private static void ShowOutputDialog(string command, string output, string error, int exitCode)
     {
+        var colorScheme = GetColorScheme();
+        var bgColor = GetBackgroundColor();
+
         var dialog = new Dialog($"Output: {command}")
         {
             Width = Dim.Percent(80),
-            Height = Dim.Percent(60)
+            Height = Dim.Percent(60),
+            ColorScheme = colorScheme
         };
 
         var outputText = new TextView
@@ -263,7 +338,8 @@ public static class TuiApp
             Height = Dim.Fill() - 6,
             Text = string.IsNullOrEmpty(output) ? "(no output)" : output,
             ReadOnly = true,
-            WordWrap = true
+            WordWrap = true,
+            ColorScheme = colorScheme
         };
 
         var exitCodeText = exitCode == 0 ? "Success" : "Failed";
@@ -271,7 +347,7 @@ public static class TuiApp
         {
             X = 1,
             Y = Pos.Bottom(outputText) + 1,
-            ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(exitCode == 0 ? Color.Green : Color.Red, Color.Black) }
+            ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(exitCode == 0 ? Color.Green : Color.Red, bgColor) }
         };
 
         dialog.Add(outputText);
@@ -283,7 +359,7 @@ public static class TuiApp
             {
                 X = 1,
                 Y = Pos.Bottom(exitCodeLabel),
-                ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.Red, Color.Black) }
+                ColorScheme = new ColorScheme { Normal = new Terminal.Gui.Attribute(Color.Red, bgColor) }
             };
             dialog.Add(errorLabel);
             dialog.Add(exitCodeLabel);
