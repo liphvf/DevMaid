@@ -1,120 +1,158 @@
 # DevMaid
 
-DevMaid e uma CLI em .NET para automatizar tarefas comuns de desenvolvimento.
+A powerful .NET CLI tool to automate common development tasks.
 
-## O que o projeto faz
+## Description
 
-Hoje o DevMaid oferece estes comandos:
+DevMaid is a cross-platform command-line interface (CLI) built with .NET that helps developers automate repetitive development tasks. It provides commands for database operations, file management, AI tool installation (Claude Code, OpenCode), and Windows package management.
 
-- `table-parser`: le colunas de uma tabela PostgreSQL e gera propriedades C#.
-- `combine`: combina varios arquivos em um unico arquivo de saida.
-- `claude install`: instala o Claude Code via `winget`.
-- `claude settings mcp-database`: executa o cadastro do MCP toolbox no Claude.
-- `claude settings win-env`: atualiza `~/.claude.json` para usar `pwsh.exe` e liberar `edit/read/shell`.
+> **Note**: This is a hobby project created for personal use. It may not follow all best practices or have comprehensive testing. Contributions and feedback are welcome, but please keep in mind this was built to solve the author's specific needs.
 
-## Requisitos
+## Problem It Solves
 
-- .NET SDK 10
-- Windows (obrigatorio para os comandos `claude`, pois usam `winget`/`pwsh`)
-- Acesso a PostgreSQL para usar `TableParser`
+Developers often perform repetitive tasks that can be automated:
+- Converting database table schemas to C# classes
+- Combining multiple files into one
+- Installing and configuring AI development tools
+- Backing up and restoring Windows packages
 
-## Como usar
+DevMaid consolidates these tasks into a single, easy-to-use CLI tool.
 
-### Rodando direto do codigo fonte
+## Key Features
+
+- **Table Parser**: Parse PostgreSQL database tables and generate C# property classes
+- **File Utils**: Search, organize, and find duplicate files
+- **Claude Code Integration**: Install and configure Claude Code CLI
+- **OpenCode Integration**: Install and configure OpenCode CLI
+- **Winget Manager**: Backup and restore Windows package manager packages
+- **Interactive TUI Mode**: User-friendly terminal interface with navigation
+
+## Tech Stack
+
+- **Framework**: .NET 10
+- **Language**: C#
+- **CLI Parsing**: System.CommandLine
+- **TUI**: Terminal.Gui
+- **Database**: Npgsql (PostgreSQL)
+- **Configuration**: Microsoft.Extensions.Configuration
+
+## Installation
+
+### Prerequisites
+
+- .NET SDK 10 or later
+- Windows (required for Claude, OpenCode, and Winget commands)
+
+### Install as .NET Tool
 
 ```bash
+dotnet tool install --global DevMaid
+```
+
+Or install from NuGet:
+
+```bash
+dotnet tool install -g DevMaid
+```
+
+### Build from Source
+
+```bash
+git clone https://github.com/your-repo/DevMaid.git
+cd DevMaid
 dotnet restore
 dotnet build
+```
+
+## How to Run Locally
+
+### Run from Source
+
+```bash
 dotnet run -- --help
 ```
 
-### Como ferramenta instalada
-
-Se voce instalar/publicar como .NET Tool, o comando sera `devmaid`.
+### Run TUI Mode
 
 ```bash
-devmaid --help
+devmaid tui
 ```
 
-## Comandos
+## Basic Usage Examples
 
-### 1) table-parser
-
-Converte metadados de uma tabela em propriedades C#.
-
-Exemplo:
+### Table Parser - Generate C# Class from Database Table
 
 ```bash
-devmaid table-parser -d meu_banco -t users -u postgres -H localhost -p minha_senha
+devmaid table-parser -d mydb -t users -u postgres -H localhost
 ```
 
-Opcoes principais:
-
-- `-d`, `--db` (obrigatorio): nome do banco.
-- `-t`, `--table`: nome da tabela.
-- `-u`, `--user`: usuario do banco (padrao: `postgres`).
-- `-p`, `--password`: senha (se nao informar, o comando pede no terminal).
-- `-H`, `--host`: host do banco (padrao: `localhost`).
-- `-o`, `--output`: arquivo de saida.
-
-Obs.: na implementacao atual, o arquivo gerado e salvo em `./tabela.class`.
-
-### 2) combine
-
-Combina varios arquivos em um arquivo unico.
-
-Exemplo:
+### Combine Files
 
 ```bash
-devmaid combine -i "C:\\tmp\\*.sql" -o "C:\\tmp\\resultado.sql"
+devmaid combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
 ```
 
-Opcoes:
-
-- `-i`, `--input` (obrigatorio): padrao de arquivos de entrada.
-- `-o`, `--output`: arquivo final. Se nao informar, o comando gera um arquivo `CombineFiles.<ext>` no mesmo diretorio.
-
-### 3) Claude
-
-#### `claude install`
-
-Instala o Claude Code com:
+### Install Claude Code
 
 ```bash
-winget install --id Anthropic.ClaudeCode -e --accept-package-agreements --accept-source-agreements
+devmaid claude install
 ```
 
-#### `claude settings mcp-database`
-
-Executa exatamente:
+### Winget Backup
 
 ```bash
-claude mcp add --transport sse toolbox http://127.0.0.1:5000/mcp/sse --scope user
+devmaid winget backup -o "C:\backup"
 ```
 
-#### `claude settings win-env`
+### Winget Restore
 
-Atualiza `%USERPROFILE%\\.claude.json` com:
-
-```json
-{
-  "shell": "pwsh.exe",
-  "permission": {
-    "edit": "allow",
-    "read": "allow",
-    "shell": "allow"
-  }
-}
+```bash
+devmaid winget restore -i "C:\backup\backup-winget.json"
 ```
 
-## Estrutura do projeto
+### Interactive TUI Mode
 
-- `Program.cs`: inicializacao e registro dos comandos raiz.
-- `Commands/`: definicao da arvore de comandos (metodo `Build`) e logica de negocio.
-- `CommandOptions/`: DTOs de opcoes usadas pelos comandos.
+```bash
+devmaid tui
+```
 
-## Contribuicao
+Use arrow keys to navigate, Enter to select, Esc to exit.
 
-Contribuicoes sao bem-vindas. Abra uma issue ou envie um PR.
+## Command List
 
-[Nuget Tool](https://www.nuget.org/packages/devmaid/)
+| Command | Description |
+|---------|-------------|
+| `table-parser` | Parse database table to C# class |
+| `file` | File management utilities |
+| `claude` | Claude Code integration |
+| `opencode` | OpenCode CLI integration |
+| `winget` | Windows package manager |
+| `tui` | Launch interactive TUI mode |
+
+## Documentation
+
+For more detailed information, see:
+
+- [Architecture](./docs/en/ARCHITECTURE.md)
+- [Feature Specification](./docs/en/FEATURE_SPECIFICATION.md)
+
+## Contribution
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+Please ensure all tests pass and code follows the project's coding standards.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+---
+
+🇺🇸 English (default)  
+🇧🇷 Portuguese: [README.pt-BR.md](./README.pt-BR.md)
