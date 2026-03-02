@@ -1,12 +1,50 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using NStack;
 using Terminal.Gui;
 
 namespace DevMaid.Tui;
+
+internal static class NativeMethods
+{
+    [StructLayout(LayoutKind.Sequential)]
+    public struct COORD
+    {
+        public short X;
+        public short Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SMALL_RECT
+    {
+        public short Left;
+        public short Top;
+        public short Right;
+        public short Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CONSOLE_SCREEN_BUFFER_INFO
+    {
+        public COORD dwSize;
+        public COORD dwCursorPosition;
+        public short wAttributes;
+        public SMALL_RECT srWindow;
+        public COORD dwMaximumWindowSize;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr GetStdHandle(int nStdHandle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool GetConsoleScreenBufferInfo(IntPtr hConsoleOutput, out CONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
+
+    public const int STD_OUTPUT_HANDLE = -11;
+}
 
 public static class TuiApp
 {
@@ -66,6 +104,37 @@ public static class TuiApp
 
     private static void DetectTerminalTheme()
     {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            // Use Windows Console API to get actual console colors
+            try
+            {
+                IntPtr hConsole = NativeMethods.GetStdHandle(NativeMethods.STD_OUTPUT_HANDLE);
+                if (hConsole != IntPtr.Zero && hConsole != new IntPtr(-1))
+                {
+                    if (NativeMethods.GetConsoleScreenBufferInfo(hConsole, out NativeMethods.CONSOLE_SCREEN_BUFFER_INFO csbi))
+                    {
+                        // Extract background color from wAttributes
+                        // The background color is in the upper 4 bits of wAttributes
+                        short bgColor = (short)((csbi.wAttributes >> 4) & 0x0F);
+                        
+                        // Check if background is dark (0-7) or light (8-15)
+                        // Windows console colors: 0=Black, 1=DarkBlue, 2=DarkGreen, 3=DarkCyan, 
+                        // 4=DarkRed, 5=DarkMagenta, 6=DarkYellow, 7=DarkGray,
+                        // 8=Black (intense), 9=Blue, 10=Green, 11=Cyan,
+                        // 12=Red, 13=Magenta, 14=Yellow, 15=White
+                        _isDarkTerminal = bgColor < 8;
+                        return;
+                    }
+                }
+            }
+            catch
+            {
+                // Fallback if API call fails
+            }
+        }
+
+        // Fallback for non-Windows or if detection fails
         var term = Environment.GetEnvironmentVariable("TERM") ?? "";
         var colorTerm = Environment.GetEnvironmentVariable("COLORTERM") ?? "";
         var wtSession = Environment.GetEnvironmentVariable("WT_SESSION");
@@ -100,8 +169,8 @@ public static class TuiApp
         {
             return new ColorScheme
             {
-                Normal = new Terminal.Gui.Attribute(Color.Black, Color.White),
-                Focus = new Terminal.Gui.Attribute(Color.Black, Color.Gray),
+                Normal = new Terminal.Gui.Attribute(Color.DarkGray, Color.White),
+                Focus = new Terminal.Gui.Attribute(Color.DarkGray, Color.Gray),
                 HotNormal = new Terminal.Gui.Attribute(Color.Blue, Color.White),
                 HotFocus = new Terminal.Gui.Attribute(Color.Blue, Color.Gray)
             };
@@ -110,7 +179,7 @@ public static class TuiApp
 
     private static Color GetTextColor(bool bright = false)
     {
-        return _isDarkTerminal ? (bright ? Color.White : Color.Gray) : (bright ? Color.Black : Color.DarkGray);
+        return _isDarkTerminal ? (bright ? Color.White : Color.Gray) : (bright ? Color.DarkGray : Color.Gray);
     }
 
     private static Color GetBackgroundColor()
@@ -252,13 +321,15 @@ public static class TuiApp
         var dbLabel = new Label("Database Name (*):")
         {
             X = 2,
-            Y = yPos
+            Y = yPos,
+            ColorScheme = colorScheme
         };
         var dbField = new TextField("")
         {
             X = 25,
             Y = yPos,
-            Width = Dim.Fill() - 3
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
         };
 
         yPos += 2;
@@ -266,13 +337,15 @@ public static class TuiApp
         var tableLabel = new Label("Table Name (*):")
         {
             X = 2,
-            Y = yPos
+            Y = yPos,
+            ColorScheme = colorScheme
         };
         var tableField = new TextField("")
         {
             X = 25,
             Y = yPos,
-            Width = Dim.Fill() - 3
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
         };
 
         yPos += 2;
@@ -280,13 +353,15 @@ public static class TuiApp
         var hostLabel = new Label("Host (default: localhost):")
         {
             X = 2,
-            Y = yPos
+            Y = yPos,
+            ColorScheme = colorScheme
         };
         var hostField = new TextField("")
         {
             X = 25,
             Y = yPos,
-            Width = Dim.Fill() - 3
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
         };
 
         yPos += 2;
@@ -294,13 +369,15 @@ public static class TuiApp
         var userLabel = new Label("User (default: postgres):")
         {
             X = 2,
-            Y = yPos
+            Y = yPos,
+            ColorScheme = colorScheme
         };
         var userField = new TextField("")
         {
             X = 25,
             Y = yPos,
-            Width = Dim.Fill() - 3
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
         };
 
         yPos += 2;
@@ -308,13 +385,15 @@ public static class TuiApp
         var outputLabel = new Label("Output (default: ./Table.class):")
         {
             X = 2,
-            Y = yPos
+            Y = yPos,
+            ColorScheme = colorScheme
         };
         var outputField = new TextField("")
         {
             X = 25,
             Y = yPos,
-            Width = Dim.Fill() - 3
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
         };
 
         yPos += 3;
@@ -323,13 +402,15 @@ public static class TuiApp
         {
             X = 2,
             Y = yPos,
-            IsDefault = true
+            IsDefault = true,
+            ColorScheme = colorScheme
         };
 
         var cancelButton = new Button("Cancel")
         {
             X = Pos.Right(convertButton) + 2,
-            Y = yPos
+            Y = yPos,
+            ColorScheme = colorScheme
         };
 
         convertButton.Clicked += () =>
@@ -442,6 +523,7 @@ public static class TuiApp
     {
         _statusLabel!.Text = $"Running: {command}...";
 
+        var colorScheme = GetColorScheme();
         var (dialog, outputText, exitCodeLabel) = ShowProgressDialog(command);
 
         var outputBuilder = new StringBuilder();
@@ -508,7 +590,8 @@ public static class TuiApp
                 {
                     X = Pos.Right(dialog) - 12,
                     Y = Pos.Bottom(dialog) - 3,
-                    IsDefault = true
+                    IsDefault = true,
+                    ColorScheme = colorScheme
                 };
                 closeButton.Clicked += () => Application.RequestStop();
                 dialog.Add(closeButton);
@@ -552,7 +635,8 @@ public static class TuiApp
         {
             X = Pos.Right(dialog) - 25,
             Y = Pos.Bottom(dialog) - 3,
-            IsDefault = false
+            IsDefault = false,
+            ColorScheme = colorScheme
         };
 
         dialog.Add(outputText, exitCodeLabel, cancelButton);
@@ -617,7 +701,8 @@ public static class TuiApp
         {
             X = Pos.Right(dialog) - 12,
             Y = Pos.Bottom(dialog) - 3,
-            IsDefault = true
+            IsDefault = true,
+            ColorScheme = colorScheme
         };
         closeButton.Clicked += () => Application.RequestStop();
 
