@@ -19,7 +19,7 @@ public static class TuiApp
 
     private static readonly List<MenuItem> MainMenuItems = new()
     {
-        new MenuItem("Table Parser", "Parse and convert table data (CSV, Markdown, JSON)", RunTableParser),
+        new MenuItem("Table Parser", "Convert database table to C# properties class", RunTableParser),
         new MenuItem("File Utils", "File management utilities (search, organize, etc.)", RunFileUtils),
         new MenuItem("Claude Code", "Claude Code CLI integration", RunClaudeCode),
         new MenuItem("OpenCode", "OpenCode CLI integration", RunOpenCode),
@@ -29,9 +29,7 @@ public static class TuiApp
 
     private static readonly List<MenuItem> TableParserItems = new()
     {
-        new MenuItem("Parse CSV to Markdown", "Convert CSV file to Markdown table", () => RunCommand("devmaid table parse -i input.csv -o output.md")),
-        new MenuItem("Parse CSV to JSON", "Convert CSV file to JSON format", () => RunCommand("devmaid table parse -i input.csv -o output.json --format json")),
-        new MenuItem("Parse Markdown to CSV", "Convert Markdown table to CSV file", () => RunCommand("devmaid table parse -i input.md -o output.csv")),
+        new MenuItem("Convert Table to C#", "Convert database table to C# properties class", RunTableParserDialog),
         new MenuItem("Back", "Return to main menu", () => { })
     };
 
@@ -236,6 +234,135 @@ public static class TuiApp
     private static void RunTableParser()
     {
         ShowSubMenu("Table Parser", TableParserItems);
+    }
+
+    private static void RunTableParserDialog()
+    {
+        var colorScheme = GetColorScheme();
+
+        var dialog = new Dialog("Table Parser - Database to C#")
+        {
+            Width = Dim.Percent(60),
+            Height = Dim.Percent(50),
+            ColorScheme = colorScheme
+        };
+
+        var yPos = 1;
+
+        var dbLabel = new Label("Database Name (*):")
+        {
+            X = 2,
+            Y = yPos
+        };
+        var dbField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3
+        };
+
+        yPos += 2;
+
+        var tableLabel = new Label("Table Name (*):")
+        {
+            X = 2,
+            Y = yPos
+        };
+        var tableField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3
+        };
+
+        yPos += 2;
+
+        var hostLabel = new Label("Host (default: localhost):")
+        {
+            X = 2,
+            Y = yPos
+        };
+        var hostField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3
+        };
+
+        yPos += 2;
+
+        var userLabel = new Label("User (default: postgres):")
+        {
+            X = 2,
+            Y = yPos
+        };
+        var userField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3
+        };
+
+        yPos += 2;
+
+        var outputLabel = new Label("Output (default: ./Table.class):")
+        {
+            X = 2,
+            Y = yPos
+        };
+        var outputField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3
+        };
+
+        yPos += 3;
+
+        var convertButton = new Button("Convert")
+        {
+            X = 2,
+            Y = yPos,
+            IsDefault = true
+        };
+
+        var cancelButton = new Button("Cancel")
+        {
+            X = Pos.Right(convertButton) + 2,
+            Y = yPos
+        };
+
+        convertButton.Clicked += () =>
+        {
+            if (string.IsNullOrWhiteSpace(dbField.Text.ToString()))
+            {
+                MessageBox.ErrorQuery("Error", "Database name is required.", "OK");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(tableField.Text.ToString()))
+            {
+                MessageBox.ErrorQuery("Error", "Table name is required.", "OK");
+                return;
+            }
+
+            var db = dbField.Text.ToString();
+            var table = tableField.Text.ToString();
+            var host = string.IsNullOrWhiteSpace(hostField.Text.ToString()) ? "localhost" : hostField.Text.ToString();
+            var user = string.IsNullOrWhiteSpace(userField.Text.ToString()) ? "postgres" : userField.Text.ToString();
+            var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "./Table.class" : outputField.Text.ToString();
+
+            Application.RequestStop();
+
+            var command = $"devmaid table-parser -d \"{db}\" -t \"{table}\" -H \"{host}\" -u \"{user}\" -o \"{output}\"";
+            RunCommand(command);
+        };
+
+        cancelButton.Clicked += () => Application.RequestStop();
+
+        dialog.Add(dbLabel, dbField, tableLabel, tableField, hostLabel, hostField, userLabel, userField, outputLabel, outputField, convertButton, cancelButton);
+
+        Application.Run(dialog);
     }
 
     private static void RunFileUtils()
