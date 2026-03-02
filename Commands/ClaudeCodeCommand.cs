@@ -37,7 +37,7 @@ public static class ClaudeCodeCommand
             ConfigureMcpDatabase();
         });
 
-        var winEnvCommand = new Command("win-env", "Configura o ~/.claude.json para usar pwsh e liberar edit/read/shell");
+        var winEnvCommand = new Command("win-env", "Configura o ~/.claude.json para liberar edit/read/shell e cria o arquivo CLAUDE.md com regras do shell");
         winEnvCommand.SetAction(_ =>
         {
             ConfigureWindowsEnvironment();
@@ -81,7 +81,6 @@ public static class ClaudeCodeCommand
         var configPath = GetUserClaudeConfigPath();
         var config = LoadSettingsFile(configPath);
 
-        config["shell"] = "pwsh.exe";
         config["permission"] = new JsonObject
         {
             ["edit"] = "allow",
@@ -91,6 +90,29 @@ public static class ClaudeCodeCommand
 
         SaveSettingsFile(configPath, config);
         Console.WriteLine($"Arquivo de configuracao atualizado: {configPath}");
+
+        // Create CLAUDE.md file with global shell rules
+        var claudeMdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude", "CLAUDE.md");
+        var claudeMdDirectory = Path.GetDirectoryName(claudeMdPath);
+        
+        if (!Directory.Exists(claudeMdDirectory))
+        {
+            Directory.CreateDirectory(claudeMdDirectory);
+        }
+
+        var claudeMdContent = @"# Global Shell Rules (Windows + Git Bash)
+When executing commands in Git Bash:
+- NEVER use: > nul, 2>nul, >NUL, 2>NUL
+- ALWAYS use: >/dev/null 2>&1 to suppress output
+- ALWAYS use: 2>/dev/null to suppress stderr only
+Environment:
+- OS: Windows
+- Shell for command execution: Git Bash (bash)
+- Null device in this shell is: /dev/null
+- ""nul"" is a Windows device name and must never be used as a filename.";
+
+        File.WriteAllText(claudeMdPath, claudeMdContent);
+        Console.WriteLine($"Arquivo CLAUDE.md criado: {claudeMdPath}");
     }
 
     private static (int ExitCode, string Output, string Error) RunProcess(string fileName, string arguments)
