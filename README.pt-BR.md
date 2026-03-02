@@ -21,7 +21,7 @@ DevMaid consolida essas tarefas em uma única ferramenta CLI fácil de usar.
 ## Principais Funcionalidades
 
 - **Table Parser**: Analisa tabelas de banco de dados PostgreSQL e gera classes de propriedades C#
-- **Combine**: Combina múltiplos arquivos em um único
+- **File (Combine)**: Combina múltiplos arquivos em um único
 - **Integração com Claude Code**: Instala e configura CLI do Claude Code
 - **Integração com OpenCode**: Instala e configura CLI do OpenCode
 - **Gerenciador Winget**: Faz backup e restaura pacotes do gerenciador de pacotes Windows
@@ -89,7 +89,7 @@ devmaid table-parser -d meubanco -t usuarios -u postgres -H localhost
 ### Combinar Arquivos
 
 ```bash
-devmaid combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
+devmaid file combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
 ```
 
 ### Instalar Claude Code
@@ -123,7 +123,7 @@ Use as teclas de seta para navegar, Enter para selecionar, Esc para sair.
 | Comando | Descrição |
 |---------|-----------|
 | `table-parser` | Analisa tabela de banco de dados e gera classe C# |
-| `combine` | Combina múltiplos arquivos em um único |
+| `file combine` | Combina múltiplos arquivos em um único |
 | `claude` | Integração com Claude Code |
 | `opencode` | Integração com CLI do OpenCode |
 | `winget` | Gerenciador de pacotes Windows |

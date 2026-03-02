@@ -94,10 +94,10 @@ The Combine feature takes multiple input files matching a pattern and combines t
 
 ```bash
 # Combine all SQL files in a directory
-devmaid combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
+devmaid file combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
 
 # Combine with default output name
-devmaid combine -i "C:\temp\*.txt"
+devmaid file combine -i "C:\temp\*.txt"
 ```
 
 ### Business Rules
@@ -442,9 +442,7 @@ Commands execute asynchronously with real-time output display:
 |---------|----------|-------------|
 | `devmaid table-parser` | `tableparser` | Parse table to C# class |
 | `devmaid file` | - | File utilities |
-| `devmaid file search` | - | Search files |
-| `devmaid file organize` | - | Organize by extension |
-| `devmaid file duplicates` | - | Find duplicates |
+| `devmaid file combine` | - | Combine files into one |
 | `devmaid claude` | - | Claude Code commands |
 | `devmaid claude install` | - | Install Claude Code |
 | `devmaid claude status` | - | Check Claude status |

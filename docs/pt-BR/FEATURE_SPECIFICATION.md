@@ -94,10 +94,10 @@ O recurso Combine pega múltiplos arquivos de entrada que correspondem a um padr
 
 ```bash
 # Combinar todos os arquivos SQL em um diretório
-devmaid combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
+devmaid file combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
 
 # Combinar com nome de saída padrão
-devmaid combine -i "C:\temp\*.txt"
+devmaid file combine -i "C:\temp\*.txt"
 ```
 
 ### Regras de Negócio
@@ -442,9 +442,7 @@ Comandos executam de forma assíncrona com exibição de saída em tempo real:
 |---------|--------|-----------|
 | `devmaid table-parser` | `tableparser` | Parse de tabela para classe C# |
 | `devmaid file` | - | Utilitários de arquivo |
-| `devmaid file search` | - | Buscar arquivos |
-| `devmaid file organize` | - | Organizar por extensão |
-| `devmaid file duplicates` | - | Encontrar duplicatas |
+| `devmaid file combine` | - | Combinar arquivos em um |
 | `devmaid claude` | - | Comandos do Claude Code |
 | `devmaid claude install` | - | Instalar Claude Code |
 | `devmaid claude status` | - | Verificar status do Claude |
