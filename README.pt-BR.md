@@ -21,7 +21,7 @@ DevMaid consolida essas tarefas em uma única ferramenta CLI fácil de usar.
 ## Principais Funcionalidades
 
 - **Table Parser**: Analisa tabelas de banco de dados PostgreSQL e gera classes de propriedades C#
-- **File Utils**: Pesquisa, organiza e encontra arquivos duplicados
+- **Combine**: Combina múltiplos arquivos em um único
 - **Integração com Claude Code**: Instala e configura CLI do Claude Code
 - **Integração com OpenCode**: Instala e configura CLI do OpenCode
 - **Gerenciador Winget**: Faz backup e restaura pacotes do gerenciador de pacotes Windows
@@ -123,11 +123,11 @@ Use as teclas de seta para navegar, Enter para selecionar, Esc para sair.
 | Comando | Descrição |
 |---------|-----------|
 | `table-parser` | Analisa tabela de banco de dados e gera classe C# |
-| `file` | Utilitários de gerenciamento de arquivos |
+| `combine` | Combina múltiplos arquivos em um único |
 | `claude` | Integração com Claude Code |
 | `opencode` | Integração com CLI do OpenCode |
 | `winget` | Gerenciador de pacotes Windows |
-| `tui` | Inicia modo TUI interativo |
+| `tui` | Inicia modo TUI interativo (Experimental) |
 
 ## Documentação
 

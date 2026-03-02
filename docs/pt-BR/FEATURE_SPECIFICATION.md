@@ -13,7 +13,7 @@ A ferramenta oferece dois modos de operação:
 ### Funcionalidades Principais
 
 1. **Table Parser**
-2. **Utilitários de Arquivos**
+2. **Combine**
 3. **Integração com Claude Code**
 4. **Integração com OpenCode**
 5. **Gerenciador de Pacotes Winget**
@@ -80,57 +80,41 @@ devmaid table-parser -d banco -t usuarios -u postgres -H localhost
 
 ---
 
-## Funcionalidade 2: Utilitários de Arquivos
+## Funcionalidade 2: Combine
 
 ### Objetivo
 
-Fornecer utilitários de gerenciamento de arquivos para busca, organização e localização de duplicatas.
+Combinar múltiplos arquivos em um único arquivo de saída.
 
 ### Descrição Detalhada
 
-Utilitários de arquivos ajudam desenvolvedores a gerenciar arquivos em seus projetos através de busca, organização por extensão e detecção de duplicatas.
-
-### Sub-Funcionalidades
-
-#### 2.1 Buscar Arquivos
-
-Encontrar arquivos por nome ou padrão em uma árvore de diretórios.
-
-#### 2.2 Organizar por Extensão
-
-Agrupar arquivos em diretórios baseados em sua extensão de arquivo.
-
-#### 2.3 Encontrar Duplicatas
-
-Identificar arquivos duplicados baseados em hash de conteúdo.
+O recurso Combine pega múltiplos arquivos de entrada que correspondem a um padrão e os combina em um único arquivo de saída. Isso é útil para consolidar arquivos SQL, arquivos de log ou qualquer arquivo de texto.
 
 ### Fluxo de Uso
 
 ```bash
-# Buscar arquivos
-devmaid file search --pattern "*.cs" --path "C:\projeto"
+# Combinar todos os arquivos SQL em um diretório
+devmaid combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
 
-# Organizar arquivos
-devmaid file organize --path "C:\downloads"
-
-# Encontrar duplicatas
-devmaid file duplicates --path "C:\fotos"
+# Combinar com nome de saída padrão
+devmaid combine -i "C:\temp\*.txt"
 ```
 
 ### Regras de Negócio
 
-- Busca suporta curingas (* e ?)
-- Organize cria subdiretórios nomeados após as extensões
-- Detecção de duplicatas usa hash MD5 ou SHA256
+- Entrada deve ser um padrão de arquivo válido (ex: `*.sql`, `*.txt`)
+- Arquivo de saída é criado ou sobrescrito
+- Se nenhuma saída for especificada, cria `CombineFiles.<extensão>` no mesmo diretório
+- Arquivos são processados em ordem alfabética
+- Codificação UTF-8 é usada para saída
 
 ### Casos Extremos e Tratamento de Erros
 
 | Cenário | Tratamento |
 |---------|------------|
-| Diretório vazio | Exibir "Nenhum arquivo encontrado" |
-| Permissão negada | Exibir erro com caminho |
-| Nenhuma duplicata encontrada | Exibir "Nenhuma duplicata encontrada" |
-| Caminho inválido | Exibir erro "Caminho inválido" |
+| Nenhum arquivo corresponde ao padrão | Exibir erro "Arquivos não encontrados" |
+| Padrão inválido | Exibir erro "Padrão de entrada inválido" |
+| Padrão vazio | Exibir erro "Padrão de entrada é obrigatório" |
 
 ---
 

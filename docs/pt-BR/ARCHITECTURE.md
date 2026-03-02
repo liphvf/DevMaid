@@ -59,10 +59,10 @@ Cada comando segue o padrão builder com um método estático `Build()` que reto
 - Recupera metadados da tabela
 - Gera classe C# com propriedades baseadas nas definições de colunas
 
-#### FileCommand
-- Funcionalidade de busca de arquivos
-- Organização por extensão
-- Detecção de arquivos duplicados
+#### FileCommand (Combine)
+- Combina múltiplos arquivos em um único
+- Suporta padrões de arquivo com curingas
+- Preserva codificação dos arquivos de origem
 
 #### ClaudeCodeCommand
 - Instala Claude Code via winget

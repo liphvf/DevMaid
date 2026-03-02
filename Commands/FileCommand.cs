@@ -12,22 +12,24 @@ public static class FileCommand
 {
     public static Command Build()
     {
-        var command = new Command("combine", "Copy dashboards between databases.");
+        var command = new Command("file", "File utilities.");
+
+        var combineCommand = new Command("combine", "Combine files in a directory into a single file.");
 
         var inputOption = new Option<string>("--input", "-i")
         {
-            Description = "Input Directory.",
+            Description = "Input file pattern (e.g., *.sql, *.txt).",
             Required = true
         };
         var outputOption = new Option<string?>("--output", "-o")
         {
-            Description = "Input Directory."
+            Description = "Output file path."
         };
 
-        command.Add(inputOption);
-        command.Add(outputOption);
+        combineCommand.Add(inputOption);
+        combineCommand.Add(outputOption);
 
-        command.SetAction(parseResult =>
+        combineCommand.SetAction(parseResult =>
         {
             var options = new FileCommandOptions
             {
@@ -37,6 +39,8 @@ public static class FileCommand
 
             Combine(options);
         });
+
+        command.Add(combineCommand);
 
         return command;
     }
@@ -65,7 +69,7 @@ public static class FileCommand
 
         if (string.IsNullOrWhiteSpace(outputPath))
         {
-            outputPath = Path.Join(directory, $"CombineFiles{extension}");
+            outputPath = Path.Combine(directory, $"CombineFiles{extension}");
         }
 
         var allFileText = new StringBuilder();

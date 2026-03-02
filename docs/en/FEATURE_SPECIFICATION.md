@@ -13,7 +13,7 @@ The tool offers two modes of operation:
 ### Core Features
 
 1. **Table Parser**
-2. **File Utilities**
+2. **Combine**
 3. **Claude Code Integration**
 4. **OpenCode Integration**
 5. **Winget Package Manager**
@@ -80,57 +80,41 @@ devmaid table-parser -d database -t users -u postgres -H localhost
 
 ---
 
-## Feature 2: File Utilities
+## Feature 2: Combine
 
 ### Objective
 
-Provide file management utilities for searching, organizing, and finding duplicates.
+Combine multiple files into a single output file.
 
 ### Detailed Description
 
-File utilities help developers manage files in their projects through search, organization by extension, and duplicate detection.
-
-### Sub-Features
-
-#### 2.1 Search Files
-
-Find files by name or pattern in a directory tree.
-
-#### 2.2 Organize by Extension
-
-Group files into directories based on their file extension.
-
-#### 2.3 Find Duplicates
-
-Identify duplicate files based on content hash.
+The Combine feature takes multiple input files matching a pattern and combines them into a single output file. This is useful for consolidating SQL files files, or any, log text-based files.
 
 ### Usage Flow
 
 ```bash
-# Search files
-devmaid file search --pattern "*.cs" --path "C:\project"
+# Combine all SQL files in a directory
+devmaid combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
 
-# Organize files
-devmaid file organize --path "C:\downloads"
-
-# Find duplicates
-devmaid file duplicates --path "C:\photos"
+# Combine with default output name
+devmaid combine -i "C:\temp\*.txt"
 ```
 
 ### Business Rules
 
-- Search supports wildcards (* and ?)
-- Organize creates subdirectories named after extensions
-- Duplicate detection uses MD5 or SHA256 hash
+- Input must be a valid file pattern (e.g., `*.sql`, `*.txt`)
+- Output file is created or overwritten
+- If no output is specified, creates `CombineFiles.<extension>` in the same directory
+- Files are processed in alphabetical order
+- UTF-8 encoding is used for output
 
 ### Edge Cases and Error Handling
 
 | Scenario | Handling |
 |----------|----------|
-| Empty directory | Display "No files found" |
-| Permission denied | Display error with path |
-| No duplicates found | Display "No duplicates found" |
-| Invalid path | Display "Invalid path" error |
+| No files match pattern | Throw "Files not Found" error |
+| Invalid pattern | Throw "Input pattern is invalid" error |
+| Empty pattern | Throw "Input pattern is required" error |
 
 ---
 

@@ -59,10 +59,10 @@ Each command follows the builder pattern with a static `Build()` method that ret
 - Retrieves table metadata
 - Generates C# class with properties based on column definitions
 
-#### FileCommand
-- File search functionality
-- Organization by extension
-- Duplicate file detection
+#### FileCommand (Combine)
+- Combines multiple files into one
+- Supports file patterns with wildcards
+- Preserves encoding from source files
 
 #### ClaudeCodeCommand
 - Installs Claude Code via winget
