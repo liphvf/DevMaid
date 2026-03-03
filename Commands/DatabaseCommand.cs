@@ -78,6 +78,78 @@ public static class DatabaseCommand
 
         command.Add(backupCommand);
 
+        var restoreCommand = new Command("restore", "Restore a PostgreSQL database using pg_restore.");
+
+        var restoreDatabaseNameArgument = new Argument<string>("database")
+        {
+            Description = "Name of the database to restore. Not required when using --all.",
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
+        var restoreFileArgument = new Argument<string?>("file")
+        {
+            Description = "Path to the dump file to restore. If not provided, looks for <database>.dump in the current directory.",
+            Arity = ArgumentArity.ZeroOrOne
+        };
+
+        var restoreAllOption = new Option<bool>("--all", "-a")
+        {
+            Description = "Restore all databases from dump files in the specified directory."
+        };
+
+        var restoreDirectoryOption = new Option<string?>("--directory", "-d")
+        {
+            Description = "Directory containing .dump files (for --all). If not provided, uses current directory."
+        };
+
+        var restoreHostOption = new Option<string?>("--host", "-h")
+        {
+            Description = "Database host address."
+        };
+
+        var restorePortOption = new Option<string?>("--port", "-p")
+        {
+            Description = "Database port."
+        };
+
+        var restoreUsernameOption = new Option<string?>("--username", "-U")
+        {
+            Description = "Database username."
+        };
+
+        var restorePasswordOption = new Option<string?>("--password", "-W")
+        {
+            Description = "Database password. If not provided, will be prompted interactively."
+        };
+
+        restoreCommand.Add(restoreAllOption);
+        restoreCommand.Add(restoreDirectoryOption);
+        restoreCommand.Add(restoreDatabaseNameArgument);
+        restoreCommand.Add(restoreFileArgument);
+        restoreCommand.Add(restoreHostOption);
+        restoreCommand.Add(restorePortOption);
+        restoreCommand.Add(restoreUsernameOption);
+        restoreCommand.Add(restorePasswordOption);
+
+        restoreCommand.SetAction(parseResult =>
+        {
+            var options = new DatabaseCommandOptions
+            {
+                DatabaseName = parseResult.GetValue(restoreDatabaseNameArgument) ?? string.Empty,
+                All = parseResult.GetValue(restoreAllOption),
+                Host = parseResult.GetValue(restoreHostOption),
+                Port = parseResult.GetValue(restorePortOption),
+                Username = parseResult.GetValue(restoreUsernameOption),
+                Password = parseResult.GetValue(restorePasswordOption),
+                OutputPath = parseResult.GetValue(restoreDirectoryOption),
+                InputFile = parseResult.GetValue(restoreFileArgument)
+            };
+
+            Restore(options);
+        });
+
+        command.Add(restoreCommand);
+
         return command;
     }
 
@@ -493,5 +565,310 @@ public static class DatabaseCommand
         }
 
         return password;
+    }
+
+    public static void Restore(DatabaseCommandOptions options)
+    {
+        // Load default values from appsettings.json
+        var defaultHost = Program.AppSettings["Database:Host"];
+        var defaultPort = Program.AppSettings["Database:Port"];
+        var defaultUsername = Program.AppSettings["Database:Username"];
+        var defaultPassword = Program.AppSettings["Database:Password"];
+
+        // Use provided values or fall back to defaults
+        var host = options.Host ?? defaultHost ?? "localhost";
+        var port = options.Port ?? defaultPort ?? "5432";
+        var username = options.Username ?? defaultUsername;
+        var password = options.Password ?? defaultPassword;
+
+        // Check if --all flag is set
+        if (options.All)
+        {
+            RestoreAllDatabases(host, port, username ?? string.Empty, password ?? string.Empty, options.OutputPath);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(options.DatabaseName))
+        {
+            throw new ArgumentException("Database name is required when --all is not specified.");
+        }
+
+        // Prompt for password if not provided
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            Console.Write("Enter password: ");
+            password = ReadPassword();
+            Console.WriteLine();
+        }
+
+        // Set input file path
+        var inputPath = options.InputFile;
+        if (string.IsNullOrWhiteSpace(inputPath))
+        {
+            inputPath = $"{options.DatabaseName}.dump";
+        }
+
+        if (!File.Exists(inputPath))
+        {
+            throw new FileNotFoundException($"Dump file not found: {Path.GetFullPath(inputPath)}");
+        }
+
+        Console.WriteLine($"Restoring database '{options.DatabaseName}'...");
+        Console.WriteLine($"Host: {host}:{port}");
+        Console.WriteLine($"Username: {username}");
+        Console.WriteLine($"Input: {Path.GetFullPath(inputPath)}");
+
+        RestoreSingleDatabase(host, port, username ?? string.Empty, password ?? string.Empty, options.DatabaseName, inputPath);
+    }
+
+    private static void RestoreAllDatabases(string host, string port, string username, string password, string? directoryPath)
+    {
+        // Prompt for password if not provided
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            Console.Write("Enter password: ");
+            password = ReadPassword();
+            Console.WriteLine();
+        }
+
+        // Set input directory
+        var inputDirectory = directoryPath;
+        if (string.IsNullOrWhiteSpace(inputDirectory))
+        {
+            inputDirectory = Directory.GetCurrentDirectory();
+        }
+
+        if (!Directory.Exists(inputDirectory))
+        {
+            throw new DirectoryNotFoundException($"Directory not found: {Path.GetFullPath(inputDirectory)}");
+        }
+
+        Console.WriteLine($"Scanning for .dump files in: {Path.GetFullPath(inputDirectory)}");
+
+        // Find all .dump files
+        var dumpFiles = Directory.GetFiles(inputDirectory, "*.dump", SearchOption.TopDirectoryOnly);
+
+        if (dumpFiles.Length == 0)
+        {
+            Console.WriteLine("No .dump files found in the directory.");
+            return;
+        }
+
+        Console.WriteLine($"Found {dumpFiles.Length} .dump files:");
+        foreach (var file in dumpFiles)
+        {
+            Console.WriteLine($"  - {Path.GetFileName(file)}");
+        }
+        Console.WriteLine();
+
+        // Restore each database
+        var successCount = 0;
+        var failureCount = 0;
+
+        foreach (var dumpFile in dumpFiles)
+        {
+            var databaseName = Path.GetFileNameWithoutExtension(dumpFile);
+            
+            Console.WriteLine($"Restoring database '{databaseName}'...");
+            
+            try
+            {
+                RestoreSingleDatabase(host, port, username, password, databaseName, dumpFile);
+                Console.WriteLine($"✓ Database restored successfully: {databaseName}");
+                successCount++;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"✗ Failed to restore database '{databaseName}': {ex.Message}");
+                failureCount++;
+            }
+            
+            Console.WriteLine();
+        }
+
+        // Summary
+        Console.WriteLine("========================================");
+        Console.WriteLine("Restore Summary:");
+        Console.WriteLine($"  Successful: {successCount}");
+        Console.WriteLine($"  Failed: {failureCount}");
+        Console.WriteLine($"  Total: {dumpFiles.Length}");
+        Console.WriteLine($"  Input directory: {Path.GetFullPath(inputDirectory)}");
+        Console.WriteLine("========================================");
+    }
+
+    private static void RestoreSingleDatabase(string host, string port, string username, string password, string databaseName, string inputPath)
+    {
+        var pgRestorePath = FindPgRestore();
+        if (pgRestorePath == null)
+        {
+            throw new Exception("pg_restore not found. Please ensure PostgreSQL is installed and pg_restore is in your PATH.");
+        }
+
+        // First, create the database if it doesn't exist
+        CreateDatabaseIfNeeded(host, port, username, password, databaseName);
+
+        // Build pg_restore command
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = pgRestorePath,
+            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d \"{databaseName}\" -c \"{inputPath}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        startInfo.Environment["PGPASSWORD"] = password;
+
+        try
+        {
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                throw new Exception("Failed to start pg_restore process.");
+            }
+
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                throw new Exception($"pg_restore failed with exit code {process.ExitCode}. Error: {error}");
+            }
+
+            Console.WriteLine($"Database '{databaseName}' restored successfully from: {Path.GetFullPath(inputPath)}");
+
+            if (!string.IsNullOrWhiteSpace(output))
+            {
+                Console.WriteLine(output);
+            }
+        }
+        finally
+        {
+            startInfo.Environment["PGPASSWORD"] = string.Empty;
+        }
+    }
+
+    private static string? FindPgRestore()
+    {
+        // Try to find pg_restore in PATH
+        var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
+
+        foreach (var path in paths)
+        {
+            var pgRestorePath = Path.Combine(path, "pg_restore.exe");
+            if (File.Exists(pgRestorePath))
+            {
+                return pgRestorePath;
+            }
+
+            pgRestorePath = Path.Combine(path, "pg_restore");
+            if (File.Exists(pgRestorePath))
+            {
+                return pgRestorePath;
+            }
+        }
+
+        // Try common PostgreSQL installation paths on Windows
+        var commonPaths = new[]
+        {
+            @"C:\Program Files\PostgreSQL\*\bin\pg_restore.exe",
+            @"C:\PostgreSQL\*\bin\pg_restore.exe"
+        };
+
+        foreach (var pattern in commonPaths)
+        {
+            var directory = Path.GetDirectoryName(pattern);
+            if (directory != null && Directory.Exists(directory))
+            {
+                var files = Directory.GetFiles(directory, "pg_restore.exe", SearchOption.AllDirectories);
+                if (files.Length > 0)
+                {
+                    return files[0];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static void CreateDatabaseIfNeeded(string host, string port, string username, string password, string databaseName)
+    {
+        var psqlPath = FindPsql();
+        if (psqlPath == null)
+        {
+            throw new Exception("psql not found. Please ensure PostgreSQL is installed and psql is in your PATH.");
+        }
+
+        // Check if database exists
+        var checkStartInfo = new ProcessStartInfo
+        {
+            FileName = psqlPath,
+            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"SELECT 1 FROM pg_database WHERE datname = '{databaseName}';\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        checkStartInfo.Environment["PGPASSWORD"] = password;
+
+        try
+        {
+            using var checkProcess = Process.Start(checkStartInfo);
+            if (checkProcess == null)
+            {
+                throw new Exception("Failed to start psql process.");
+            }
+
+            var output = checkProcess.StandardOutput.ReadToEnd();
+            var error = checkProcess.StandardError.ReadToEnd();
+            checkProcess.WaitForExit();
+
+            // If database exists (output contains "1"), we skip creation
+            if (output.Contains("1") && !output.Contains("0 rows"))
+            {
+                Console.WriteLine($"Database '{databaseName}' already exists. Restoring data...");
+                return;
+            }
+
+            // Create database
+            Console.WriteLine($"Creating database '{databaseName}'...");
+
+            var createStartInfo = new ProcessStartInfo
+            {
+                FileName = psqlPath,
+                Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"CREATE DATABASE \\\"{databaseName}\\\";\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            createStartInfo.Environment["PGPASSWORD"] = password;
+
+            using var createProcess = Process.Start(createStartInfo);
+            if (createProcess == null)
+            {
+                throw new Exception("Failed to start psql process.");
+            }
+
+            var createOutput = createProcess.StandardOutput.ReadToEnd();
+            var createError = createProcess.StandardError.ReadToEnd();
+            createProcess.WaitForExit();
+
+            if (createProcess.ExitCode != 0)
+            {
+                throw new Exception($"Failed to create database. Error: {createError}");
+            }
+
+            Console.WriteLine($"Database '{databaseName}' created successfully.");
+        }
+        finally
+        {
+            checkStartInfo.Environment["PGPASSWORD"] = string.Empty;
+        }
     }
 }

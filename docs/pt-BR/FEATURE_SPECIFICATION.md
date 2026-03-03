@@ -14,10 +14,11 @@ A ferramenta oferece dois modos de operação:
 
 1. **Table Parser**
 2. **Combine**
-3. **Integração com Claude Code**
-4. **Integração com OpenCode**
-5. **Gerenciador de Pacotes Winget**
-6. **Modo TUI Interativo**
+3. **Utilitários de Banco de Dados**
+4. **Integração com Claude Code**
+5. **Integração com OpenCode**
+6. **Gerenciador de Pacotes Winget**
+7. **Modo TUI Interativo**
 
 ---
 
@@ -80,6 +81,100 @@ devmaid table-parser -d banco -t usuarios -u postgres -H localhost
 
 ---
 
+## Funcionalidade 2: Utilitários de Banco de Dados
+
+### Objetivo
+
+Fornecer utilitários para backup e restore de bancos de dados PostgreSQL.
+
+### Descrição Detalhada
+
+O comando database fornece funcionalidades para criar backups e restaurar bancos de dados PostgreSQL usando pg_dump e pg_restore.
+
+### Sub-Funcionalidades
+
+#### 2.1 Backup de Banco de Dados
+
+Cria backups de bancos de dados PostgreSQL usando pg_dump.
+
+#### 2.2 Restore de Banco de Dados
+
+Restaura bancos de dados PostgreSQL usando pg_restore a partir de arquivos .dump.
+
+### Fluxo de Uso
+
+```bash
+# Backup de um único banco de dados
+devmaid database backup meubanco -h localhost -U postgres
+
+# Backup de todos os bancos de dados
+devmaid database backup --all -h localhost -U postgres -o "C:\backups"
+
+# Restore de um banco de dados específico
+devmaid database restore meubanco "C:\backups\meubanco.dump"
+
+# Restore de todos os bancos de dados de um diretório
+devmaid database restore --all "C:\backups"
+
+# Restore de todos os bancos de dados do diretório atual
+devmaid database restore --all
+```
+
+### Regras de Negócio
+
+- **Backup**:
+  - Usa pg_dump para criar backups em formato customizado
+  - Suporta backup de um único banco ou todos os bancos
+  - Arquivos de backup são criados com extensão .dump
+  - Se não especificado, usa diretório atual para saída
+
+- **Restore**:
+  - Usa pg_restore para restaurar backups
+  - Cria automaticamente o banco de dados se não existir
+  - Suporta restore de um único banco ou todos de um diretório
+  - Se não especificado, procura arquivos .dump no diretório atual
+  - Usa nome do arquivo (sem extensão) como nome do banco de dados
+
+### Casos Extremos e Tratamento de Erros
+
+| Cenário | Tratamento |
+|---------|------------|
+| pg_dump/pg_restore não encontrado | Exibir erro com instruções de instalação do PostgreSQL |
+| Credenciais inválidas | Exibir mensagem de erro, sair com código 1 |
+| Arquivo de dump não encontrado | Exibir erro "Arquivo não encontrado" |
+| Banco de dados já existe no restore | Exibir aviso, continuar com restore |
+| Diretório de restore não encontrado | Exibir erro "Diretório não encontrado" |
+| Nenhum arquivo .dump encontrado | Exibir aviso "Nenhum arquivo .dump encontrado" |
+
+### Opções
+
+#### Backup
+
+| Opção | Obrigatório | Padrão | Descrição |
+|-------|--------------|--------|-----------|
+| `<database>` | Não* | - | Nome do banco de dados (obrigatório sem --all) |
+| `-a`, `--all` | Não | false | Backup de todos os bancos |
+| `-h`, `--host` | Não | localhost | Host do banco de dados |
+| `-p`, `--port` | Não | 5432 | Porta do banco de dados |
+| `-U`, `--username` | Não | - | Usuário do banco de dados |
+| `-W`, `--password` | Não | - | Senha (solicitada se não fornecida) |
+| `-o`, `--output` | Não | diretório atual | Caminho de saída |
+
+#### Restore
+
+| Opção | Obrigatório | Padrão | Descrição |
+|-------|--------------|--------|-----------|
+| `<database>` | Não* | - | Nome do banco (obrigatório sem --all) |
+| `<file>` | Não | `<database>.dump` | Arquivo de dump para restore |
+| `-a`, `--all` | Não | false | Restore de todos os bancos |
+| `-d`, `--directory` | Não | diretório atual | Diretório com arquivos .dump |
+| `-h`, `--host` | Não | localhost | Host do banco de dados |
+| `-p`, `--port` | Não | 5432 | Porta do banco de dados |
+| `-U`, `--username` | Não | - | Usuário do banco de dados |
+| `-W`, `--password` | Não | - | Senha (solicitada se não fornecida) |
+
+---
+
 ## Funcionalidade 2: Combine
 
 ### Objetivo
@@ -118,7 +213,7 @@ devmaid file combine -i "C:\temp\*.txt"
 
 ---
 
-## Funcionalidade 3: Integração com Claude Code
+## Funcionalidade 4: Integração com Claude Code
 
 ### Objetivo
 
@@ -176,7 +271,7 @@ devmaid claude settings win-env
 
 ---
 
-## Funcionalidade 4: Integração com OpenCode
+## Funcionalidade 5: Integração com OpenCode
 
 ### Objetivo
 
@@ -223,7 +318,7 @@ devmaid opencode config
 
 ---
 
-## Funcionalidade 5: Gerenciador de Pacotes Winget
+## Funcionalidade 6: Gerenciador de Pacotes Winget
 
 ### Objetivo
 
@@ -290,7 +385,7 @@ devmaid winget restore -i "C:\backups\backup-winget.json"
 
 ---
 
-## Funcionalidade 6: Modo TUI Interativo
+## Funcionalidade 7: Modo TUI Interativo
 
 ### Objetivo
 
@@ -451,6 +546,9 @@ Comandos executam de forma assíncrona com exibição de saída em tempo real:
 | `devmaid winget` | - | Comandos do Winget |
 | `devmaid winget backup` | - | Backup de pacotes |
 | `devmaid winget restore` | - | Restaurar pacotes |
+| `devmaid database` | - | Comandos de banco de dados |
+| `devmaid database backup` | - | Backup de banco de dados |
+| `devmaid database restore` | - | Restore de banco de dados |
 | `devmaid tui` | - | Iniciar TUI |
 
 ---

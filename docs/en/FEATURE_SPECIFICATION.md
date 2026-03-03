@@ -14,10 +14,11 @@ The tool offers two modes of operation:
 
 1. **Table Parser**
 2. **Combine**
-3. **Claude Code Integration**
-4. **OpenCode Integration**
-5. **Winget Package Manager**
-6. **Interactive TUI Mode**
+3. **Database Utilities**
+4. **Claude Code Integration**
+5. **OpenCode Integration**
+6. **Winget Package Manager**
+7. **Interactive TUI Mode**
 
 ---
 
@@ -80,6 +81,100 @@ devmaid table-parser -d database -t users -u postgres -H localhost
 
 ---
 
+## Feature 2: Database Utilities
+
+### Objective
+
+Provide utilities for backing up and restoring PostgreSQL databases.
+
+### Detailed Description
+
+The database command provides functionality to create backups and restore PostgreSQL databases using pg_dump and pg_restore.
+
+### Sub-Features
+
+#### 2.1 Database Backup
+
+Creates backups of PostgreSQL databases using pg_dump.
+
+#### 2.2 Database Restore
+
+Restores PostgreSQL databases using pg_restore from .dump files.
+
+### Usage Flow
+
+```bash
+# Backup a single database
+devmaid database backup mydb -h localhost -U postgres
+
+# Backup all databases
+devmaid database backup --all -h localhost -U postgres -o "C:\backups"
+
+# Restore a specific database
+devmaid database restore mydb "C:\backups\mydb.dump"
+
+# Restore all databases from a directory
+devmaid database restore --all "C:\backups"
+
+# Restore all databases from current directory
+devmaid database restore --all
+```
+
+### Business Rules
+
+- **Backup**:
+  - Uses pg_dump to create custom format backups
+  - Supports single database or all databases backup
+  - Backup files are created with .dump extension
+  - Uses current directory for output if not specified
+
+- **Restore**:
+  - Uses pg_restore to restore backups
+  - Automatically creates database if it doesn't exist
+  - Supports single database or all databases restore
+  - Searches for .dump files in current directory if not specified
+  - Uses filename (without extension) as database name
+
+### Edge Cases and Error Handling
+
+| Scenario | Handling |
+|----------|----------|
+| pg_dump/pg_restore not found | Display error with PostgreSQL installation instructions |
+| Invalid credentials | Display error message, exit with code 1 |
+| Dump file not found | Display "File not found" error |
+| Database already exists on restore | Display warning, continue with restore |
+| Restore directory not found | Display "Directory not found" error |
+| No .dump files found | Display warning "No .dump files found" |
+
+### Options
+
+#### Backup
+
+| Option | Required | Default | Description |
+|--------|----------|---------|-------------|
+| `<database>` | No* | - | Database name (required without --all) |
+| `-a`, `--all` | No | false | Backup all databases |
+| `-h`, `--host` | No | localhost | Database host |
+| `-p`, `--port` | No | 5432 | Database port |
+| `-U`, `--username` | No | - | Database username |
+| `-W`, `--password` | No | - | Password (prompted if not provided) |
+| `-o`, `--output` | No | current directory | Output path |
+
+#### Restore
+
+| Option | Required | Default | Description |
+|--------|----------|---------|-------------|
+| `<database>` | No* | - | Database name (required without --all) |
+| `<file>` | No | `<database>.dump` | Dump file to restore |
+| `-a`, `--all` | No | false | Restore all databases |
+| `-d`, `--directory` | No | current directory | Directory with .dump files |
+| `-h`, `--host` | No | localhost | Database host |
+| `-p`, `--port` | No | 5432 | Database port |
+| `-U`, `--username` | No | - | Database username |
+| `-W`, `--password` | No | - | Password (prompted if not provided) |
+
+---
+
 ## Feature 2: Combine
 
 ### Objective
@@ -118,7 +213,7 @@ devmaid file combine -i "C:\temp\*.txt"
 
 ---
 
-## Feature 3: Claude Code Integration
+## Feature 4: Claude Code Integration
 
 ### Objective
 
@@ -176,7 +271,7 @@ devmaid claude settings win-env
 
 ---
 
-## Feature 4: OpenCode Integration
+## Feature 5: OpenCode Integration
 
 ### Objective
 
@@ -223,7 +318,7 @@ devmaid opencode config
 
 ---
 
-## Feature 5: Winget Package Manager
+## Feature 6: Winget Package Manager
 
 ### Objective
 
@@ -290,7 +385,7 @@ devmaid winget restore -i "C:\backups\backup-winget.json"
 
 ---
 
-## Feature 6: Interactive TUI Mode
+## Feature 7: Interactive TUI Mode
 
 ### Objective
 
@@ -451,6 +546,9 @@ Commands execute asynchronously with real-time output display:
 | `devmaid winget` | - | Winget commands |
 | `devmaid winget backup` | - | Backup packages |
 | `devmaid winget restore` | - | Restore packages |
+| `devmaid database` | - | Database commands |
+| `devmaid database backup` | - | Backup database |
+| `devmaid database restore` | - | Restore database |
 | `devmaid tui` | - | Launch TUI |
 
 ---

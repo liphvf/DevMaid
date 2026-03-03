@@ -9,4 +9,5 @@ public class DatabaseCommandOptions
     public string? Username { get; set; }
     public string? Password { get; set; }
     public string? OutputPath { get; set; }
+    public string? InputFile { get; set; }
 }
