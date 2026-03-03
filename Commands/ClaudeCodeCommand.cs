@@ -95,7 +95,7 @@ public static class ClaudeCodeCommand
         var claudeMdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude", "CLAUDE.md");
         var claudeMdDirectory = Path.GetDirectoryName(claudeMdPath);
         
-        if (!Directory.Exists(claudeMdDirectory))
+        if (claudeMdDirectory != null && !Directory.Exists(claudeMdDirectory))
         {
             Directory.CreateDirectory(claudeMdDirectory);
         }

@@ -20,6 +20,7 @@ DevMaid consolida essas tarefas em uma única ferramenta CLI fácil de usar.
 
 ## Principais Funcionalidades
 
+- **Database Backup**: Faz backup de bancos de dados PostgreSQL usando pg_dump
 - **Table Parser**: Analisa tabelas de banco de dados PostgreSQL e gera classes de propriedades C#
 - **File (Combine)**: Combina múltiplos arquivos em um único
 - **Integração com Claude Code**: Instala e configura CLI do Claude Code
@@ -80,6 +81,35 @@ devmaid tui
 
 ## Exemplos de Uso Básico
 
+### Database Backup
+
+```bash
+# Backup com configurações de conexão padrão (do appsettings.json)
+devmaid database backup meubanco
+
+# Backup com configurações de conexão personalizadas
+devmaid database backup meubanco --host localhost --port 5432 --username postgres --password minhasenha
+
+# Backup com caminho de saída personalizado
+devmaid database backup meubanco -o "C:\backups\meubanco.backup"
+
+# Backup com prompt de senha (senha não fornecida na linha de comando)
+devmaid database backup meubanco --host localhost --username postgres
+```
+
+**Arquivo de Configuração**: Crie um `appsettings.json` em `%LocalAppData%\DevMaid\` para definir valores de conexão padrão:
+
+```json
+{
+  "Database": {
+    "Host": "localhost",
+    "Port": "5432",
+    "Username": "postgres",
+    "Password": ""
+  }
+}
+```
+
 ### Table Parser - Gerar Classe C# a Partir de Tabela de Banco de Dados
 
 ```bash
@@ -122,6 +152,7 @@ Use as teclas de seta para navegar, Enter para selecionar, Esc para sair.
 
 | Comando | Descrição |
 |---------|-----------|
+| `database backup` | Faz backup de banco de dados PostgreSQL |
 | `table-parser` | Analisa tabela de banco de dados e gera classe C# |
 | `file combine` | Combina múltiplos arquivos em um único |
 | `claude` | Integração com Claude Code |

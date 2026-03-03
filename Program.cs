@@ -32,7 +32,8 @@ internal static class Program
             ClaudeCodeCommand.Build(),
             OpenCodeCommand.Build(),
             WingetCommand.Build(),
-            TuiCommand.Build()
+            TuiCommand.Build(),
+            DatabaseCommand.Build()
         };
 
         return rootCommand.Parse(args).Invoke();
