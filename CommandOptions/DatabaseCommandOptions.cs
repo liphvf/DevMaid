@@ -3,6 +3,7 @@ namespace DevMaid.CommandOptions;
 public class DatabaseCommandOptions
 {
     public string DatabaseName { get; set; } = string.Empty;
+    public bool All { get; set; }
     public string? Host { get; set; }
     public string? Port { get; set; }
     public string? Username { get; set; }
