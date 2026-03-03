@@ -167,6 +167,22 @@ public static class DatabaseCommand
         var username = options.Username ?? defaultUsername;
         var password = options.Password ?? defaultPassword;
 
+        // Validate inputs
+        if (!SecurityUtils.IsValidHost(host))
+        {
+            throw new ArgumentException($"Invalid host: '{host}'");
+        }
+
+        if (!SecurityUtils.IsValidPort(port))
+        {
+            throw new ArgumentException($"Invalid port: '{port}'. Port must be between 1 and 65535.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(username) && !SecurityUtils.IsValidUsername(username))
+        {
+            throw new ArgumentException($"Invalid username: '{username}'");
+        }
+
         // Check if --all flag is set
         if (options.All)
         {
@@ -581,6 +597,22 @@ public static class DatabaseCommand
         var username = options.Username ?? defaultUsername;
         var password = options.Password ?? defaultPassword;
 
+        // Validate inputs
+        if (!SecurityUtils.IsValidHost(host))
+        {
+            throw new ArgumentException($"Invalid host: '{host}'");
+        }
+
+        if (!SecurityUtils.IsValidPort(port))
+        {
+            throw new ArgumentException($"Invalid port: '{port}'. Port must be between 1 and 65535.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(username) && !SecurityUtils.IsValidUsername(username))
+        {
+            throw new ArgumentException($"Invalid username: '{username}'");
+        }
+
         // Check if --all flag is set
         if (options.All)
         {
@@ -608,10 +640,19 @@ public static class DatabaseCommand
             inputPath = $"{options.DatabaseName}.dump";
         }
 
-        if (!File.Exists(inputPath))
+        // Validate input path to prevent path traversal
+        var fullPath = Path.GetFullPath(inputPath);
+        if (!SecurityUtils.IsValidPath(fullPath))
         {
-            throw new FileNotFoundException($"Dump file not found: {Path.GetFullPath(inputPath)}");
+            throw new ArgumentException($"Invalid input path: '{inputPath}'. Path traversal not allowed.");
         }
+
+        if (!File.Exists(fullPath))
+        {
+            throw new FileNotFoundException($"Dump file not found: {fullPath}");
+        }
+
+        inputPath = fullPath;
 
         Console.WriteLine($"Restoring database '{options.DatabaseName}'...");
         Console.WriteLine($"Host: {host}:{port}");
@@ -668,6 +709,14 @@ public static class DatabaseCommand
         foreach (var dumpFile in dumpFiles)
         {
             var databaseName = Path.GetFileNameWithoutExtension(dumpFile);
+            
+            // Validate database name to prevent SQL injection
+            if (!SecurityUtils.IsValidPostgreSQLIdentifier(databaseName))
+            {
+                Console.WriteLine($"✗ Skipping invalid database name: '{databaseName}'");
+                failureCount++;
+                continue;
+            }
             
             Console.WriteLine($"Restoring database '{databaseName}'...");
             
@@ -794,7 +843,7 @@ public static class DatabaseCommand
         return null;
     }
 
-    private static void CreateDatabaseIfNeeded(string host, string port, string username, string password, string databaseName)
+private static void CreateDatabaseIfNeeded(string host, string port, string username, string password, string databaseName)
     {
         var psqlPath = FindPsql();
         if (psqlPath == null)
@@ -802,11 +851,17 @@ public static class DatabaseCommand
             throw new Exception("psql not found. Please ensure PostgreSQL is installed and psql is in your PATH.");
         }
 
-        // Check if database exists
+        // Validate database name to prevent SQL injection
+        if (string.IsNullOrWhiteSpace(databaseName) || !SecurityUtils.IsValidPostgreSQLIdentifier(databaseName))
+        {
+            throw new ArgumentException($"Invalid database name: '{databaseName}'. Database name must contain only letters, numbers, and underscores, and must not start with a number.");
+        }
+
+        // Check if database exists using escaped string
         var checkStartInfo = new ProcessStartInfo
         {
             FileName = psqlPath,
-            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"SELECT 1 FROM pg_database WHERE datname = '{databaseName}';\"",
+            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"SELECT 1 FROM pg_database WHERE datname = '{SecurityUtils.EscapeSqlString(databaseName)}';\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -834,13 +889,13 @@ public static class DatabaseCommand
                 return;
             }
 
-            // Create database
+            // Create database using escaped identifier
             Console.WriteLine($"Creating database '{databaseName}'...");
 
             var createStartInfo = new ProcessStartInfo
             {
                 FileName = psqlPath,
-                Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"CREATE DATABASE \\\"{databaseName}\\\";\"",
+                Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"CREATE DATABASE \\\"{SecurityUtils.EscapeSqlString(databaseName)}\\\";\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -849,7 +904,7 @@ public static class DatabaseCommand
 
             createStartInfo.Environment["PGPASSWORD"] = password;
 
-            using var createProcess = Process.Start(createStartInfo);
+            using var createProcess = Process.Start(createProcess);
             if (createProcess == null)
             {
                 throw new Exception("Failed to start psql process.");

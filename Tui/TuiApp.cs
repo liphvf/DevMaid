@@ -449,6 +449,41 @@ public static class TuiApp
             var user = string.IsNullOrWhiteSpace(userField.Text.ToString()) ? "postgres" : userField.Text.ToString();
             var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "./Table.class" : outputField.Text.ToString();
 
+            // Validate database name
+            if (!DevMaid.SecurityUtils.IsValidPostgreSQLIdentifier(db!))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid database name. Use only letters, numbers, and underscores.", "OK");
+                return;
+            }
+
+            // Validate table name
+            if (!DevMaid.SecurityUtils.IsValidPostgreSQLIdentifier(table!))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid table name. Use only letters, numbers, and underscores.", "OK");
+                return;
+            }
+
+            // Validate host
+            if (!DevMaid.SecurityUtils.IsValidHost(host!))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid host.", "OK");
+                return;
+            }
+
+            // Validate username
+            if (!DevMaid.SecurityUtils.IsValidUsername(user!))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid username. Use only letters, numbers, underscores, hyphens, and dots.", "OK");
+                return;
+            }
+
+            // Validate output path
+            if (!DevMaid.SecurityUtils.IsValidPath(output!))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid output path.", "OK");
+                return;
+            }
+
             Application.RequestStop();
 
             var command = $"devmaid table-parser -d \"{db}\" -t \"{table}\" -H \"{host}\" -u \"{user}\" -o \"{output}\"";
@@ -594,6 +629,41 @@ public static class TuiApp
             var port = string.IsNullOrWhiteSpace(portField.Text.ToString()) ? "5432" : portField.Text.ToString();
             var user = string.IsNullOrWhiteSpace(userField.Text.ToString()) ? "" : userField.Text.ToString();
             var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "" : outputField.Text.ToString();
+
+            // Validate database name
+            if (!allDatabases && !string.IsNullOrWhiteSpace(db) && !DevMaid.SecurityUtils.IsValidPostgreSQLIdentifier(db))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid database name. Use only letters, numbers, and underscores.", "OK");
+                return;
+            }
+
+            // Validate host
+            if (!string.IsNullOrWhiteSpace(host) && !DevMaid.SecurityUtils.IsValidHost(host))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid host.", "OK");
+                return;
+            }
+
+            // Validate port
+            if (!string.IsNullOrWhiteSpace(port) && !DevMaid.SecurityUtils.IsValidPort(port))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid port. Must be between 1 and 65535.", "OK");
+                return;
+            }
+
+            // Validate username
+            if (!string.IsNullOrWhiteSpace(user) && !DevMaid.SecurityUtils.IsValidUsername(user))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid username. Use only letters, numbers, underscores, hyphens, and dots.", "OK");
+                return;
+            }
+
+            // Validate output path
+            if (!string.IsNullOrWhiteSpace(output) && !DevMaid.SecurityUtils.IsValidPath(output))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid output path.", "OK");
+                return;
+            }
 
             Application.RequestStop();
 
@@ -754,6 +824,41 @@ public static class TuiApp
             var host = string.IsNullOrWhiteSpace(hostField.Text.ToString()) ? "localhost" : hostField.Text.ToString();
             var port = string.IsNullOrWhiteSpace(portField.Text.ToString()) ? "5432" : portField.Text.ToString();
             var user = string.IsNullOrWhiteSpace(userField.Text.ToString()) ? "" : userField.Text.ToString();
+
+            // Validate database name
+            if (!allDatabases && !string.IsNullOrWhiteSpace(db) && !DevMaid.SecurityUtils.IsValidPostgreSQLIdentifier(db))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid database name. Use only letters, numbers, and underscores.", "OK");
+                return;
+            }
+
+            // Validate host
+            if (!string.IsNullOrWhiteSpace(host) && !DevMaid.SecurityUtils.IsValidHost(host))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid host.", "OK");
+                return;
+            }
+
+            // Validate port
+            if (!string.IsNullOrWhiteSpace(port) && !DevMaid.SecurityUtils.IsValidPort(port))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid port. Must be between 1 and 65535.", "OK");
+                return;
+            }
+
+            // Validate username
+            if (!string.IsNullOrWhiteSpace(user) && !DevMaid.SecurityUtils.IsValidUsername(user))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid username. Use only letters, numbers, underscores, hyphens, and dots.", "OK");
+                return;
+            }
+
+            // Validate file/directory path
+            if (!string.IsNullOrWhiteSpace(file) && !DevMaid.SecurityUtils.IsValidPath(file))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid file path.", "OK");
+                return;
+            }
 
             Application.RequestStop();
 
@@ -980,6 +1085,13 @@ public static class TuiApp
             var input = inputField.Text.ToString();
             var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "" : outputField.Text.ToString();
 
+            // Validate output path
+            if (!string.IsNullOrWhiteSpace(output) && !DevMaid.SecurityUtils.IsValidPath(output))
+            {
+                MessageBox.ErrorQuery("Error", "Invalid output path.", "OK");
+                return;
+            }
+
             Application.RequestStop();
 
             var command = $"devmaid file combine --input \"{input}\"";
@@ -1085,6 +1197,13 @@ public static class TuiApp
 
     private static void RunCommand(string command)
     {
+        // Validate command to prevent command injection
+        if (!IsValidDevMaidCommand(command))
+        {
+            MessageBox.ErrorQuery("Security Error", "Invalid command. Only DevMaid commands are allowed.", "OK");
+            return;
+        }
+
         _statusLabel!.Text = $"Running: {command}...";
 
         var colorScheme = GetColorScheme();
@@ -1272,5 +1391,63 @@ public static class TuiApp
 
         dialog.Add(closeButton);
         Application.Run(dialog);
+    }
+
+    private static bool IsValidDevMaidCommand(string command)
+    {
+        if (string.IsNullOrWhiteSpace(command))
+        {
+            return false;
+        }
+
+        // Allow only DevMaid commands starting with "devmaid "
+        if (!command.TrimStart().StartsWith("devmaid ", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Define allowed subcommands
+        var allowedSubcommands = new[]
+        {
+            "devmaid table-parser",
+            "devmaid file",
+            "devmaid database",
+            "devmaid claude",
+            "devmaid opencode",
+            "devmaid winget"
+        };
+
+        // Check if command starts with any allowed subcommand
+        var trimmedCommand = command.TrimStart();
+        foreach (var subcommand in allowedSubcommands)
+        {
+            if (trimmedCommand.StartsWith(subcommand, StringComparison.OrdinalIgnoreCase))
+            {
+                // Additional validation for dangerous characters
+                if (ContainsDangerousCharacters(trimmedCommand))
+                {
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsDangerousCharacters(string command)
+    {
+        // Check for command injection characters
+        var dangerousChars = new[] { '&', '|', ';', '$', '`', '\\', '<', '>', '\n', '\r' };
+        
+        foreach (var dangerousChar in dangerousChars)
+        {
+            if (command.Contains(dangerousChar))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

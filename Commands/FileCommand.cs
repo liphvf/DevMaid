@@ -64,6 +64,13 @@ public static class FileCommand
             directory = Directory.GetCurrentDirectory();
         }
 
+        // Validate directory path to prevent path traversal
+        var fullDirectoryPath = Path.GetFullPath(directory);
+        if (!SecurityUtils.IsValidPath(fullDirectoryPath))
+        {
+            throw new ArgumentException($"Invalid directory path: '{directory}'. Path traversal not allowed.");
+        }
+
         var extension = Path.GetExtension(options.Input);
         var outputPath = options.Output;
 
@@ -72,10 +79,17 @@ public static class FileCommand
             outputPath = Path.Combine(directory, $"CombineFiles{extension}");
         }
 
+        // Validate output path to prevent path traversal
+        var fullOutputPath = Path.GetFullPath(outputPath);
+        if (!SecurityUtils.IsValidPath(fullOutputPath, fullDirectoryPath))
+        {
+            throw new ArgumentException($"Output path is outside the input directory: '{outputPath}'");
+        }
+
         var allFileText = new StringBuilder();
         var currentEncoding = Encoding.UTF8;
 
-        var inputFilePaths = Directory.GetFiles(directory, pattern);
+        var inputFilePaths = Directory.GetFiles(fullDirectoryPath, pattern);
         Console.WriteLine("Number of files: {0}.", inputFilePaths.Length);
 
         if (!inputFilePaths.Any())
@@ -92,6 +106,6 @@ public static class FileCommand
             Console.WriteLine("The file {0} has been processed.", inputFilePath);
         }
 
-        File.WriteAllText(outputPath, allFileText.ToString(), currentEncoding);
+        File.WriteAllText(fullOutputPath, allFileText.ToString(), currentEncoding);
     }
 }
