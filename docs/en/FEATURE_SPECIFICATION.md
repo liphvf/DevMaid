@@ -414,24 +414,26 @@ devmaid tui
 ```
 DevMaid - Terminal User Interface
 ├── Table Parser
-│   ├── Parse CSV to Markdown
-│   ├── Parse CSV to JSON
-│   ├── Parse Markdown to CSV
+│   ├── Convert Table to C#
 │   └── Back
 ├── File Utils
-│   ├── Search Files
-│   ├── Organize by Extension
-│   ├── Find Duplicates
+│   ├── Combine Files
+│   └── Back
+├── Database
+│   ├── Backup
+│   ├── Restore
 │   └── Back
 ├── Claude Code
 │   ├── Install Claude Code
-│   ├── Check Status
-│   ├── Configure
+│   ├── Settings
+│   │   ├── MCP Database
+│   │   ├── Windows Environment
+│   │   └── Back
 │   └── Back
 ├── OpenCode
-│   ├── Install OpenCode
-│   ├── Check Status
-│   ├── Configure
+│   ├── Settings
+│   │   ├── MCP Database
+│   │   └── Back
 │   └── Back
 ├── Winget
 │   ├── Backup Packages

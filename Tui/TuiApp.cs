@@ -59,6 +59,7 @@ public static class TuiApp
     {
         new MenuItem("Table Parser", "Convert database table to C# properties class", RunTableParser),
         new MenuItem("File Utils", "File management utilities (search, organize, etc.)", RunFileUtils),
+        new MenuItem("Database", "PostgreSQL backup and restore utilities", RunDatabase),
         new MenuItem("Claude Code", "Claude Code CLI integration", RunClaudeCode),
         new MenuItem("OpenCode", "OpenCode CLI integration", RunOpenCode),
         new MenuItem("Winget", "Backup and restore winget packages", RunWinget),
@@ -73,32 +74,47 @@ public static class TuiApp
 
     private static readonly List<MenuItem> FileUtilsItems = new()
     {
-        new MenuItem("Search Files", "Search for files by name or pattern", () => RunCommand("devmaid file search")),
-        new MenuItem("Organize by Extension", "Organize files by their extension", () => RunCommand("devmaid file organize")),
-        new MenuItem("Find Duplicates", "Find duplicate files in directory", () => RunCommand("devmaid file duplicates")),
+        new MenuItem("Combine Files", "Combine files in a directory into a single file", RunFileCombineDialog),
+        new MenuItem("Back", "Return to main menu", () => { })
+    };
+
+    private static readonly List<MenuItem> DatabaseItems = new()
+    {
+        new MenuItem("Backup", "Create a backup of a PostgreSQL database", RunDatabaseBackupDialog),
+        new MenuItem("Restore", "Restore a PostgreSQL database from backup", RunDatabaseRestoreDialog),
         new MenuItem("Back", "Return to main menu", () => { })
     };
 
     private static readonly List<MenuItem> ClaudeCodeItems = new()
     {
         new MenuItem("Install Claude Code", "Install Claude Code CLI tool", () => RunCommand("devmaid claude install")),
-        new MenuItem("Check Status", "Check Claude Code installation status", () => RunCommand("devmaid claude status")),
-        new MenuItem("Configure", "Configure Claude Code settings", () => RunCommand("devmaid claude config")),
+        new MenuItem("Settings", "Configure Claude Code settings", RunClaudeCodeSettings),
         new MenuItem("Back", "Return to main menu", () => { })
+    };
+
+    private static readonly List<MenuItem> ClaudeCodeSettingsItems = new()
+    {
+        new MenuItem("MCP Database", "Configure MCP database integration", () => RunCommand("devmaid claude settings mcp-database")),
+        new MenuItem("Windows Environment", "Configure Windows environment and CLAUDE.md", () => RunCommand("devmaid claude settings win-env")),
+        new MenuItem("Back", "Return to Claude Code menu", () => { })
     };
 
     private static readonly List<MenuItem> OpenCodeItems = new()
     {
-        new MenuItem("Install OpenCode", "Install OpenCode CLI tool", () => RunCommand("devmaid opencode install")),
-        new MenuItem("Check Status", "Check OpenCode installation status", () => RunCommand("devmaid opencode status")),
-        new MenuItem("Configure", "Configure OpenCode settings", () => RunCommand("devmaid opencode config")),
+        new MenuItem("Settings", "Configure OpenCode settings", RunOpenCodeSettings),
         new MenuItem("Back", "Return to main menu", () => { })
+    };
+
+    private static readonly List<MenuItem> OpenCodeSettingsItems = new()
+    {
+        new MenuItem("MCP Database", "Configure MCP database integration", () => RunCommand("devmaid opencode settings mcp-database")),
+        new MenuItem("Back", "Return to OpenCode menu", () => { })
     };
 
     private static readonly List<MenuItem> WingetItems = new()
     {
-        new MenuItem("Backup Packages", "Backup installed winget packages", () => RunCommand("devmaid winget backup")),
-        new MenuItem("Restore Packages", "Restore winget packages from backup", () => RunCommand("devmaid winget restore")),
+        new MenuItem("Backup Packages", "Backup installed winget packages", RunWingetBackupDialog),
+        new MenuItem("Restore Packages", "Restore winget packages from backup", RunWingetRestoreDialog),
         new MenuItem("Back", "Return to main menu", () => { })
     };
 
@@ -446,6 +462,539 @@ public static class TuiApp
         Application.Run(dialog);
     }
 
+    private static void RunDatabaseBackupDialog()
+    {
+        var colorScheme = GetColorScheme();
+
+        var dialog = new Dialog("Database Backup")
+        {
+            Width = Dim.Percent(60),
+            Height = Dim.Percent(50),
+            ColorScheme = colorScheme
+        };
+
+        var yPos = 1;
+
+        var allCheckbox = new CheckBox("Backup all databases")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var dbLabel = new Label("Database Name (*):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var dbField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var hostLabel = new Label("Host (default: localhost):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var hostField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var portLabel = new Label("Port (default: 5432):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var portField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var userLabel = new Label("Username:")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var userField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var outputLabel = new Label("Output (default: current dir):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var outputField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 3;
+
+        var backupButton = new Button("Backup")
+        {
+            X = 2,
+            Y = yPos,
+            IsDefault = true,
+            ColorScheme = colorScheme
+        };
+
+        var cancelButton = new Button("Cancel")
+        {
+            X = Pos.Right(backupButton) + 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+
+        backupButton.Clicked += () =>
+        {
+            var allDatabases = allCheckbox.Checked;
+
+            if (!allDatabases && string.IsNullOrWhiteSpace(dbField.Text.ToString()))
+            {
+                MessageBox.ErrorQuery("Error", "Database name is required when not backing up all databases.", "OK");
+                return;
+            }
+
+            var db = dbField.Text.ToString();
+            var host = string.IsNullOrWhiteSpace(hostField.Text.ToString()) ? "localhost" : hostField.Text.ToString();
+            var port = string.IsNullOrWhiteSpace(portField.Text.ToString()) ? "5432" : portField.Text.ToString();
+            var user = string.IsNullOrWhiteSpace(userField.Text.ToString()) ? "" : userField.Text.ToString();
+            var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "" : outputField.Text.ToString();
+
+            Application.RequestStop();
+
+            var command = "devmaid database backup";
+            if (allDatabases)
+            {
+                command += " --all";
+            }
+            else
+            {
+                command += $" \"{db}\"";
+            }
+
+            if (!string.IsNullOrEmpty(host)) { command += $" --host \"{host}\""; }
+            if (!string.IsNullOrEmpty(port)) { command += $" --port \"{port}\""; }
+            if (!string.IsNullOrEmpty(user)) { command += $" --username \"{user}\""; }
+            if (!string.IsNullOrEmpty(output)) { command += $" --output \"{output}\""; }
+
+            RunCommand(command);
+        };
+
+        cancelButton.Clicked += () => Application.RequestStop();
+
+        dialog.Add(allCheckbox, dbLabel, dbField, hostLabel, hostField, portLabel, portField, userLabel, userField, outputLabel, outputField, backupButton, cancelButton);
+
+        Application.Run(dialog);
+    }
+
+    private static void RunDatabaseRestoreDialog()
+    {
+        var colorScheme = GetColorScheme();
+
+        var dialog = new Dialog("Database Restore")
+        {
+            Width = Dim.Percent(60),
+            Height = Dim.Percent(50),
+            ColorScheme = colorScheme
+        };
+
+        var yPos = 1;
+
+        var allCheckbox = new CheckBox("Restore all databases")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var dbLabel = new Label("Database Name (*):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var dbField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var fileLabel = new Label("Dump File:")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var fileField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var hostLabel = new Label("Host (default: localhost):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var hostField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var portLabel = new Label("Port (default: 5432):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var portField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var userLabel = new Label("Username:")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var userField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 3;
+
+        var restoreButton = new Button("Restore")
+        {
+            X = 2,
+            Y = yPos,
+            IsDefault = true,
+            ColorScheme = colorScheme
+        };
+
+        var cancelButton = new Button("Cancel")
+        {
+            X = Pos.Right(restoreButton) + 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+
+        restoreButton.Clicked += () =>
+        {
+            var allDatabases = allCheckbox.Checked;
+
+            if (!allDatabases && string.IsNullOrWhiteSpace(dbField.Text.ToString()))
+            {
+                MessageBox.ErrorQuery("Error", "Database name is required when not restoring all databases.", "OK");
+                return;
+            }
+
+            var db = dbField.Text.ToString();
+            var file = string.IsNullOrWhiteSpace(fileField.Text.ToString()) ? "" : fileField.Text.ToString();
+            var host = string.IsNullOrWhiteSpace(hostField.Text.ToString()) ? "localhost" : hostField.Text.ToString();
+            var port = string.IsNullOrWhiteSpace(portField.Text.ToString()) ? "5432" : portField.Text.ToString();
+            var user = string.IsNullOrWhiteSpace(userField.Text.ToString()) ? "" : userField.Text.ToString();
+
+            Application.RequestStop();
+
+            var command = "devmaid database restore";
+            if (allDatabases)
+            {
+                command += " --all";
+                if (!string.IsNullOrEmpty(file)) { command += $" --directory \"{file}\""; }
+            }
+            else
+            {
+                command += $" \"{db}\"";
+                if (!string.IsNullOrEmpty(file)) { command += $" \"{file}\""; }
+            }
+
+            if (!string.IsNullOrEmpty(host)) { command += $" --host \"{host}\""; }
+            if (!string.IsNullOrEmpty(port)) { command += $" --port \"{port}\""; }
+            if (!string.IsNullOrEmpty(user)) { command += $" --username \"{user}\""; }
+
+            RunCommand(command);
+        };
+
+        cancelButton.Clicked += () => Application.RequestStop();
+
+        dialog.Add(allCheckbox, dbLabel, dbField, fileLabel, fileField, hostLabel, hostField, portLabel, portField, userLabel, userField, restoreButton, cancelButton);
+
+        Application.Run(dialog);
+    }
+
+    private static void RunWingetBackupDialog()
+    {
+        var colorScheme = GetColorScheme();
+
+        var dialog = new Dialog("Winget Backup")
+        {
+            Width = Dim.Percent(50),
+            Height = 15,
+            ColorScheme = colorScheme
+        };
+
+        var yPos = 1;
+
+        var outputLabel = new Label("Output Directory (default: current):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var outputField = new TextField("")
+        {
+            X = 35,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 3;
+
+        var backupButton = new Button("Backup")
+        {
+            X = 2,
+            Y = yPos,
+            IsDefault = true,
+            ColorScheme = colorScheme
+        };
+
+        var cancelButton = new Button("Cancel")
+        {
+            X = Pos.Right(backupButton) + 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+
+        backupButton.Clicked += () =>
+        {
+            var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "" : outputField.Text.ToString();
+
+            Application.RequestStop();
+
+            var command = "devmaid winget backup";
+            if (!string.IsNullOrEmpty(output)) { command += $" --output \"{output}\""; }
+
+            RunCommand(command);
+        };
+
+        cancelButton.Clicked += () => Application.RequestStop();
+
+        dialog.Add(outputLabel, outputField, backupButton, cancelButton);
+
+        Application.Run(dialog);
+    }
+
+    private static void RunWingetRestoreDialog()
+    {
+        var colorScheme = GetColorScheme();
+
+        var dialog = new Dialog("Winget Restore")
+        {
+            Width = Dim.Percent(50),
+            Height = 15,
+            ColorScheme = colorScheme
+        };
+
+        var yPos = 1;
+
+        var inputLabel = new Label("Input File (default: backup-winget.json):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var inputField = new TextField("")
+        {
+            X = 40,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 3;
+
+        var restoreButton = new Button("Restore")
+        {
+            X = 2,
+            Y = yPos,
+            IsDefault = true,
+            ColorScheme = colorScheme
+        };
+
+        var cancelButton = new Button("Cancel")
+        {
+            X = Pos.Right(restoreButton) + 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+
+        restoreButton.Clicked += () =>
+        {
+            var input = string.IsNullOrWhiteSpace(inputField.Text.ToString()) ? "" : inputField.Text.ToString();
+
+            Application.RequestStop();
+
+            var command = "devmaid winget restore";
+            if (!string.IsNullOrEmpty(input)) { command += $" --input \"{input}\""; }
+
+            RunCommand(command);
+        };
+
+        cancelButton.Clicked += () => Application.RequestStop();
+
+        dialog.Add(inputLabel, inputField, restoreButton, cancelButton);
+
+        Application.Run(dialog);
+    }
+
+    private static void RunFileCombineDialog()
+    {
+        var colorScheme = GetColorScheme();
+
+        var dialog = new Dialog("File Combine")
+        {
+            Width = Dim.Percent(60),
+            Height = 15,
+            ColorScheme = colorScheme
+        };
+
+        var yPos = 1;
+
+        var inputLabel = new Label("Input Pattern (*):")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var inputField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 2;
+
+        var outputLabel = new Label("Output Path:")
+        {
+            X = 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+        var outputField = new TextField("")
+        {
+            X = 25,
+            Y = yPos,
+            Width = Dim.Fill() - 3,
+            ColorScheme = colorScheme
+        };
+
+        yPos += 3;
+
+        var combineButton = new Button("Combine")
+        {
+            X = 2,
+            Y = yPos,
+            IsDefault = true,
+            ColorScheme = colorScheme
+        };
+
+        var cancelButton = new Button("Cancel")
+        {
+            X = Pos.Right(combineButton) + 2,
+            Y = yPos,
+            ColorScheme = colorScheme
+        };
+
+        combineButton.Clicked += () =>
+        {
+            if (string.IsNullOrWhiteSpace(inputField.Text.ToString()))
+            {
+                MessageBox.ErrorQuery("Error", "Input pattern is required.", "OK");
+                return;
+            }
+
+            var input = inputField.Text.ToString();
+            var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "" : outputField.Text.ToString();
+
+            Application.RequestStop();
+
+            var command = $"devmaid file combine --input \"{input}\"";
+            if (!string.IsNullOrEmpty(output)) { command += $" --output \"{output}\""; }
+
+            RunCommand(command);
+        };
+
+        cancelButton.Clicked += () => Application.RequestStop();
+
+        dialog.Add(inputLabel, inputField, outputLabel, outputField, combineButton, cancelButton);
+
+        Application.Run(dialog);
+    }
+
     private static void RunFileUtils()
     {
         ShowSubMenu("File Utils", FileUtilsItems);
@@ -464,6 +1013,21 @@ public static class TuiApp
     private static void RunWinget()
     {
         ShowSubMenu("Winget", WingetItems);
+    }
+
+    private static void RunDatabase()
+    {
+        ShowSubMenu("Database", DatabaseItems);
+    }
+
+    private static void RunClaudeCodeSettings()
+    {
+        ShowSubMenu("Claude Code Settings", ClaudeCodeSettingsItems);
+    }
+
+    private static void RunOpenCodeSettings()
+    {
+        ShowSubMenu("OpenCode Settings", OpenCodeSettingsItems);
     }
 
     private static void ShowSubMenu(string title, List<MenuItem> items)
