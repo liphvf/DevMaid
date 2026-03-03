@@ -111,6 +111,24 @@ public static class TableParserCommand
             throw new ArgumentException("Table name is required.");
         }
 
+        // Validate table name to prevent SQL injection
+        if (!SecurityUtils.IsValidPostgreSQLIdentifier(options.Table))
+        {
+            throw new ArgumentException($"Invalid table name: '{options.Table}'. Table name must contain only letters, numbers, and underscores, and must not start with a number.");
+        }
+
+        // Validate host
+        if (!SecurityUtils.IsValidHost(options.Host))
+        {
+            throw new ArgumentException($"Invalid host: '{options.Host}'");
+        }
+
+        // Validate username
+        if (!string.IsNullOrWhiteSpace(options.User) && !SecurityUtils.IsValidUsername(options.User))
+        {
+            throw new ArgumentException($"Invalid username: '{options.User}'");
+        }
+
         if (string.IsNullOrWhiteSpace(options.Password))
         {
             options.Password = Utils.SecureStringToString(Utils.GetConsoleSecurePassword());
@@ -123,13 +141,21 @@ public static class TableParserCommand
         }
 
         var outputPath = string.IsNullOrWhiteSpace(options.Output) ? "./Table.class" : options.Output;
-        var outputDirectory = Path.GetDirectoryName(outputPath);
+        
+        // Validate output path to prevent path traversal
+        var fullOutputPath = Path.GetFullPath(outputPath);
+        if (!SecurityUtils.IsValidPath(fullOutputPath))
+        {
+            throw new ArgumentException($"Invalid output path: '{outputPath}'. Path traversal not allowed.");
+        }
+
+        var outputDirectory = Path.GetDirectoryName(fullOutputPath);
         if (!string.IsNullOrWhiteSpace(outputDirectory))
         {
             Directory.CreateDirectory(outputDirectory);
         }
 
-        using var file = new StreamWriter(outputPath, append: false);
+        using var file = new StreamWriter(fullOutputPath, append: false);
 
         foreach (var tableColumn in tableColumns)
         {

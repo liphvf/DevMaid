@@ -12,22 +12,24 @@ public static class FileCommand
 {
     public static Command Build()
     {
-        var command = new Command("combine", "Copy dashboards between databases.");
+        var command = new Command("file", "File utilities.");
+
+        var combineCommand = new Command("combine", "Combine files in a directory into a single file.");
 
         var inputOption = new Option<string>("--input", "-i")
         {
-            Description = "Input Directory.",
+            Description = "Input file pattern (e.g., *.sql, *.txt).",
             Required = true
         };
         var outputOption = new Option<string?>("--output", "-o")
         {
-            Description = "Input Directory."
+            Description = "Output file path."
         };
 
-        command.Add(inputOption);
-        command.Add(outputOption);
+        combineCommand.Add(inputOption);
+        combineCommand.Add(outputOption);
 
-        command.SetAction(parseResult =>
+        combineCommand.SetAction(parseResult =>
         {
             var options = new FileCommandOptions
             {
@@ -37,6 +39,8 @@ public static class FileCommand
 
             Combine(options);
         });
+
+        command.Add(combineCommand);
 
         return command;
     }
@@ -60,18 +64,32 @@ public static class FileCommand
             directory = Directory.GetCurrentDirectory();
         }
 
+        // Validate directory path to prevent path traversal
+        var fullDirectoryPath = Path.GetFullPath(directory);
+        if (!SecurityUtils.IsValidPath(fullDirectoryPath))
+        {
+            throw new ArgumentException($"Invalid directory path: '{directory}'. Path traversal not allowed.");
+        }
+
         var extension = Path.GetExtension(options.Input);
         var outputPath = options.Output;
 
         if (string.IsNullOrWhiteSpace(outputPath))
         {
-            outputPath = Path.Join(directory, $"CombineFiles{extension}");
+            outputPath = Path.Combine(directory, $"CombineFiles{extension}");
+        }
+
+        // Validate output path to prevent path traversal
+        var fullOutputPath = Path.GetFullPath(outputPath);
+        if (!SecurityUtils.IsValidPath(fullOutputPath, fullDirectoryPath))
+        {
+            throw new ArgumentException($"Output path is outside the input directory: '{outputPath}'");
         }
 
         var allFileText = new StringBuilder();
         var currentEncoding = Encoding.UTF8;
 
-        var inputFilePaths = Directory.GetFiles(directory, pattern);
+        var inputFilePaths = Directory.GetFiles(fullDirectoryPath, pattern);
         Console.WriteLine("Number of files: {0}.", inputFilePaths.Length);
 
         if (!inputFilePaths.Any())
@@ -88,6 +106,6 @@ public static class FileCommand
             Console.WriteLine("The file {0} has been processed.", inputFilePath);
         }
 
-        File.WriteAllText(outputPath, allFileText.ToString(), currentEncoding);
+        File.WriteAllText(fullOutputPath, allFileText.ToString(), currentEncoding);
     }
 }
