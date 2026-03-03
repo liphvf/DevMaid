@@ -904,7 +904,7 @@ private static void CreateDatabaseIfNeeded(string host, string port, string user
 
             createStartInfo.Environment["PGPASSWORD"] = password;
 
-            using var createProcess = Process.Start(createProcess);
+            using var createProcess = Process.Start(createStartInfo);
             if (createProcess == null)
             {
                 throw new Exception("Failed to start psql process.");
