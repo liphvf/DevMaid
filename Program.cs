@@ -34,7 +34,8 @@ internal static class Program
             WingetCommand.Build(),
             TuiCommand.Build(),
             DatabaseCommand.Build(),
-            QueryCommand.Build()
+            QueryCommand.Build(),
+            CleanCommand.Build()
         };
 
         return rootCommand.Parse(args).Invoke();
