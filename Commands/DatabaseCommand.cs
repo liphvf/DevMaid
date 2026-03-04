@@ -307,8 +307,8 @@ public static class DatabaseCommand
 
         Logger.LogInformation("Creating backup of database '{DatabaseName}'...", config.DatabaseName);
         Logger.LogInformation("Host: {Host}:{Port}", config.Host, config.Port);
-        Logger.LogInformation("Username: {Username}", config.Username);
-        Logger.LogInformation("Output: {Output}", Path.GetFullPath(outputPath));
+        Logger.LogInformation("Username: {Username}", config.Username ?? "N/A");
+        Logger.LogInformation("Output: {Output}", Path.GetFullPath(outputPath ?? "unknown"));
 
         var pgDumpPath = PostgresBinaryLocator.FindPgDump();
         if (pgDumpPath == null)
@@ -316,7 +316,7 @@ public static class DatabaseCommand
             throw new PostgresBinaryNotFoundException(DevMaidConstants.PgDumpExecutable);
         }
 
-        var arguments = BuildPgDumpArguments(config, outputPath);
+        var arguments = BuildPgDumpArguments(config, outputPath ?? string.Empty);
 
         var startInfo = new ProcessStartInfo
         {
@@ -348,7 +348,7 @@ public static class DatabaseCommand
                 throw new BackupFailedException($"pg_dump failed with exit code {process.ExitCode}. Error: {error}");
             }
 
-            Logger.LogInformation("Backup created successfully at: {FullPath}", Path.GetFullPath(outputPath));
+            Logger.LogInformation("Backup created successfully at: {FullPath}", Path.GetFullPath(outputPath ?? "unknown"));
 
             if (!string.IsNullOrWhiteSpace(output))
             {
@@ -368,7 +368,7 @@ public static class DatabaseCommand
 
         Logger.LogInformation("Listing all databases...");
         Logger.LogInformation("Host: {Host}:{Port}", config.Host, config.Port);
-        Logger.LogInformation("Username: {Username}", config.Username);
+        Logger.LogInformation("Username: {Username}", config.Username ?? "N/A");
 
         var databases = PostgresDatabaseLister.ListAllDatabases(config.Host, config.Port, config.Username ?? string.Empty, password);
 
@@ -446,7 +446,7 @@ public static class DatabaseCommand
             throw new PostgresBinaryNotFoundException(DevMaidConstants.PgDumpExecutable);
         }
 
-        var arguments = BuildPgDumpArguments(config, config.OutputPath);
+        var arguments = BuildPgDumpArguments(config, config.OutputPath ?? string.Empty);
 
         var startInfo = new ProcessStartInfo
         {
@@ -531,7 +531,7 @@ public static class DatabaseCommand
 
         Logger.LogInformation("Restoring database '{DatabaseName}'...", config.DatabaseName);
         Logger.LogInformation("Host: {Host}:{Port}", config.Host, config.Port);
-        Logger.LogInformation("Username: {Username}", config.Username);
+        Logger.LogInformation("Username: {Username}", config.Username ?? "N/A");
         Logger.LogInformation("Input: {FullPath}", Path.GetFullPath(fullPath));
 
         var pgRestorePath = PostgresBinaryLocator.FindPgRestore();
@@ -669,7 +669,7 @@ public static class DatabaseCommand
             throw new PostgresBinaryNotFoundException(DevMaidConstants.PgRestoreExecutable);
         }
 
-        CreateDatabaseIfNeeded(config.Host, config.Port, config.Username ?? string.Empty, config.Password, config.DatabaseName);
+        CreateDatabaseIfNeeded(config.Host, config.Port, config.Username ?? string.Empty, config.Password ?? string.Empty, config.DatabaseName);
 
         var startInfo = new ProcessStartInfo
         {

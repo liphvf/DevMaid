@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 
 using DevMaid.CommandOptions;
+using DevMaid.Services;
 
 using Npgsql;
 
@@ -528,11 +529,12 @@ public static class QueryCommand
 
     private static (string Host, string Port, string Username, string Password) GetConnectionParameters(QueryCommandOptions options)
     {
-        // Load default values from appsettings.json
-        var defaultHost = Program.AppSettings["Database:Host"] ?? "localhost";
-        var defaultPort = Program.AppSettings["Database:Port"] ?? "5432";
-        var defaultUsername = Program.AppSettings["Database:Username"];
-        var defaultPassword = Program.AppSettings["Database:Password"];
+        // Load default values from configuration
+        var dbConfig = ConfigurationService.GetDatabaseConfig();
+        var defaultHost = dbConfig.Host ?? "localhost";
+        var defaultPort = dbConfig.Port ?? "5432";
+        var defaultUsername = dbConfig.Username;
+        var defaultPassword = dbConfig.Password;
 
         // Use provided values or fall back to defaults
         var host = options.Host ?? defaultHost;
@@ -754,8 +756,8 @@ public static class QueryCommand
             return cleanedConnectionString;
         }
 
-        // Load primary server configuration from appsettings.json
-        var primaryServerName = Program.AppSettings["Servers:PrimaryServer"];
+        // Load primary server configuration from configuration
+        var primaryServerName = ConfigurationService.Configuration["Servers:PrimaryServer"];
         if (string.IsNullOrWhiteSpace(primaryServerName))
         {
             throw new ArgumentException("PrimaryServer is not configured in appsettings.json. Please set 'Servers:PrimaryServer'.");
@@ -1163,7 +1165,7 @@ public static class QueryCommand
             // Check if servers configuration is enabled (only when explicitly requested)
             if (checkEnabled)
             {
-                var enabledValue = Program.AppSettings["Servers:Enabled"];
+                var enabledValue = ConfigurationService.Configuration["Servers:Enabled"];
                 if (enabledValue == null || !bool.TryParse(enabledValue, out var enabled) || !enabled)
                 {
                     throw new ArgumentException("Multi-server configuration is not enabled. Set 'Servers:Enabled' to true in appsettings.json");
@@ -1171,7 +1173,7 @@ public static class QueryCommand
             }
 
             // Load servers list
-            var serversSection = Program.AppSettings["Servers:ServersList"];
+            var serversSection = ConfigurationService.Configuration["Servers:ServersList"];
             if (string.IsNullOrWhiteSpace(serversSection))
             {
                 return null;
