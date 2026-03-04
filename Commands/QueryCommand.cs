@@ -5,6 +5,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 using DevMaid.CommandOptions;
@@ -121,6 +122,17 @@ public static class QueryCommand
             Description = "Comma-separated list of database names to exclude (e.g., postgres,template0,template1)."
         };
 
+        // Multi-server options
+        var serversOption = new Option<bool>("--servers", "-s")
+        {
+            Description = "Execute the query on all servers configured in appsettings.json."
+        };
+
+        var serverFilterOption = new Option<string?>("--server-filter")
+        {
+            Description = "Filter servers by name pattern (supports * wildcard). Example: 'prod-*' or '*-primary'."
+        };
+
         // Add all options to the command
         runCommand.Add(inputOption);
         runCommand.Add(outputOption);
@@ -141,6 +153,8 @@ public static class QueryCommand
         runCommand.Add(allOption);
         runCommand.Add(separateFilesOption);
         runCommand.Add(excludeOption);
+        runCommand.Add(serversOption);
+        runCommand.Add(serverFilterOption);
 
         runCommand.SetAction(parseResult =>
         {
@@ -164,7 +178,9 @@ public static class QueryCommand
                 ConnectionLifetime = parseResult.GetValue(connectionLifetimeOption),
                 All = parseResult.GetValue(allOption),
                 SeparateFiles = parseResult.GetValue(separateFilesOption),
-                Exclude = parseResult.GetValue(excludeOption)
+                Exclude = parseResult.GetValue(excludeOption),
+                Servers = parseResult.GetValue(serversOption),
+                ServerFilter = parseResult.GetValue(serverFilterOption)
             };
 
             Run(options);
@@ -194,11 +210,18 @@ public static class QueryCommand
             throw new FileNotFoundException($"SQL input file not found: {inputFullPath}");
         }
 
-        // Read SQL query
+// Read SQL query
         var sqlQuery = File.ReadAllText(inputFullPath, Encoding.UTF8);
         if (string.IsNullOrWhiteSpace(sqlQuery))
         {
             throw new ArgumentException("SQL input file is empty.");
+        }
+
+        // Check if --servers flag is set
+        if (options.Servers)
+        {
+            RunOnAllServers(options, sqlQuery);
+            return;
         }
 
         // Check if --all flag is set
@@ -731,19 +754,31 @@ public static class QueryCommand
             return cleanedConnectionString;
         }
 
-        // Load default values from appsettings.json
-        var defaultHost = Program.AppSettings["Database:Host"] ?? "localhost";
-        var defaultPort = Program.AppSettings["Database:Port"] ?? "5432";
-        var defaultUsername = Program.AppSettings["Database:Username"];
-        var defaultPassword = Program.AppSettings["Database:Password"];
-        var defaultDatabase = Program.AppSettings["Database:Database"];
+        // Load primary server configuration from appsettings.json
+        var primaryServerName = Program.AppSettings["Servers:PrimaryServer"];
+        if (string.IsNullOrWhiteSpace(primaryServerName))
+        {
+            throw new ArgumentException("PrimaryServer is not configured in appsettings.json. Please set 'Servers:PrimaryServer'.");
+        }
 
-        // Use provided values or fall back to defaults
-        var host = options.Host ?? defaultHost;
-        var port = options.Port ?? defaultPort;
-        var database = options.Database ?? defaultDatabase;
-        var username = options.Username ?? defaultUsername;
-        var password = options.Password ?? defaultPassword;
+        var servers = LoadServersConfiguration(checkEnabled: false);
+        if (servers == null || servers.Count == 0)
+        {
+            throw new ArgumentException("No servers configured in appsettings.json. Please add servers configuration under 'Servers:ServersList'.");
+        }
+
+        var primaryServer = servers.FirstOrDefault(s => s.Name.Equals(primaryServerName, StringComparison.OrdinalIgnoreCase));
+        if (primaryServer == null)
+        {
+            throw new ArgumentException($"Primary server '{primaryServerName}' not found in ServersList. Available servers: {string.Join(", ", servers.Select(s => s.Name))}");
+        }
+
+        // Use provided values or fall back to primary server configuration
+        var host = options.Host ?? primaryServer.Host;
+        var port = options.Port ?? primaryServer.Port;
+        var database = options.Database ?? primaryServer.Database;
+        var username = options.Username ?? primaryServer.Username;
+        var password = options.Password ?? primaryServer.Password;
 
         // Validate required parameters
         if (string.IsNullOrWhiteSpace(host))
@@ -768,7 +803,7 @@ public static class QueryCommand
 
         if (string.IsNullOrWhiteSpace(database))
         {
-            throw new ArgumentException("Database name is required when not using --npgsql-connection-string.");
+            throw new ArgumentException($"Database name is required. Either specify --database, configure Database in the server config, or use --all.");
         }
 
         // Prompt for password if not provided
@@ -789,49 +824,59 @@ public static class QueryCommand
             Password = password
         };
 
-        // Add optional connection parameters
-        if (!string.IsNullOrWhiteSpace(options.SslMode))
+        // Add optional connection parameters (fallback to primary server config if not in options)
+        var sslMode = options.SslMode ?? primaryServer.SslMode;
+        var timeout = options.Timeout ?? primaryServer.Timeout;
+        var commandTimeout = options.CommandTimeout ?? primaryServer.CommandTimeout;
+        var pooling = options.Pooling ?? primaryServer.Pooling;
+        var minPoolSize = options.MinPoolSize ?? primaryServer.MinPoolSize;
+        var maxPoolSize = options.MaxPoolSize ?? primaryServer.MaxPoolSize;
+        var keepalive = options.Keepalive ?? primaryServer.Keepalive;
+        var connectionLifetime = options.ConnectionLifetime ?? primaryServer.ConnectionLifetime;
+
+        if (!string.IsNullOrWhiteSpace(sslMode))
         {
-            builder.SslMode = ParseSslMode(options.SslMode);
+            builder.SslMode = ParseSslMode(sslMode);
         }
 
-        if (options.Timeout.HasValue)
+        if (timeout.HasValue)
         {
-            builder.Timeout = options.Timeout.Value;
+            builder.Timeout = timeout.Value;
         }
 
-        if (options.CommandTimeout.HasValue)
+        if (commandTimeout.HasValue)
         {
-            builder.CommandTimeout = options.CommandTimeout.Value;
+            builder.CommandTimeout = commandTimeout.Value;
         }
 
-        if (options.Pooling.HasValue)
+        if (pooling.HasValue)
         {
-            builder.Pooling = options.Pooling.Value;
+            builder.Pooling = pooling.Value;
         }
 
-        if (options.MinPoolSize.HasValue)
+        if (minPoolSize.HasValue)
         {
-            builder.MinPoolSize = options.MinPoolSize.Value;
+            builder.MinPoolSize = minPoolSize.Value;
         }
 
-        if (options.MaxPoolSize.HasValue)
+        if (maxPoolSize.HasValue)
         {
-            builder.MaxPoolSize = options.MaxPoolSize.Value;
+            builder.MaxPoolSize = maxPoolSize.Value;
         }
 
-        if (options.Keepalive.HasValue)
+        if (keepalive.HasValue)
         {
-            builder.KeepAlive = options.Keepalive.Value;
+            builder.KeepAlive = keepalive.Value;
         }
 
-        if (options.ConnectionLifetime.HasValue)
+        if (connectionLifetime.HasValue)
         {
-            builder.ConnectionLifetime = options.ConnectionLifetime.Value;
+            builder.ConnectionLifetime = connectionLifetime.Value;
         }
 
         Console.WriteLine($"Connection: {host}:{port}/{database}");
         Console.WriteLine($"Username: {username}");
+        Console.WriteLine($"Primary Server: {primaryServerName}");
 
         return builder.ConnectionString;
     }
@@ -945,4 +990,293 @@ public static class QueryCommand
 
         return password;
     }
+
+    private static void RunOnAllServers(QueryCommandOptions options, string sqlQuery)
+    {
+        // Validate output directory for multi-server mode
+        if (string.IsNullOrWhiteSpace(options.OutputFile))
+        {
+            throw new ArgumentException("Output directory path is required when using --servers.");
+        }
+
+        var outputDirectory = Path.GetFullPath(options.OutputFile);
+        if (!SecurityUtils.IsValidPath(outputDirectory))
+        {
+            throw new ArgumentException($"Invalid output path: '{options.OutputFile}'. Path traversal not allowed.");
+        }
+
+        // Create output directory if it doesn't exist
+        if (!Directory.Exists(outputDirectory))
+        {
+            Directory.CreateDirectory(outputDirectory);
+        }
+
+        // Load servers configuration from appsettings.json
+        var servers = LoadServersConfiguration();
+        
+        if (servers == null || servers.Count == 0)
+        {
+            throw new ArgumentException("No servers configured in appsettings.json. Please add servers configuration under 'Servers:ServersList'.");
+        }
+
+        // Filter servers by pattern if provided
+        var filteredServers = FilterServers(servers, options.ServerFilter);
+
+        if (filteredServers.Count == 0)
+        {
+            throw new ArgumentException($"No servers found matching filter pattern: '{options.ServerFilter}'");
+        }
+
+        Console.WriteLine($"Found {filteredServers.Count} servers to process:");
+        foreach (var server in filteredServers)
+        {
+            Console.WriteLine($"  - {server.Name} ({server.Host}:{server.Port})");
+        }
+        Console.WriteLine();
+        Console.WriteLine($"Output directory: {Path.GetFullPath(outputDirectory)}");
+        Console.WriteLine();
+
+        // Execute query on all servers
+        var successCount = 0;
+        var failureCount = 0;
+        var totalRowCount = 0;
+
+        foreach (var server in filteredServers)
+        {
+            var serverOutputDir = Path.Combine(outputDirectory, server.Name);
+            
+            Console.WriteLine($"========================================");
+            Console.WriteLine($"Processing server: {server.Name}");
+            Console.WriteLine($"Host: {server.Host}:{server.Port}");
+            Console.WriteLine($"========================================");
+            Console.WriteLine();
+
+            try
+            {
+                // Determine databases to query
+                List<string> databasesToQuery;
+                
+                if (server.Databases != null && server.Databases.Count > 0)
+                {
+                    // Use specific databases from server config
+                    databasesToQuery = server.Databases;
+                    Console.WriteLine($"Using configured databases: {string.Join(", ", databasesToQuery)}");
+                }
+                else if (options.All)
+                {
+                    // Query all databases on the server
+                    Console.WriteLine("Querying all databases on server...");
+                    databasesToQuery = ListAllDatabases(server.Host, server.Port, server.Username, server.Password);
+                    
+                    // Apply exclude filter if provided
+                    if (!string.IsNullOrWhiteSpace(options.Exclude))
+                    {
+                        var excludedDatabases = new HashSet<string>(options.Exclude.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+                        databasesToQuery = databasesToQuery.FindAll(db => !excludedDatabases.Contains(db));
+                    }
+                }
+                else
+                {
+                    // Use default database from server config
+                    if (string.IsNullOrWhiteSpace(server.Database))
+                    {
+                        throw new ArgumentException($"No database specified for server '{server.Name}'. Either configure Database in the server config, use --all, or specify databases in the Databases list");
+                    }
+                    databasesToQuery = new List<string> { server.Database };
+                    Console.WriteLine($"Using default database: {server.Database}");
+                }
+
+                Console.WriteLine();
+
+                // Create server output directory
+                if (!Directory.Exists(serverOutputDir))
+                {
+                    Directory.CreateDirectory(serverOutputDir);
+                }
+
+                // Execute query on each database
+                var serverSuccessCount = 0;
+                var serverFailureCount = 0;
+                var serverRowCount = 0;
+
+                foreach (var database in databasesToQuery)
+                {
+                    var outputFilePath = Path.Combine(serverOutputDir, $"{database}.csv");
+
+                    Console.WriteLine($"  Processing database '{database}'...");
+
+                    try
+                    {
+                        // Build connection string for this database
+                        var connectionString = BuildConnectionStringForServer(server, database, options);
+
+                        // Execute query and export to CSV
+                        var rowCount = ExecuteQueryAndExportToCsv(connectionString, sqlQuery, outputFilePath, server.CommandTimeout ?? options.CommandTimeout);
+
+                        serverRowCount += rowCount;
+                        serverSuccessCount++;
+
+                        Console.WriteLine($"    ✓ Results exported to: {database}.csv ({rowCount} rows)");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"    ✗ Failed: {ex.Message}");
+                        serverFailureCount++;
+                    }
+                }
+
+                totalRowCount += serverRowCount;
+                successCount += serverSuccessCount;
+                failureCount += serverFailureCount;
+
+                Console.WriteLine();
+                Console.WriteLine($"Server '{server.Name}' summary:");
+                Console.WriteLine($"  Successful: {serverSuccessCount}");
+                Console.WriteLine($"  Failed: {serverFailureCount}");
+                Console.WriteLine($"  Total rows: {serverRowCount}");
+                Console.WriteLine();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"✗ Server '{server.Name}' failed: {ex.Message}");
+                failureCount++;
+                Console.WriteLine();
+            }
+        }
+
+        // Overall summary
+        Console.WriteLine("========================================");
+        Console.WriteLine("Overall Execution Summary:");
+        Console.WriteLine($"  Servers processed: {filteredServers.Count}");
+        Console.WriteLine($"  Successful databases: {successCount}");
+        Console.WriteLine($"  Failed databases: {failureCount}");
+        Console.WriteLine($"  Total rows: {totalRowCount}");
+        Console.WriteLine($"  Output directory: {Path.GetFullPath(outputDirectory)}");
+        Console.WriteLine("========================================");
+    }
+
+    private static List<ServerConfig>? LoadServersConfiguration(bool checkEnabled = true)
+    {
+        try
+        {
+            // Check if servers configuration is enabled (only when explicitly requested)
+            if (checkEnabled)
+            {
+                var enabledValue = Program.AppSettings["Servers:Enabled"];
+                if (enabledValue == null || !bool.TryParse(enabledValue, out var enabled) || !enabled)
+                {
+                    throw new ArgumentException("Multi-server configuration is not enabled. Set 'Servers:Enabled' to true in appsettings.json");
+                }
+            }
+
+            // Load servers list
+            var serversSection = Program.AppSettings["Servers:ServersList"];
+            if (string.IsNullOrWhiteSpace(serversSection))
+            {
+                return null;
+            }
+
+            // Parse JSON configuration
+            var serversJson = $"{{\"Servers\":{serversSection}}}";
+            var config = System.Text.Json.JsonSerializer.Deserialize<ServersConfig>(serversJson);
+            
+            return config?.Servers;
+        }
+        catch (Exception ex)
+        {
+            throw new ArgumentException($"Failed to load servers configuration from appsettings.json: {ex.Message}");
+        }
+    }
+
+    private static List<ServerConfig> FilterServers(List<ServerConfig> servers, string? filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            return servers;
+        }
+
+        var filtered = new List<ServerConfig>();
+        var pattern = filter.Replace("*", ".*");
+
+        foreach (var server in servers)
+        {
+            if (System.Text.RegularExpressions.Regex.IsMatch(server.Name, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            {
+                filtered.Add(server);
+            }
+        }
+
+        return filtered;
+    }
+
+    private static string BuildConnectionStringForServer(ServerConfig server, string database, QueryCommandOptions options)
+    {
+        var builder = new NpgsqlConnectionStringBuilder
+        {
+            Host = server.Host,
+            Port = int.Parse(server.Port),
+            Database = database,
+            Username = server.Username,
+            Password = server.Password
+        };
+
+        // Use server-specific options or fall back to command options
+        var sslMode = server.SslMode ?? options.SslMode;
+        var timeout = server.Timeout ?? options.Timeout;
+        var commandTimeout = server.CommandTimeout ?? options.CommandTimeout;
+        var pooling = server.Pooling ?? options.Pooling;
+        var minPoolSize = server.MinPoolSize ?? options.MinPoolSize;
+        var maxPoolSize = server.MaxPoolSize ?? options.MaxPoolSize;
+        var keepalive = server.Keepalive ?? options.Keepalive;
+        var connectionLifetime = server.ConnectionLifetime ?? options.ConnectionLifetime;
+
+        if (!string.IsNullOrWhiteSpace(sslMode))
+        {
+            builder.SslMode = ParseSslMode(sslMode);
+        }
+
+        if (timeout.HasValue)
+        {
+            builder.Timeout = timeout.Value;
+        }
+
+        if (commandTimeout.HasValue)
+        {
+            builder.CommandTimeout = commandTimeout.Value;
+        }
+
+        if (pooling.HasValue)
+        {
+            builder.Pooling = pooling.Value;
+        }
+
+        if (minPoolSize.HasValue)
+        {
+            builder.MinPoolSize = minPoolSize.Value;
+        }
+
+        if (maxPoolSize.HasValue)
+        {
+            builder.MaxPoolSize = maxPoolSize.Value;
+        }
+
+        if (keepalive.HasValue)
+        {
+            builder.KeepAlive = keepalive.Value;
+        }
+
+        if (connectionLifetime.HasValue)
+        {
+            builder.ConnectionLifetime = connectionLifetime.Value;
+        }
+
+        return builder.ConnectionString;
+    }
+}
+
+// Helper class for deserializing servers configuration
+public class ServersConfig
+{
+    public List<ServerConfig> Servers { get; set; } = new();
 }

@@ -1,6 +1,6 @@
 # Query Command
 
-O comando `query` permite executar queries SQL e exportar os resultados para CSV. Suporta execução em banco único ou múltiplos bancos simultaneamente.
+O comando `query` permite executar queries SQL e exportar os resultados para CSV. Suporta execução em banco único, múltiplos bancos em um servidor, ou múltiplos servidores.
 
 ## Uso
 
@@ -54,6 +54,11 @@ devmaid query run --all --input <arquivo.sql> --output <diretorio> [opções]
 - `--max-pool-size <size>`: Tamanho máximo do pool. Padrão: 100
 - `--keepalive <seconds>`: Intervalo de keepalive em segundos. Padrão: 0
 - `--connection-lifetime <seconds>`: Tempo de vida da conexão em segundos. Padrão: 0
+
+### Opções Multi-Server
+
+- `-s, --servers`: Executa a query em todos os servidores configurados no appsettings.json
+- `--server-filter <pattern>`: Filtra servidores por nome (suporta curinga `*`). Ex: `prod-*`, `*-primary`
 
 ## Exemplos
 
@@ -208,21 +213,28 @@ Se o psql não for encontrado, ocorrerá um erro informando que o PostgreSQL pre
 
 ## Configuração Padrão
 
-Você pode configurar valores padrão no arquivo `appsettings.json`:
+Você pode configurar o servidor primário no arquivo `appsettings.json`:
 
 ```json
 {
-  "Database": {
-    "Host": "localhost",
-    "Port": "5432",
-    "Database": "mydb",
-    "Username": "myuser",
-    "Password": "mypassword"
+  "Servers": {
+    "Enabled": true,
+    "PrimaryServer": "localhost",
+    "ServersList": [
+      {
+        "Name": "localhost",
+        "Host": "localhost",
+        "Port": "5432",
+        "Username": "myuser",
+        "Password": "mypassword",
+        "Database": "mydb"
+      }
+    ]
   }
 }
 ```
 
-**Nota:** Ao usar `--all`, o parâmetro `Database` não é obrigatório, pois a query será executada em todos os bancos listados no servidor.
+**Nota:** Ao usar `--all`, o parâmetro `--database` não é obrigatório, pois a query será executada em todos os bancos listados no servidor.
 
 ## Arquivo SQL de Exemplo
 
@@ -277,6 +289,82 @@ Durante a execução em múltiplos bancos:
   - Quantidade de falhas
   - Total de linhas
   - Localização dos arquivos gerados
+
+## Query Multi-Server
+
+O comando `query` também suporta execução em múltiplos servidores PostgreSQL configurados no `appsettings.json`. Isso é útil para:
+
+- Auditoria de dados em múltiplos servidores de produção
+- Coletar métricas de todos os servidores de um ambiente
+- Comparar dados entre diferentes servidores
+- Relatórios consolidados de múltiplas fontes
+
+### Configuração
+
+Para usar o modo multi-server, configure os servidores no `appsettings.json`:
+
+```json
+{
+  "Servers": {
+    "Enabled": true,
+    "ServersList": [
+      {
+        "Name": "prod-primary",
+        "Host": "prod-db-01.company.com",
+        "Port": "5432",
+        "Username": "readonly",
+        "Password": "password1",
+        "Databases": ["app_prod", "analytics"]
+      },
+      {
+        "Name": "staging",
+        "Host": "staging-db.company.com",
+        "Port": "5432",
+        "Username": "readonly",
+        "Password": "password3",
+        "Databases": ["app_staging"]
+      }
+    ]
+  }
+}
+```
+
+Para documentação completa sobre multi-server, veja [MULTI_SERVER.md](MULTI_SERVER.md).
+
+### Exemplos Multi-Server
+
+#### Executar em todos os servidores configurados
+
+```bash
+devmaid query run --servers --input query.sql --output ./results
+```
+
+**Saída:**
+```
+results/
+├── prod-primary/
+│   ├── app_prod.csv
+│   └── analytics.csv
+└── staging/
+    └── app_staging.csv
+```
+
+#### Filtrar servidores por nome
+
+```bash
+# Apenas servidores de produção
+devmaid query run --servers --server-filter "prod-*" --input query.sql --output ./results
+
+# Apenas servidores primários
+devmaid query run --servers --server-filter "*-primary" --input query.sql --output ./results
+```
+
+#### Combinar com --all (todos os bancos)
+
+```bash
+devmaid query run --servers --all --exclude "postgres,template0,template1" \
+    --input audit.sql --output ./audit_results
+```
 
 ## Segurança
 

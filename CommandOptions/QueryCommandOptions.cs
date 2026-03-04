@@ -11,6 +11,10 @@ public class QueryCommandOptions
     public bool SeparateFiles { get; set; }
     public string? Exclude { get; set; }
 
+    // Multi-server options
+    public bool Servers { get; set; }
+    public string? ServerFilter { get; set; }
+
     // Connection string alternatives
     public string? NpgsqlConnectionString { get; set; }
 
