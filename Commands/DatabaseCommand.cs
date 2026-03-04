@@ -52,6 +52,11 @@ public static class DatabaseCommand
             Description = "Backup all databases on the server. Each database will have its own .dump file."
         };
 
+        var excludeTableDataOption = new Option<string[]?>("--exclude-table-data")
+        {
+            Description = "Exclude table data matching the specified pattern(s). Can be specified multiple times. Example: --exclude-table-data 'log*'"
+        };
+
         backupCommand.Add(allOption);
         backupCommand.Add(databaseNameArgument);
         backupCommand.Add(hostOption);
@@ -59,6 +64,7 @@ public static class DatabaseCommand
         backupCommand.Add(usernameOption);
         backupCommand.Add(passwordOption);
         backupCommand.Add(outputOption);
+        backupCommand.Add(excludeTableDataOption);
 
         backupCommand.SetAction(parseResult =>
         {
@@ -70,7 +76,8 @@ public static class DatabaseCommand
                 Port = parseResult.GetValue(portOption),
                 Username = parseResult.GetValue(usernameOption),
                 Password = parseResult.GetValue(passwordOption),
-                OutputPath = parseResult.GetValue(outputOption)
+                OutputPath = parseResult.GetValue(outputOption),
+                ExcludeTableData = parseResult.GetValue(excludeTableDataOption)
             };
 
             Backup(options);
@@ -186,7 +193,7 @@ public static class DatabaseCommand
         // Check if --all flag is set
         if (options.All)
         {
-            BackupAllDatabases(host, port, username ?? string.Empty, password ?? string.Empty, options.OutputPath);
+            BackupAllDatabases(host, port, username ?? string.Empty, password ?? string.Empty, options.OutputPath, options.ExcludeTableData);
             return;
         }
 
@@ -222,10 +229,25 @@ public static class DatabaseCommand
             throw new Exception("pg_dump not found. Please ensure PostgreSQL is installed and pg_dump is in your PATH.");
         }
 
+        var arguments = $"-Fc -h \"{host}\" -p {port} -U \"{username}\" -d \"{options.DatabaseName}\" -f \"{outputPath}\"";
+
+        // Add --exclude-table-data options if specified
+        if (options.ExcludeTableData != null && options.ExcludeTableData.Length > 0)
+        {
+            foreach (var pattern in options.ExcludeTableData)
+            {
+                if (!string.IsNullOrWhiteSpace(pattern))
+                {
+                    arguments += $" --exclude-table-data \"{pattern}\"";
+                    Console.WriteLine($"Excluding table data matching pattern: {pattern}");
+                }
+            }
+        }
+
         var startInfo = new ProcessStartInfo
         {
             FileName = pgDumpPath,
-            Arguments = $"-Fc -h \"{host}\" -p {port} -U \"{username}\" -d \"{options.DatabaseName}\" -f \"{outputPath}\"",
+            Arguments = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -267,7 +289,7 @@ public static class DatabaseCommand
         }
     }
 
-    private static void BackupAllDatabases(string host, string port, string username, string password, string? outputPath)
+    private static void BackupAllDatabases(string host, string port, string username, string password, string? outputPath, string[]? excludeTableData = null)
     {
         // Prompt for password if not provided
         if (string.IsNullOrWhiteSpace(password))
@@ -326,7 +348,7 @@ public static class DatabaseCommand
             
             try
             {
-                BackupSingleDatabase(host, port, username, password, database, dumpPath);
+                BackupSingleDatabase(host, port, username, password, database, dumpPath, excludeTableData);
                 Console.WriteLine($"✓ Backup created successfully: {database}.dump");
                 successCount++;
             }
@@ -349,7 +371,7 @@ public static class DatabaseCommand
         Console.WriteLine("========================================");
     }
 
-    private static void BackupSingleDatabase(string host, string port, string username, string password, string databaseName, string outputPath)
+    private static void BackupSingleDatabase(string host, string port, string username, string password, string databaseName, string outputPath, string[]? excludeTableData = null)
     {
         var pgDumpPath = FindPgDump();
         if (pgDumpPath == null)
@@ -357,10 +379,24 @@ public static class DatabaseCommand
             throw new Exception("pg_dump not found. Please ensure PostgreSQL is installed and pg_dump is in your PATH.");
         }
 
+        var arguments = $"-Fc -h \"{host}\" -p {port} -U \"{username}\" -d \"{databaseName}\" -f \"{outputPath}\"";
+
+        // Add --exclude-table-data options if specified
+        if (excludeTableData != null && excludeTableData.Length > 0)
+        {
+            foreach (var pattern in excludeTableData)
+            {
+                if (!string.IsNullOrWhiteSpace(pattern))
+                {
+                    arguments += $" --exclude-table-data \"{pattern}\"";
+                }
+            }
+        }
+
         var startInfo = new ProcessStartInfo
         {
             FileName = pgDumpPath,
-            Arguments = $"-Fc -h \"{host}\" -p {port} -U \"{username}\" -d \"{databaseName}\" -f \"{outputPath}\"",
+            Arguments = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
