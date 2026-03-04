@@ -10,4 +10,5 @@ public class DatabaseCommandOptions
     public string? Password { get; set; }
     public string? OutputPath { get; set; }
     public string? InputFile { get; set; }
+    public string[]? ExcludeTableData { get; set; }
 }
