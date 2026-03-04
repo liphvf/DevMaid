@@ -1,19 +1,37 @@
 using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 
 using DevMaid.CommandOptions;
+using DevMaid.Services;
+using DevMaid.Services.Logging;
 
 namespace DevMaid.Commands;
 
+/// <summary>
+/// Provides database utilities including backup and restore functionality.
+/// </summary>
 public static class DatabaseCommand
 {
+    /// <summary>
+    /// Builds the database command structure.
+    /// </summary>
+    /// <returns>The configured RootCommand.</returns>
     public static Command Build()
     {
-        var command = new Command("database", "Database utilities.");
+        var command = new Command("database", "Database utilities.")
+        {
+            BuildBackupCommand(),
+            BuildRestoreCommand()
+        };
 
+        return command;
+    }
+
+    private static Command BuildBackupCommand()
+    {
         var backupCommand = new Command("backup", "Create a backup of a PostgreSQL database using pg_dump.");
 
         var databaseNameArgument = new Argument<string>("database")
@@ -83,8 +101,11 @@ public static class DatabaseCommand
             Backup(options);
         });
 
-        command.Add(backupCommand);
+        return backupCommand;
+    }
 
+    private static Command BuildRestoreCommand()
+    {
         var restoreCommand = new Command("restore", "Restore a PostgreSQL database using pg_restore.");
 
         var restoreDatabaseNameArgument = new Argument<string>("database")
@@ -155,26 +176,109 @@ public static class DatabaseCommand
             Restore(options);
         });
 
-        command.Add(restoreCommand);
-
-        return command;
+        return restoreCommand;
     }
 
+    /// <summary>
+    /// Creates a backup of a PostgreSQL database.
+    /// </summary>
+    /// <param name="options">The backup options.</param>
     public static void Backup(DatabaseCommandOptions options)
     {
-        // Load default values from appsettings.json
-        var defaultHost = Program.AppSettings["Database:Host"];
-        var defaultPort = Program.AppSettings["Database:Port"];
-        var defaultUsername = Program.AppSettings["Database:Username"];
-        var defaultPassword = Program.AppSettings["Database:Password"];
+        var config = LoadAndValidateBackupConfiguration(options);
 
-        // Use provided values or fall back to defaults
-        var host = options.Host ?? defaultHost ?? "localhost";
-        var port = options.Port ?? defaultPort ?? "5432";
-        var username = options.Username ?? defaultUsername;
-        var password = options.Password ?? defaultPassword;
+        if (config.BackupAll)
+        {
+            BackupAllDatabases(config);
+        }
+        else
+        {
+            BackupSingleDatabase(config);
+        }
+    }
 
-        // Validate inputs
+    /// <summary>
+    /// Restores a PostgreSQL database from a backup.
+    /// </summary>
+    /// <param name="options">The restore options.</param>
+    public static void Restore(DatabaseCommandOptions options)
+    {
+        var config = LoadAndValidateRestoreConfiguration(options);
+
+        if (config.RestoreAll)
+        {
+            RestoreAllDatabases(config);
+        }
+        else
+        {
+            RestoreSingleDatabase(config);
+        }
+    }
+
+    private static DatabaseBackupConfig LoadAndValidateBackupConfiguration(DatabaseCommandOptions options)
+    {
+        var dbConfig = ConfigurationService.GetDatabaseConfig();
+
+        var host = options.Host ?? dbConfig.Host ?? DevMaidConstants.DefaultHost;
+        var port = options.Port ?? dbConfig.Port ?? DevMaidConstants.DefaultPort;
+        var username = options.Username ?? dbConfig.Username;
+        var password = options.Password ?? dbConfig.Password;
+
+        ValidateConnectionParameters(host, port, username);
+
+        var config = new DatabaseBackupConfig
+        {
+            Host = host,
+            Port = port,
+            Username = username,
+            Password = password,
+            DatabaseName = options.DatabaseName,
+            BackupAll = options.All,
+            ExcludeTableData = options.ExcludeTableData,
+            OutputPath = options.OutputPath
+        };
+
+        if (!config.BackupAll && string.IsNullOrWhiteSpace(config.DatabaseName))
+        {
+            throw new ArgumentException("Database name is required when --all is not specified.");
+        }
+
+        return config;
+    }
+
+    private static DatabaseRestoreConfig LoadAndValidateRestoreConfiguration(DatabaseCommandOptions options)
+    {
+        var dbConfig = ConfigurationService.GetDatabaseConfig();
+
+        var host = options.Host ?? dbConfig.Host ?? DevMaidConstants.DefaultHost;
+        var port = options.Port ?? dbConfig.Port ?? DevMaidConstants.DefaultPort;
+        var username = options.Username ?? dbConfig.Username;
+        var password = options.Password ?? dbConfig.Password;
+
+        ValidateConnectionParameters(host, port, username);
+
+        var config = new DatabaseRestoreConfig
+        {
+            Host = host,
+            Port = port,
+            Username = username,
+            Password = password,
+            DatabaseName = options.DatabaseName,
+            RestoreAll = options.All,
+            InputFile = options.InputFile,
+            OutputPath = options.OutputPath
+        };
+
+        if (!config.RestoreAll && string.IsNullOrWhiteSpace(config.DatabaseName))
+        {
+            throw new ArgumentException("Database name is required when --all is not specified.");
+        }
+
+        return config;
+    }
+
+    private static void ValidateConnectionParameters(string host, string port, string? username)
+    {
         if (!SecurityUtils.IsValidHost(host))
         {
             throw new ArgumentException($"Invalid host: '{host}'");
@@ -189,60 +293,30 @@ public static class DatabaseCommand
         {
             throw new ArgumentException($"Invalid username: '{username}'");
         }
+    }
 
-        // Check if --all flag is set
-        if (options.All)
-        {
-            BackupAllDatabases(host, port, username ?? string.Empty, password ?? string.Empty, options.OutputPath, options.ExcludeTableData);
-            return;
-        }
+    private static void BackupSingleDatabase(DatabaseBackupConfig config)
+    {
+        var password = GetPassword(config.Password);
 
-        if (string.IsNullOrWhiteSpace(options.DatabaseName))
-        {
-            throw new ArgumentException("Database name is required when --all is not specified.");
-        }
-
-        // Prompt for password if not provided
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            Console.Write("Enter password: ");
-            password = ReadPassword();
-            Console.WriteLine();
-        }
-
-        // Set output path
-        var outputPath = options.OutputPath;
+        var outputPath = config.OutputPath;
         if (string.IsNullOrWhiteSpace(outputPath))
         {
-            outputPath = $"{options.DatabaseName}.backup";
+            outputPath = $"{config.DatabaseName}{DevMaidConstants.BackupExtension}";
         }
 
-        Console.WriteLine($"Creating backup of database '{options.DatabaseName}'...");
-        Console.WriteLine($"Host: {host}:{port}");
-        Console.WriteLine($"Username: {username}");
-        Console.WriteLine($"Output: {outputPath}");
+        Logger.LogInformation("Creating backup of database '{DatabaseName}'...", config.DatabaseName);
+        Logger.LogInformation("Host: {Host}:{Port}", config.Host, config.Port);
+        Logger.LogInformation("Username: {Username}", config.Username);
+        Logger.LogInformation("Output: {Output}", Path.GetFullPath(outputPath));
 
-        // Build pg_dump command
-        var pgDumpPath = FindPgDump();
+        var pgDumpPath = PostgresBinaryLocator.FindPgDump();
         if (pgDumpPath == null)
         {
-            throw new Exception("pg_dump not found. Please ensure PostgreSQL is installed and pg_dump is in your PATH.");
+            throw new PostgresBinaryNotFoundException(DevMaidConstants.PgDumpExecutable);
         }
 
-        var arguments = $"-Fc -h \"{host}\" -p {port} -U \"{username}\" -d \"{options.DatabaseName}\" -f \"{outputPath}\"";
-
-        // Add --exclude-table-data options if specified
-        if (options.ExcludeTableData != null && options.ExcludeTableData.Length > 0)
-        {
-            foreach (var pattern in options.ExcludeTableData)
-            {
-                if (!string.IsNullOrWhiteSpace(pattern))
-                {
-                    arguments += $" --exclude-table-data \"{pattern}\"";
-                    Console.WriteLine($"Excluding table data matching pattern: {pattern}");
-                }
-            }
-        }
+        var arguments = BuildPgDumpArguments(config, outputPath);
 
         var startInfo = new ProcessStartInfo
         {
@@ -254,7 +328,6 @@ public static class DatabaseCommand
             CreateNoWindow = true
         };
 
-        // Set PGPASSWORD environment variable
         startInfo.Environment["PGPASSWORD"] = password;
 
         try
@@ -272,14 +345,14 @@ public static class DatabaseCommand
 
             if (process.ExitCode != 0)
             {
-                throw new Exception($"pg_dump failed with exit code {process.ExitCode}. Error: {error}");
+                throw new BackupFailedException($"pg_dump failed with exit code {process.ExitCode}. Error: {error}");
             }
 
-            Console.WriteLine($"Backup created successfully at: {Path.GetFullPath(outputPath)}");
+            Logger.LogInformation("Backup created successfully at: {FullPath}", Path.GetFullPath(outputPath));
 
             if (!string.IsNullOrWhiteSpace(output))
             {
-                Console.WriteLine(output);
+                Logger.LogDebug(output);
             }
         }
         finally
@@ -289,109 +362,91 @@ public static class DatabaseCommand
         }
     }
 
-    private static void BackupAllDatabases(string host, string port, string username, string password, string? outputPath, string[]? excludeTableData = null)
+    private static void BackupAllDatabases(DatabaseBackupConfig config)
     {
-        // Prompt for password if not provided
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            Console.Write("Enter password: ");
-            password = ReadPassword();
-            Console.WriteLine();
-        }
+        var password = GetPassword(config.Password);
 
-        Console.WriteLine("Listing all databases...");
-        Console.WriteLine($"Host: {host}:{port}");
-        Console.WriteLine($"Username: {username}");
+        Logger.LogInformation("Listing all databases...");
+        Logger.LogInformation("Host: {Host}:{Port}", config.Host, config.Port);
+        Logger.LogInformation("Username: {Username}", config.Username);
 
-        // Get list of all databases
-        var databases = ListAllDatabases(host, port, username, password);
+        var databases = PostgresDatabaseLister.ListAllDatabases(config.Host, config.Port, config.Username ?? string.Empty, password);
 
         if (databases.Count == 0)
         {
-            Console.WriteLine("No databases found.");
+            Logger.LogWarning("No databases found.");
             return;
         }
 
-        Console.WriteLine($"Found {databases.Count} databases:");
+        Logger.LogInformation("Found {Count} databases:", databases.Count);
         foreach (var db in databases)
         {
-            Console.WriteLine($"  - {db}");
+            Logger.LogInformation("  - {Database}", db);
         }
-        Console.WriteLine();
+        Logger.LogInformation(string.Empty);
 
-        // Set output directory
-        var outputDirectory = outputPath;
+        var outputDirectory = config.OutputPath;
         if (string.IsNullOrWhiteSpace(outputDirectory))
         {
             outputDirectory = Directory.GetCurrentDirectory();
         }
 
-        // Create output directory if it doesn't exist
         if (!Directory.Exists(outputDirectory))
         {
             Directory.CreateDirectory(outputDirectory);
-            Console.WriteLine($"Created output directory: {outputDirectory}");
+            Logger.LogInformation("Created output directory: {Directory}", outputDirectory);
         }
 
-        Console.WriteLine($"Output directory: {Path.GetFullPath(outputDirectory)}");
-        Console.WriteLine();
+        Logger.LogInformation("Output directory: {FullPath}", Path.GetFullPath(outputDirectory));
+        Logger.LogInformation(string.Empty);
 
-        // Backup each database
         var successCount = 0;
         var failureCount = 0;
 
         foreach (var database in databases)
         {
-            var dumpPath = Path.Combine(outputDirectory, $"{database}.dump");
-            
-            Console.WriteLine($"Backing up database '{database}'...");
-            
+            var dumpPath = Path.Combine(outputDirectory, $"{database}{DevMaidConstants.DumpExtension}");
+
+            Logger.LogInformation("Backing up database '{Database}'...", database);
+
             try
             {
-                BackupSingleDatabase(host, port, username, password, database, dumpPath, excludeTableData);
-                Console.WriteLine($"✓ Backup created successfully: {database}.dump");
+                var singleConfig = new DatabaseBackupConfig
+                {
+                    Host = config.Host,
+                    Port = config.Port,
+                    Username = config.Username,
+                    Password = password,
+                    DatabaseName = database,
+                    ExcludeTableData = config.ExcludeTableData,
+                    OutputPath = dumpPath
+                };
+
+                BackupSingleDatabaseInternal(singleConfig);
+                Logger.LogInformation("✓ Backup created successfully: {File}", $"{database}{DevMaidConstants.DumpExtension}");
                 successCount++;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"✗ Failed to backup database '{database}': {ex.Message}");
+                Logger.LogError("✗ Failed to backup database '{Database}': {Message}", null, database, ex.Message);
                 failureCount++;
             }
-            
-            Console.WriteLine();
+
+            Logger.LogInformation(string.Empty);
         }
 
-        // Summary
-        Console.WriteLine("========================================");
-        Console.WriteLine("Backup Summary:");
-        Console.WriteLine($"  Successful: {successCount}");
-        Console.WriteLine($"  Failed: {failureCount}");
-        Console.WriteLine($"  Total: {databases.Count}");
-        Console.WriteLine($"  Output directory: {Path.GetFullPath(outputDirectory)}");
-        Console.WriteLine("========================================");
+        PrintBackupSummary(successCount, failureCount, databases.Count, outputDirectory);
     }
 
-    private static void BackupSingleDatabase(string host, string port, string username, string password, string databaseName, string outputPath, string[]? excludeTableData = null)
+    private static void BackupSingleDatabaseInternal(DatabaseBackupConfig config)
     {
-        var pgDumpPath = FindPgDump();
+        var pgDumpPath = PostgresBinaryLocator.FindPgDump();
         if (pgDumpPath == null)
         {
-            throw new Exception("pg_dump not found. Please ensure PostgreSQL is installed and pg_dump is in your PATH.");
+            throw new PostgresBinaryNotFoundException(DevMaidConstants.PgDumpExecutable);
         }
 
-        var arguments = $"-Fc -h \"{host}\" -p {port} -U \"{username}\" -d \"{databaseName}\" -f \"{outputPath}\"";
-
-        // Add --exclude-table-data options if specified
-        if (excludeTableData != null && excludeTableData.Length > 0)
-        {
-            foreach (var pattern in excludeTableData)
-            {
-                if (!string.IsNullOrWhiteSpace(pattern))
-                {
-                    arguments += $" --exclude-table-data \"{pattern}\"";
-                }
-            }
-        }
+        var arguments = BuildPgDumpArguments(config, config.OutputPath);
 
         var startInfo = new ProcessStartInfo
         {
@@ -403,7 +458,7 @@ public static class DatabaseCommand
             CreateNoWindow = true
         };
 
-        startInfo.Environment["PGPASSWORD"] = password;
+        startInfo.Environment["PGPASSWORD"] = config.Password;
 
         try
         {
@@ -420,12 +475,12 @@ public static class DatabaseCommand
 
             if (process.ExitCode != 0)
             {
-                throw new Exception($"pg_dump failed with exit code {process.ExitCode}. Error: {error}");
+                throw new BackupFailedException($"pg_dump failed with exit code {process.ExitCode}. Error: {error}");
             }
 
             if (!string.IsNullOrWhiteSpace(output))
             {
-                Console.Write(output);
+                Logger.LogDebug(output);
             }
         }
         finally
@@ -434,369 +489,63 @@ public static class DatabaseCommand
         }
     }
 
-    private static string? FindPgDump()
+    private static string BuildPgDumpArguments(DatabaseBackupConfig config, string outputPath)
     {
-        // Try to find pg_dump in PATH
-        var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
+        var arguments = new StringBuilder($"-Fc -h \"{config.Host}\" -p {config.Port} -U \"{config.Username}\" -d \"{config.DatabaseName}\" -f \"{outputPath}\"");
 
-        foreach (var path in paths)
+        if (config.ExcludeTableData != null && config.ExcludeTableData.Length > 0)
         {
-            var pgDumpPath = Path.Combine(path, "pg_dump.exe");
-            if (File.Exists(pgDumpPath))
+            foreach (var pattern in config.ExcludeTableData)
             {
-                return pgDumpPath;
-            }
-
-            pgDumpPath = Path.Combine(path, "pg_dump");
-            if (File.Exists(pgDumpPath))
-            {
-                return pgDumpPath;
-            }
-        }
-
-        // Try common PostgreSQL installation paths on Windows
-        var commonPaths = new[]
-        {
-            @"C:\Program Files\PostgreSQL\*\bin\pg_dump.exe",
-            @"C:\PostgreSQL\*\bin\pg_dump.exe"
-        };
-
-        foreach (var pattern in commonPaths)
-        {
-            var directory = Path.GetDirectoryName(pattern);
-            if (directory != null && Directory.Exists(directory))
-            {
-                var files = Directory.GetFiles(directory, "pg_dump.exe", SearchOption.AllDirectories);
-                if (files.Length > 0)
+                if (!string.IsNullOrWhiteSpace(pattern))
                 {
-                    return files[0];
+                    arguments.Append($" --exclude-table-data \"{pattern}\"");
+                    Logger.LogInformation("Excluding table data matching pattern: {Pattern}", pattern);
                 }
             }
         }
 
-        return null;
+        return arguments.ToString();
     }
 
-    private static string? FindPsql()
+    private static void RestoreSingleDatabase(DatabaseRestoreConfig config)
     {
-        // Try to find psql in PATH
-        var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
+        var password = GetPassword(config.Password);
 
-        foreach (var path in paths)
-        {
-            var psqlPath = Path.Combine(path, "psql.exe");
-            if (File.Exists(psqlPath))
-            {
-                return psqlPath;
-            }
-
-            psqlPath = Path.Combine(path, "psql");
-            if (File.Exists(psqlPath))
-            {
-                return psqlPath;
-            }
-        }
-
-        // Try common PostgreSQL installation paths on Windows
-        var commonPaths = new[]
-        {
-            @"C:\Program Files\PostgreSQL\*\bin\psql.exe",
-            @"C:\PostgreSQL\*\bin\psql.exe"
-        };
-
-        foreach (var pattern in commonPaths)
-        {
-            var directory = Path.GetDirectoryName(pattern);
-            if (directory != null && Directory.Exists(directory))
-            {
-                var files = Directory.GetFiles(directory, "psql.exe", SearchOption.AllDirectories);
-                if (files.Length > 0)
-                {
-                    return files[0];
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static List<string> ListAllDatabases(string host, string port, string username, string password)
-    {
-        var psqlPath = FindPsql();
-        if (psqlPath == null)
-        {
-            throw new Exception("psql not found. Please ensure PostgreSQL is installed and psql is in your PATH.");
-        }
-
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = psqlPath,
-            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        startInfo.Environment["PGPASSWORD"] = password;
-
-        try
-        {
-            using var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                throw new Exception("Failed to start psql process.");
-            }
-
-            var output = process.StandardOutput.ReadToEnd();
-            var error = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                throw new Exception($"psql failed with exit code {process.ExitCode}. Error: {error}");
-            }
-
-            // Parse output to get database names
-            var databases = new List<string>();
-            var lines = output.Split('\n');
-            
-            foreach (var line in lines)
-            {
-                var trimmedLine = line.Trim();
-                // Skip header lines and empty lines
-                if (string.IsNullOrWhiteSpace(trimmedLine) || 
-                    trimmedLine.StartsWith("datname") || 
-                    trimmedLine.StartsWith("---") ||
-                    trimmedLine.StartsWith("("))
-                {
-                    continue;
-                }
-
-                // Remove trailing | and whitespace
-                if (trimmedLine.EndsWith("|"))
-                {
-                    trimmedLine = trimmedLine.Substring(0, trimmedLine.Length - 1).Trim();
-                }
-
-                if (!string.IsNullOrWhiteSpace(trimmedLine))
-                {
-                    databases.Add(trimmedLine);
-                }
-            }
-
-            return databases;
-        }
-        finally
-        {
-            startInfo.Environment["PGPASSWORD"] = string.Empty;
-        }
-    }
-
-    private static string ReadPassword()
-    {
-        var password = string.Empty;
-        var consoleKeyInfo = Console.ReadKey(true);
-
-        while (consoleKeyInfo.Key != ConsoleKey.Enter)
-        {
-            if (consoleKeyInfo.Key == ConsoleKey.Backspace)
-            {
-                if (password.Length > 0)
-                {
-                    password = password.Substring(0, password.Length - 1);
-                }
-            }
-            else if (!char.IsControl(consoleKeyInfo.KeyChar))
-            {
-                password += consoleKeyInfo.KeyChar;
-            }
-
-            consoleKeyInfo = Console.ReadKey(true);
-        }
-
-        return password;
-    }
-
-    public static void Restore(DatabaseCommandOptions options)
-    {
-        // Load default values from appsettings.json
-        var defaultHost = Program.AppSettings["Database:Host"];
-        var defaultPort = Program.AppSettings["Database:Port"];
-        var defaultUsername = Program.AppSettings["Database:Username"];
-        var defaultPassword = Program.AppSettings["Database:Password"];
-
-        // Use provided values or fall back to defaults
-        var host = options.Host ?? defaultHost ?? "localhost";
-        var port = options.Port ?? defaultPort ?? "5432";
-        var username = options.Username ?? defaultUsername;
-        var password = options.Password ?? defaultPassword;
-
-        // Validate inputs
-        if (!SecurityUtils.IsValidHost(host))
-        {
-            throw new ArgumentException($"Invalid host: '{host}'");
-        }
-
-        if (!SecurityUtils.IsValidPort(port))
-        {
-            throw new ArgumentException($"Invalid port: '{port}'. Port must be between 1 and 65535.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(username) && !SecurityUtils.IsValidUsername(username))
-        {
-            throw new ArgumentException($"Invalid username: '{username}'");
-        }
-
-        // Check if --all flag is set
-        if (options.All)
-        {
-            RestoreAllDatabases(host, port, username ?? string.Empty, password ?? string.Empty, options.OutputPath);
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(options.DatabaseName))
-        {
-            throw new ArgumentException("Database name is required when --all is not specified.");
-        }
-
-        // Prompt for password if not provided
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            Console.Write("Enter password: ");
-            password = ReadPassword();
-            Console.WriteLine();
-        }
-
-        // Set input file path
-        var inputPath = options.InputFile;
+        var inputPath = config.InputFile;
         if (string.IsNullOrWhiteSpace(inputPath))
         {
-            inputPath = $"{options.DatabaseName}.dump";
+            inputPath = $"{config.DatabaseName}{DevMaidConstants.DumpExtension}";
         }
 
-        // Validate input path to prevent path traversal
         var fullPath = Path.GetFullPath(inputPath);
         if (!SecurityUtils.IsValidPath(fullPath))
         {
-            throw new ArgumentException($"Invalid input path: '{inputPath}'. Path traversal not allowed.");
+            throw new PathTraversalException(inputPath);
         }
 
         if (!File.Exists(fullPath))
         {
-            throw new FileNotFoundException($"Dump file not found: {fullPath}");
+            throw new DevMaidFileNotFoundException(fullPath);
         }
 
-        inputPath = fullPath;
+        Logger.LogInformation("Restoring database '{DatabaseName}'...", config.DatabaseName);
+        Logger.LogInformation("Host: {Host}:{Port}", config.Host, config.Port);
+        Logger.LogInformation("Username: {Username}", config.Username);
+        Logger.LogInformation("Input: {FullPath}", Path.GetFullPath(fullPath));
 
-        Console.WriteLine($"Restoring database '{options.DatabaseName}'...");
-        Console.WriteLine($"Host: {host}:{port}");
-        Console.WriteLine($"Username: {username}");
-        Console.WriteLine($"Input: {Path.GetFullPath(inputPath)}");
-
-        RestoreSingleDatabase(host, port, username ?? string.Empty, password ?? string.Empty, options.DatabaseName, inputPath);
-    }
-
-    private static void RestoreAllDatabases(string host, string port, string username, string password, string? directoryPath)
-    {
-        // Prompt for password if not provided
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            Console.Write("Enter password: ");
-            password = ReadPassword();
-            Console.WriteLine();
-        }
-
-        // Set input directory
-        var inputDirectory = directoryPath;
-        if (string.IsNullOrWhiteSpace(inputDirectory))
-        {
-            inputDirectory = Directory.GetCurrentDirectory();
-        }
-
-        if (!Directory.Exists(inputDirectory))
-        {
-            throw new DirectoryNotFoundException($"Directory not found: {Path.GetFullPath(inputDirectory)}");
-        }
-
-        Console.WriteLine($"Scanning for .dump files in: {Path.GetFullPath(inputDirectory)}");
-
-        // Find all .dump files
-        var dumpFiles = Directory.GetFiles(inputDirectory, "*.dump", SearchOption.TopDirectoryOnly);
-
-        if (dumpFiles.Length == 0)
-        {
-            Console.WriteLine("No .dump files found in the directory.");
-            return;
-        }
-
-        Console.WriteLine($"Found {dumpFiles.Length} .dump files:");
-        foreach (var file in dumpFiles)
-        {
-            Console.WriteLine($"  - {Path.GetFileName(file)}");
-        }
-        Console.WriteLine();
-
-        // Restore each database
-        var successCount = 0;
-        var failureCount = 0;
-
-        foreach (var dumpFile in dumpFiles)
-        {
-            var databaseName = Path.GetFileNameWithoutExtension(dumpFile);
-            
-            // Validate database name to prevent SQL injection
-            if (!SecurityUtils.IsValidPostgreSQLIdentifier(databaseName))
-            {
-                Console.WriteLine($"✗ Skipping invalid database name: '{databaseName}'");
-                failureCount++;
-                continue;
-            }
-            
-            Console.WriteLine($"Restoring database '{databaseName}'...");
-            
-            try
-            {
-                RestoreSingleDatabase(host, port, username, password, databaseName, dumpFile);
-                Console.WriteLine($"✓ Database restored successfully: {databaseName}");
-                successCount++;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"✗ Failed to restore database '{databaseName}': {ex.Message}");
-                failureCount++;
-            }
-            
-            Console.WriteLine();
-        }
-
-        // Summary
-        Console.WriteLine("========================================");
-        Console.WriteLine("Restore Summary:");
-        Console.WriteLine($"  Successful: {successCount}");
-        Console.WriteLine($"  Failed: {failureCount}");
-        Console.WriteLine($"  Total: {dumpFiles.Length}");
-        Console.WriteLine($"  Input directory: {Path.GetFullPath(inputDirectory)}");
-        Console.WriteLine("========================================");
-    }
-
-    private static void RestoreSingleDatabase(string host, string port, string username, string password, string databaseName, string inputPath)
-    {
-        var pgRestorePath = FindPgRestore();
+        var pgRestorePath = PostgresBinaryLocator.FindPgRestore();
         if (pgRestorePath == null)
         {
-            throw new Exception("pg_restore not found. Please ensure PostgreSQL is installed and pg_restore is in your PATH.");
+            throw new PostgresBinaryNotFoundException(DevMaidConstants.PgRestoreExecutable);
         }
 
-        // First, create the database if it doesn't exist
-        CreateDatabaseIfNeeded(host, port, username, password, databaseName);
+        CreateDatabaseIfNeeded(config.Host, config.Port, config.Username ?? string.Empty, password, config.DatabaseName);
 
-        // Build pg_restore command
         var startInfo = new ProcessStartInfo
         {
             FileName = pgRestorePath,
-            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d \"{databaseName}\" -c \"{inputPath}\"",
+            Arguments = $"-h \"{config.Host}\" -p {config.Port} -U \"{config.Username}\" -d \"{config.DatabaseName}\" -c \"{fullPath}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -820,14 +569,14 @@ public static class DatabaseCommand
 
             if (process.ExitCode != 0)
             {
-                throw new Exception($"pg_restore failed with exit code {process.ExitCode}. Error: {error}");
+                throw new RestoreFailedException($"pg_restore failed with exit code {process.ExitCode}. Error: {error}");
             }
 
-            Console.WriteLine($"Database '{databaseName}' restored successfully from: {Path.GetFullPath(inputPath)}");
+            Logger.LogInformation("Database '{DatabaseName}' restored successfully from: {FullPath}", config.DatabaseName, Path.GetFullPath(fullPath));
 
             if (!string.IsNullOrWhiteSpace(output))
             {
-                Console.WriteLine(output);
+                Logger.LogDebug(output);
             }
         }
         finally
@@ -836,130 +585,268 @@ public static class DatabaseCommand
         }
     }
 
-    private static string? FindPgRestore()
+    private static void RestoreAllDatabases(DatabaseRestoreConfig config)
     {
-        // Try to find pg_restore in PATH
-        var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
+        var password = GetPassword(config.Password);
 
-        foreach (var path in paths)
+        var inputDirectory = config.OutputPath;
+        if (string.IsNullOrWhiteSpace(inputDirectory))
         {
-            var pgRestorePath = Path.Combine(path, "pg_restore.exe");
-            if (File.Exists(pgRestorePath))
-            {
-                return pgRestorePath;
-            }
-
-            pgRestorePath = Path.Combine(path, "pg_restore");
-            if (File.Exists(pgRestorePath))
-            {
-                return pgRestorePath;
-            }
+            inputDirectory = Directory.GetCurrentDirectory();
         }
 
-        // Try common PostgreSQL installation paths on Windows
-        var commonPaths = new[]
+        if (!Directory.Exists(inputDirectory))
         {
-            @"C:\Program Files\PostgreSQL\*\bin\pg_restore.exe",
-            @"C:\PostgreSQL\*\bin\pg_restore.exe"
-        };
+            throw new DirectoryNotFoundException($"Directory not found: {Path.GetFullPath(inputDirectory)}");
+        }
 
-        foreach (var pattern in commonPaths)
+        Logger.LogInformation("Scanning for {Extension} files in: {FullPath}", DevMaidConstants.DumpExtension, Path.GetFullPath(inputDirectory));
+
+        var dumpFiles = Directory.GetFiles(inputDirectory, $"*{DevMaidConstants.DumpExtension}", SearchOption.TopDirectoryOnly);
+
+        if (dumpFiles.Length == 0)
         {
-            var directory = Path.GetDirectoryName(pattern);
-            if (directory != null && Directory.Exists(directory))
+            Logger.LogWarning("No {Extension} files found in the directory.", DevMaidConstants.DumpExtension);
+            return;
+        }
+
+        Logger.LogInformation("Found {Count} {Extension} files:", dumpFiles.Length, DevMaidConstants.DumpExtension);
+        foreach (var file in dumpFiles)
+        {
+            Logger.LogInformation("  - {File}", Path.GetFileName(file));
+        }
+        Logger.LogInformation(string.Empty);
+
+        var successCount = 0;
+        var failureCount = 0;
+
+        foreach (var dumpFile in dumpFiles)
+        {
+            var databaseName = Path.GetFileNameWithoutExtension(dumpFile);
+
+            if (!SecurityUtils.IsValidPostgreSQLIdentifier(databaseName))
             {
-                var files = Directory.GetFiles(directory, "pg_restore.exe", SearchOption.AllDirectories);
-                if (files.Length > 0)
+                Logger.LogWarning("✗ Skipping invalid database name: '{Database}'", databaseName);
+                failureCount++;
+                continue;
+            }
+
+            Logger.LogInformation("Restoring database '{Database}'...", databaseName);
+
+            try
+            {
+                var singleConfig = new DatabaseRestoreConfig
                 {
-                    return files[0];
-                }
+                    Host = config.Host,
+                    Port = config.Port,
+                    Username = config.Username,
+                    Password = password,
+                    DatabaseName = databaseName,
+                    InputFile = dumpFile
+                };
+
+                RestoreSingleDatabaseInternal(singleConfig);
+                Logger.LogInformation("✓ Database restored successfully: {Database}", databaseName);
+                successCount++;
             }
+            catch (Exception ex)
+            {
+                Logger.LogError("✗ Failed to restore database '{Database}': {Message}", null, databaseName, ex.Message);
+                failureCount++;
+            }
+
+            Logger.LogInformation(string.Empty);
         }
 
-        return null;
+        PrintRestoreSummary(successCount, failureCount, dumpFiles.Length, inputDirectory);
     }
 
-private static void CreateDatabaseIfNeeded(string host, string port, string username, string password, string databaseName)
+    private static void RestoreSingleDatabaseInternal(DatabaseRestoreConfig config)
     {
-        var psqlPath = FindPsql();
-        if (psqlPath == null)
+        var pgRestorePath = PostgresBinaryLocator.FindPgRestore();
+        if (pgRestorePath == null)
         {
-            throw new Exception("psql not found. Please ensure PostgreSQL is installed and psql is in your PATH.");
+            throw new PostgresBinaryNotFoundException(DevMaidConstants.PgRestoreExecutable);
         }
 
-        // Validate database name to prevent SQL injection
-        if (string.IsNullOrWhiteSpace(databaseName) || !SecurityUtils.IsValidPostgreSQLIdentifier(databaseName))
-        {
-            throw new ArgumentException($"Invalid database name: '{databaseName}'. Database name must contain only letters, numbers, and underscores, and must not start with a number.");
-        }
+        CreateDatabaseIfNeeded(config.Host, config.Port, config.Username ?? string.Empty, config.Password, config.DatabaseName);
 
-        // Check if database exists using escaped string
-        var checkStartInfo = new ProcessStartInfo
+        var startInfo = new ProcessStartInfo
         {
-            FileName = psqlPath,
-            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"SELECT 1 FROM pg_database WHERE datname = '{SecurityUtils.EscapeSqlString(databaseName)}';\"",
+            FileName = pgRestorePath,
+            Arguments = $"-h \"{config.Host}\" -p {config.Port} -U \"{config.Username}\" -d \"{config.DatabaseName}\" -c \"{config.InputFile}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
 
-        checkStartInfo.Environment["PGPASSWORD"] = password;
+        startInfo.Environment["PGPASSWORD"] = config.Password;
 
         try
         {
-            using var checkProcess = Process.Start(checkStartInfo);
-            if (checkProcess == null)
+            using var process = Process.Start(startInfo);
+            if (process == null)
             {
-                throw new Exception("Failed to start psql process.");
+                throw new Exception("Failed to start pg_restore process.");
             }
 
-            var output = checkProcess.StandardOutput.ReadToEnd();
-            var error = checkProcess.StandardError.ReadToEnd();
-            checkProcess.WaitForExit();
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
 
-            // If database exists (output contains "1"), we skip creation
-            if (output.Contains("1") && !output.Contains("0 rows"))
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
             {
-                Console.WriteLine($"Database '{databaseName}' already exists. Restoring data...");
-                return;
+                throw new RestoreFailedException($"pg_restore failed with exit code {process.ExitCode}. Error: {error}");
             }
 
-            // Create database using escaped identifier
-            Console.WriteLine($"Creating database '{databaseName}'...");
-
-            var createStartInfo = new ProcessStartInfo
+            if (!string.IsNullOrWhiteSpace(output))
             {
-                FileName = psqlPath,
-                Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"CREATE DATABASE \\\"{SecurityUtils.EscapeSqlString(databaseName)}\\\";\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            createStartInfo.Environment["PGPASSWORD"] = password;
-
-            using var createProcess = Process.Start(createStartInfo);
-            if (createProcess == null)
-            {
-                throw new Exception("Failed to start psql process.");
+                Logger.LogDebug(output);
             }
-
-            var createOutput = createProcess.StandardOutput.ReadToEnd();
-            var createError = createProcess.StandardError.ReadToEnd();
-            createProcess.WaitForExit();
-
-            if (createProcess.ExitCode != 0)
-            {
-                throw new Exception($"Failed to create database. Error: {createError}");
-            }
-
-            Console.WriteLine($"Database '{databaseName}' created successfully.");
         }
         finally
         {
-            checkStartInfo.Environment["PGPASSWORD"] = string.Empty;
+            startInfo.Environment["PGPASSWORD"] = string.Empty;
         }
     }
+
+    private static void CreateDatabaseIfNeeded(string host, string port, string username, string password, string databaseName)
+    {
+        if (!SecurityUtils.IsValidPostgreSQLIdentifier(databaseName))
+        {
+            throw new ArgumentException($"Invalid database name: '{databaseName}'");
+        }
+
+        var psqlPath = PostgresBinaryLocator.FindPsql();
+        if (psqlPath == null)
+        {
+            throw new PostgresBinaryNotFoundException(DevMaidConstants.PsqlExecutable);
+        }
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = psqlPath,
+            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"SELECT 1 FROM pg_database WHERE datname = '{databaseName}'\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        startInfo.Environment["PGPASSWORD"] = password;
+
+        try
+        {
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                throw new Exception("Failed to start psql process.");
+            }
+
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+
+            process.WaitForExit();
+
+            // If database doesn't exist (exit code 3), create it
+            if (process.ExitCode == 3)
+            {
+                var createStartInfo = new ProcessStartInfo
+                {
+                    FileName = psqlPath,
+                    Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"CREATE DATABASE \\\"{databaseName}\\\"\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                createStartInfo.Environment["PGPASSWORD"] = password;
+
+                using var createProcess = Process.Start(createStartInfo);
+                if (createProcess == null)
+                {
+                    throw new Exception("Failed to start psql process.");
+                }
+
+                createProcess.WaitForExit();
+
+                if (createProcess.ExitCode != 0)
+                {
+                    var createError = createProcess.StandardError.ReadToEnd();
+                    throw new Exception($"Failed to create database: {createError}");
+                }
+            }
+        }
+        finally
+        {
+            startInfo.Environment["PGPASSWORD"] = string.Empty;
+        }
+    }
+
+    private static string GetPassword(string? password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            Console.Write("Enter password: ");
+            password = PostgresPasswordHandler.ReadPasswordInteractively();
+            Console.WriteLine();
+        }
+
+        return password;
+    }
+
+    private static void PrintBackupSummary(int successCount, int failureCount, int totalCount, string outputDirectory)
+    {
+        Logger.LogInformation("========================================");
+        Logger.LogInformation("Backup Summary:");
+        Logger.LogInformation("  Successful: {Success}", successCount);
+        Logger.LogInformation("  Failed: {Failure}", failureCount);
+        Logger.LogInformation("  Total: {Total}", totalCount);
+        Logger.LogInformation("  Output directory: {Directory}", Path.GetFullPath(outputDirectory));
+        Logger.LogInformation("========================================");
+    }
+
+    private static void PrintRestoreSummary(int successCount, int failureCount, int totalCount, string inputDirectory)
+    {
+        Logger.LogInformation("========================================");
+        Logger.LogInformation("Restore Summary:");
+        Logger.LogInformation("  Successful: {Success}", successCount);
+        Logger.LogInformation("  Failed: {Failure}", failureCount);
+        Logger.LogInformation("  Total: {Total}", totalCount);
+        Logger.LogInformation("  Input directory: {Directory}", Path.GetFullPath(inputDirectory));
+        Logger.LogInformation("========================================");
+    }
+}
+
+/// <summary>
+/// Configuration for database backup operations.
+/// </summary>
+internal record DatabaseBackupConfig
+{
+    public string Host { get; init; } = string.Empty;
+    public string Port { get; init; } = string.Empty;
+    public string? Username { get; init; }
+    public string? Password { get; init; }
+    public string DatabaseName { get; init; } = string.Empty;
+    public bool BackupAll { get; init; }
+    public string[]? ExcludeTableData { get; init; }
+    public string? OutputPath { get; init; }
+}
+
+/// <summary>
+/// Configuration for database restore operations.
+/// </summary>
+internal record DatabaseRestoreConfig
+{
+    public string Host { get; init; } = string.Empty;
+    public string Port { get; init; } = string.Empty;
+    public string? Username { get; init; }
+    public string? Password { get; init; }
+    public string DatabaseName { get; init; } = string.Empty;
+    public bool RestoreAll { get; init; }
+    public string? InputFile { get; init; }
+    public string? OutputPath { get; init; }
 }

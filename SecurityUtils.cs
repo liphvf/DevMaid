@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace DevMaid;
@@ -9,13 +10,37 @@ namespace DevMaid;
 /// </summary>
 public static class SecurityUtils
 {
+    // Path traversal patterns to detect
+    private static readonly string[] PathTraversalPatterns =
+    [
+        "..",
+        "../",
+        "..\\",
+        "%2e%2e",
+        "%2e%2e%2f",
+        "%2e%2e%5c",
+        "..%2f",
+        "..%5c",
+        "%252e%252e",
+        "....//",
+        "..\\..\\"
+    ];
+
     /// <summary>
     /// Validates if a string is a valid PostgreSQL identifier.
     /// PostgreSQL identifiers: letters, digits, underscores, cannot start with digit unless quoted.
     /// </summary>
+    /// <param name="identifier">The identifier to validate.</param>
+    /// <returns>True if the identifier is valid, false otherwise.</returns>
     public static bool IsValidPostgreSQLIdentifier(string identifier)
     {
         if (string.IsNullOrWhiteSpace(identifier))
+        {
+            return false;
+        }
+
+        // Check maximum length (PostgreSQL limit is 63 characters)
+        if (identifier.Length > 63)
         {
             return false;
         }
@@ -28,6 +53,8 @@ public static class SecurityUtils
     /// <summary>
     /// Escapes a string for safe use in SQL queries.
     /// </summary>
+    /// <param name="input">The input string to escape.</param>
+    /// <returns>The escaped string.</returns>
     public static string EscapeSqlString(string input)
     {
         if (string.IsNullOrEmpty(input))
@@ -42,6 +69,9 @@ public static class SecurityUtils
     /// <summary>
     /// Validates if a path is safe and doesn't contain path traversal attacks.
     /// </summary>
+    /// <param name="path">The path to validate.</param>
+    /// <param name="basePath">Optional base path to validate against.</param>
+    /// <returns>True if the path is valid, false otherwise.</returns>
     public static bool IsValidPath(string path, string? basePath = null)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -51,6 +81,26 @@ public static class SecurityUtils
 
         try
         {
+            // Check for path traversal patterns
+            var lowerPath = path.ToLowerInvariant();
+            if (PathTraversalPatterns.Any(pattern => lowerPath.Contains(pattern)))
+            {
+                return false;
+            }
+
+            // Check for null bytes (can bypass security checks)
+            if (path.Contains('\0'))
+            {
+                return false;
+            }
+
+            // Check for invalid characters
+            var invalidChars = Path.GetInvalidPathChars();
+            if (path.IndexOfAny(invalidChars) >= 0)
+            {
+                return false;
+            }
+
             // Get full path
             var fullPath = Path.GetFullPath(path);
 
@@ -68,10 +118,26 @@ public static class SecurityUtils
                 }
             }
 
-            // Check for null bytes (can bypass security checks)
-            if (path.Contains('\0'))
+            // Additional check: ensure the path doesn't resolve to sensitive system locations
+            var sensitivePaths = new[]
             {
-                return false;
+                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.System),
+                "/etc",
+                "/usr/bin",
+                "/usr/sbin",
+                "/bin",
+                "/sbin"
+            };
+
+            foreach (var sensitivePath in sensitivePaths)
+            {
+                if (!string.IsNullOrEmpty(sensitivePath) && 
+                    fullPath.StartsWith(sensitivePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
             }
 
             return true;
@@ -85,6 +151,8 @@ public static class SecurityUtils
     /// <summary>
     /// Validates if a port number is within valid range.
     /// </summary>
+    /// <param name="port">The port string to validate.</param>
+    /// <returns>True if the port is valid, false otherwise.</returns>
     public static bool IsValidPort(string port)
     {
         if (string.IsNullOrWhiteSpace(port))
@@ -98,6 +166,8 @@ public static class SecurityUtils
     /// <summary>
     /// Validates if a host is a valid hostname or IP address.
     /// </summary>
+    /// <param name="host">The host to validate.</param>
+    /// <returns>True if the host is valid, false otherwise.</returns>
     public static bool IsValidHost(string host)
     {
         if (string.IsNullOrWhiteSpace(host))
@@ -111,6 +181,12 @@ public static class SecurityUtils
             return false;
         }
 
+        // Check maximum length
+        if (host.Length > 253)
+        {
+            return false;
+        }
+
         // Basic validation for hostname or IP
         // Allow: localhost, domain names, IPv4, IPv6
         var pattern = @"^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$|^localhost$|^(\d{1,3}\.){3}\d{1,3}$|^(\[?[0-9a-fA-F:]+\]?)$";
@@ -120,9 +196,17 @@ public static class SecurityUtils
     /// <summary>
     /// Validates if a username contains only safe characters.
     /// </summary>
+    /// <param name="username">The username to validate.</param>
+    /// <returns>True if the username is valid, false otherwise.</returns>
     public static bool IsValidUsername(string username)
     {
         if (string.IsNullOrWhiteSpace(username))
+        {
+            return false;
+        }
+
+        // Check maximum length
+        if (username.Length > 63)
         {
             return false;
         }
@@ -134,6 +218,8 @@ public static class SecurityUtils
     /// <summary>
     /// Sanitizes a file path argument for command line usage.
     /// </summary>
+    /// <param name="argument">The argument to sanitize.</param>
+    /// <returns>The sanitized argument.</returns>
     public static string SanitizeCommandLineArgument(string argument)
     {
         if (string.IsNullOrEmpty(argument))
@@ -149,6 +235,10 @@ public static class SecurityUtils
     /// <summary>
     /// Validates and resolves a safe output path within a base directory.
     /// </summary>
+    /// <param name="outputPath">The output path to resolve.</param>
+    /// <param name="baseDirectory">The base directory.</param>
+    /// <returns>The validated and resolved output path.</returns>
+    /// <exception cref="ArgumentException">Thrown when the output path is invalid.</exception>
     public static string GetSafeOutputPath(string outputPath, string baseDirectory)
     {
         if (string.IsNullOrWhiteSpace(outputPath))
@@ -179,5 +269,25 @@ public static class SecurityUtils
         {
             throw new ArgumentException($"Invalid output path: {ex.Message}", ex);
         }
+    }
+
+    /// <summary>
+    /// Validates if a database name is safe to use.
+    /// </summary>
+    /// <param name="databaseName">The database name to validate.</param>
+    /// <returns>True if the database name is valid, false otherwise.</returns>
+    public static bool IsValidDatabaseName(string databaseName)
+    {
+        return IsValidPostgreSQLIdentifier(databaseName);
+    }
+
+    /// <summary>
+    /// Validates if a table name is safe to use.
+    /// </summary>
+    /// <param name="tableName">The table name to validate.</param>
+    /// <returns>True if the table name is valid, false otherwise.</returns>
+    public static bool IsValidTableName(string tableName)
+    {
+        return IsValidPostgreSQLIdentifier(tableName);
     }
 }
