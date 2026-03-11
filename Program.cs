@@ -23,7 +23,8 @@ internal static class Program
             TuiCommand.Build(),
             DatabaseCommand.Build(),
             QueryCommand.Build(),
-            CleanCommand.Build()
+            CleanCommand.Build(),
+            WindowsFeaturesCommand.Build()
         };
 
         return rootCommand.Parse(args).Invoke();
