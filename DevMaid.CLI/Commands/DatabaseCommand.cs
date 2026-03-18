@@ -428,7 +428,7 @@ public static class DatabaseCommand
             }
             catch (Exception ex)
             {
-                Logger.LogError("✗ Failed to backup database '{Database}': {Message}", null, database, ex.Message);
+                Logger.LogError("✗ Failed to backup database '{Database}': {Message}", ex, database, ex.Message);
                 failureCount++;
             }
 
@@ -651,7 +651,7 @@ public static class DatabaseCommand
             }
             catch (Exception ex)
             {
-                Logger.LogError("✗ Failed to restore database '{Database}': {Message}", null, databaseName, ex.Message);
+                Logger.LogError("✗ Failed to restore database '{Database}': {Message}", ex, databaseName, ex.Message);
                 failureCount++;
             }
 
