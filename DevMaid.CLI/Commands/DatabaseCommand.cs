@@ -4,11 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using DevMaid.CommandOptions;
-using DevMaid.Services;
-using DevMaid.Services.Logging;
+using DevMaid.CLI.CommandOptions;
+using DevMaid.CLI.Services;
+using DevMaid.CLI.Services.Logging;
 
-namespace DevMaid.Commands;
+namespace DevMaid.CLI.Commands;
 
 /// <summary>
 /// Provides database utilities including backup and restore functionality.

@@ -2,7 +2,7 @@ using System;
 using System.CommandLine;
 using System.IO;
 
-namespace DevMaid.Commands;
+namespace DevMaid.CLI.Commands;
 
 public static class CleanCommand
 {

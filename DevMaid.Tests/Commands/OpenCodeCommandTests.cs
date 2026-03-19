@@ -34,7 +34,7 @@ public class OpenCodeCommandTests
     [TestMethod]
     public void Build_ReturnsCommandWithCorrectName()
     {
-        var command = DevMaid.Commands.OpenCodeCommand.Build();
+        var command = DevMaid.CLI.Commands.OpenCodeCommand.Build();
 
         Assert.AreEqual("opencode", command.Name);
     }
@@ -42,7 +42,7 @@ public class OpenCodeCommandTests
     [TestMethod]
     public void Build_ContainsSettingsSubcommand()
     {
-        var command = DevMaid.Commands.OpenCodeCommand.Build();
+        var command = DevMaid.CLI.Commands.OpenCodeCommand.Build();
 
         var settingsCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "settings");
         Assert.IsNotNull(settingsCommand);
@@ -51,7 +51,7 @@ public class OpenCodeCommandTests
     [TestMethod]
     public void Build_SettingsContainsMcpDatabaseCommand()
     {
-        var command = DevMaid.Commands.OpenCodeCommand.Build();
+        var command = DevMaid.CLI.Commands.OpenCodeCommand.Build();
 
         var settingsCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "settings");
         Assert.IsNotNull(settingsCommand);

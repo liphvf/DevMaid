@@ -5,11 +5,11 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-using DevMaid.CommandOptions;
+using DevMaid.CLI.CommandOptions;
 using DevMaid.Core.Models;
 using DevMaid.Core.Interfaces;
 
-namespace DevMaid.Services;
+namespace DevMaid.CLI.Services;
 
 /// <summary>
 /// Provides centralized configuration management for the DevMaid application.
@@ -49,10 +49,10 @@ public static class ConfigurationService
     /// <summary>
     /// Gets the database connection configuration.
     /// </summary>
-    public static DevMaid.CommandOptions.DatabaseConnectionConfig GetDatabaseConfig()
+    public static DevMaid.CLI.CommandOptions.DatabaseConnectionConfig GetDatabaseConfig()
     {
         var coreConfig = GetConfigurationService().GetDatabaseConfig();
-        return new DevMaid.CommandOptions.DatabaseConnectionConfig
+        return new DevMaid.CLI.CommandOptions.DatabaseConnectionConfig
         {
             Host = coreConfig.Host ?? "localhost",
             Port = coreConfig.Port ?? "5432",

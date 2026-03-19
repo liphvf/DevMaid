@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMaid.Services.Logging;
+namespace DevMaid.CLI.Services.Logging;
 
 /// <summary>
 /// Console logger implementation.

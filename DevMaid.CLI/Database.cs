@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 using Npgsql;
 
-namespace DevMaid;
+namespace DevMaid.CLI;
 
 public sealed record TableColumnInfo(string ColumnName, string DataType, bool IsNullable);
 

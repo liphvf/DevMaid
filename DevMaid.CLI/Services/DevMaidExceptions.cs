@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMaid.Services;
+namespace DevMaid.CLI.Services;
 
 /// <summary>
 /// Exception thrown when a PostgreSQL binary is not found.

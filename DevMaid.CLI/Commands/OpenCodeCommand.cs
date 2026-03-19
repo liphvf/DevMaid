@@ -4,7 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace DevMaid.Commands;
+namespace DevMaid.CLI.Commands;
 
 public static class OpenCodeCommand
 {

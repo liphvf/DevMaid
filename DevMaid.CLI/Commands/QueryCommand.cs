@@ -8,12 +8,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-using DevMaid.CommandOptions;
-using DevMaid.Services;
+using DevMaid.CLI.CommandOptions;
+using DevMaid.CLI.Services;
 
 using Npgsql;
 
-namespace DevMaid.Commands;
+namespace DevMaid.CLI.Commands;
 
 public static class QueryCommand
 {

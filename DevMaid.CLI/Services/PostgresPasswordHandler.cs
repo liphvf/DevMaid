@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace DevMaid.Services;
+namespace DevMaid.CLI.Services;
 
 /// <summary>
 /// Provides secure password handling for PostgreSQL operations.

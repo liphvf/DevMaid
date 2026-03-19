@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace DevMaid.Commands;
+namespace DevMaid.CLI.Commands;
 
 public static class WingetCommand
 {

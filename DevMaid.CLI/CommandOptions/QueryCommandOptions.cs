@@ -1,4 +1,4 @@
-namespace DevMaid.CommandOptions;
+namespace DevMaid.CLI.CommandOptions;
 
 public class QueryCommandOptions
 {

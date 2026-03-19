@@ -5,9 +5,9 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-using DevMaid.CommandOptions;
+using DevMaid.CLI.CommandOptions;
 
-namespace DevMaid.Commands;
+namespace DevMaid.CLI.Commands;
 
 public static class TableParserCommand
 {

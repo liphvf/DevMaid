@@ -1,9 +1,9 @@
 using System;
 using System.CommandLine;
 
-using DevMaid.Tui;
+using DevMaid.CLI.Tui;
 
-namespace DevMaid.Commands;
+namespace DevMaid.CLI.Commands;
 
 public static class TuiCommand
 {

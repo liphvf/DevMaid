@@ -42,7 +42,7 @@ public class CleanCommandTests
         var srcFile = Path.Combine(binDir, "test.dll");
         File.WriteAllText(srcFile, "test");
 
-        DevMaid.Commands.CleanCommand.Clean(projectDir);
+        DevMaid.CLI.Commands.CleanCommand.Clean(projectDir);
 
         Assert.IsFalse(Directory.Exists(binDir), "bin folder should be removed");
         Assert.IsFalse(Directory.Exists(objDir), "obj folder should be removed");
@@ -63,7 +63,7 @@ public class CleanCommandTests
             
             Directory.SetCurrentDirectory(tempDir);
             
-            DevMaid.Commands.CleanCommand.Clean(null);
+            DevMaid.CLI.Commands.CleanCommand.Clean(null);
             
             Assert.IsFalse(Directory.Exists(binDir), "bin folder should be removed");
         }
@@ -87,7 +87,7 @@ public class CleanCommandTests
         var projectFile = Path.Combine(projectDir, "Project2.csproj");
         File.WriteAllText(projectFile, "<Project />");
 
-        DevMaid.Commands.CleanCommand.Clean(projectFile);
+        DevMaid.CLI.Commands.CleanCommand.Clean(projectFile);
 
         Assert.IsFalse(Directory.Exists(binDir), "bin folder should be removed");
     }
@@ -97,7 +97,7 @@ public class CleanCommandTests
     {
         var nonExistentDir = Path.Combine(_testDirectory, "NonExistent");
         
-        try { DevMaid.Commands.CleanCommand.Clean(nonExistentDir); Assert.Fail(); } catch (DirectoryNotFoundException) { }
+        try { DevMaid.CLI.Commands.CleanCommand.Clean(nonExistentDir); Assert.Fail(); } catch (DirectoryNotFoundException) { }
     }
 
     [TestMethod]
@@ -112,7 +112,7 @@ public class CleanCommandTests
         Directory.CreateDirectory(project2Dir);
         Directory.CreateDirectory(srcDir);
 
-        DevMaid.Commands.CleanCommand.Clean(rootDir);
+        DevMaid.CLI.Commands.CleanCommand.Clean(rootDir);
 
         Assert.IsFalse(Directory.Exists(Path.Combine(rootDir, "Project1", "bin")));
         Assert.IsFalse(Directory.Exists(Path.Combine(rootDir, "Project2", "obj")));
@@ -129,7 +129,7 @@ public class CleanCommandTests
         Directory.CreateDirectory(binDir);
         Directory.CreateDirectory(objDir);
 
-        DevMaid.Commands.CleanCommand.Clean(projectDir);
+        DevMaid.CLI.Commands.CleanCommand.Clean(projectDir);
 
         Assert.IsFalse(Directory.Exists(binDir));
         Assert.IsFalse(Directory.Exists(objDir));
@@ -138,7 +138,7 @@ public class CleanCommandTests
     [TestMethod]
     public void Build_ReturnsCommandWithCorrectNameAndDescription()
     {
-        var command = DevMaid.Commands.CleanCommand.Build();
+        var command = DevMaid.CLI.Commands.CleanCommand.Build();
 
         Assert.AreEqual("clean", command.Name);
         Assert.AreEqual("Remove bin and obj folders from solution.", command.Description);
@@ -147,7 +147,7 @@ public class CleanCommandTests
     [TestMethod]
     public void Build_CommandHasDirectoryArgument()
     {
-        var command = DevMaid.Commands.CleanCommand.Build();
+        var command = DevMaid.CLI.Commands.CleanCommand.Build();
 
         Assert.AreEqual(1, command.Arguments.Count);
         Assert.AreEqual("directory", command.Arguments[0].Name);

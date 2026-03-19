@@ -1,4 +1,4 @@
-namespace DevMaid.Services.Logging;
+namespace DevMaid.CLI.Services.Logging;
 
 using Microsoft.Extensions.DependencyInjection;
 

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using DevMaid.Core.Interfaces;
 
-namespace DevMaid.Services;
+namespace DevMaid.CLI.Services;
 
 /// <summary>
 /// Provides methods to list PostgreSQL databases.

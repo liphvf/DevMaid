@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 
-namespace DevMaid;
+namespace DevMaid.CLI;
 
 public static class Utils
 {

@@ -32,7 +32,7 @@ public class WingetCommandTests
     [TestMethod]
     public void Build_ReturnsCommandWithCorrectName()
     {
-        var command = DevMaid.Commands.WingetCommand.Build();
+        var command = DevMaid.CLI.Commands.WingetCommand.Build();
 
         Assert.AreEqual("winget", command.Name);
         Assert.AreEqual("Manage winget packages.", command.Description);
@@ -41,7 +41,7 @@ public class WingetCommandTests
     [TestMethod]
     public void Build_ContainsBackupAndRestoreSubcommands()
     {
-        var command = DevMaid.Commands.WingetCommand.Build();
+        var command = DevMaid.CLI.Commands.WingetCommand.Build();
 
         Assert.AreEqual(2, command.Children.Count());
         
@@ -55,7 +55,7 @@ public class WingetCommandTests
     [TestMethod]
     public void Build_BackupCommand_HasOutputOption()
     {
-        var command = DevMaid.Commands.WingetCommand.Build();
+        var command = DevMaid.CLI.Commands.WingetCommand.Build();
 
         var backupCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "backup");
         Assert.IsNotNull(backupCommand);
@@ -68,7 +68,7 @@ public class WingetCommandTests
     [TestMethod]
     public void Build_RestoreCommand_HasInputOption()
     {
-        var command = DevMaid.Commands.WingetCommand.Build();
+        var command = DevMaid.CLI.Commands.WingetCommand.Build();
 
         var restoreCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "restore");
         Assert.IsNotNull(restoreCommand);

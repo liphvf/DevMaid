@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace DevMaid;
+namespace DevMaid.CLI;
 
 /// <summary>
 /// Security utilities for input validation and sanitization.

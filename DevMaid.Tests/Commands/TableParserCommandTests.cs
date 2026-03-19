@@ -4,12 +4,12 @@ using System.Linq;
 using System.Reflection;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DevMaid.CommandOptions;
-using DevMaid.Services;
+using DevMaid.CLI.CommandOptions;
+using DevMaid.CLI.Services;
 using DevMaid.Core.Interfaces;
 using DevMaid.Core.Logging;
 using DevMaid.Core.Services;
-using DevMaid.Services.Logging;
+using DevMaid.CLI.Services.Logging;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DevMaid.Tests.Commands;
@@ -30,7 +30,7 @@ public class TableParserCommandTests
     public static void ClassInitialize(TestContext context)
     {
         // Initialize logger
-        var logger = new Services.Logging.ConsoleLogger(useColors: false);
+        var logger = new DevMaid.CLI.Services.Logging.ConsoleLogger(useColors: false);
         _logger = logger;
 
         // Initialize core services
@@ -52,9 +52,9 @@ public class TableParserCommandTests
         var serviceProvider = services.BuildServiceProvider();
 
         // Set service provider for static services
-        DevMaid.Services.Logging.Logger.SetServiceProvider(serviceProvider);
-        DevMaid.Services.ConfigurationService.SetServiceProvider(serviceProvider);
-        DevMaid.Services.PostgresDatabaseLister.SetServiceProvider(serviceProvider);
+        DevMaid.CLI.Services.Logging.Logger.SetServiceProvider(serviceProvider);
+        DevMaid.CLI.Services.ConfigurationService.SetServiceProvider(serviceProvider);
+        DevMaid.CLI.Services.PostgresDatabaseLister.SetServiceProvider(serviceProvider);
     }
 
     [TestInitialize]
@@ -76,7 +76,7 @@ public class TableParserCommandTests
     [TestMethod]
     public void Build_ReturnsCommandWithCorrectName()
     {
-        var command = DevMaid.Commands.TableParserCommand.Build();
+        var command = DevMaid.CLI.Commands.TableParserCommand.Build();
 
         Assert.AreEqual("table-parser", command.Name);
     }
@@ -84,7 +84,7 @@ public class TableParserCommandTests
     [TestMethod]
     public void Build_HasTableParserAlias()
     {
-        var command = DevMaid.Commands.TableParserCommand.Build();
+        var command = DevMaid.CLI.Commands.TableParserCommand.Build();
 
         Assert.IsTrue(command.Aliases.Contains("tableparser"));
     }
@@ -99,7 +99,7 @@ public class TableParserCommandTests
             Table = ""
         };
 
-        try { DevMaid.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { DevMaid.CLI.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -112,7 +112,7 @@ public class TableParserCommandTests
             Table = "invalid;table"
         };
 
-        try { DevMaid.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { DevMaid.CLI.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -125,7 +125,7 @@ public class TableParserCommandTests
             Table = "123table"
         };
 
-        try { DevMaid.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { DevMaid.CLI.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -138,7 +138,7 @@ public class TableParserCommandTests
             Table = "invalid_table"
         };
 
-        try { DevMaid.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { DevMaid.CLI.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -152,7 +152,7 @@ public class TableParserCommandTests
             Table = "testtable"
         };
 
-        try { DevMaid.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { DevMaid.CLI.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -167,7 +167,7 @@ public class TableParserCommandTests
             Password = "test" // Provide password to avoid console input
         };
 
-        try { DevMaid.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { DevMaid.CLI.Commands.TableParserCommand.Parse(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -187,7 +187,7 @@ public class TableParserCommandTests
 
         try
         {
-            DevMaid.Commands.TableParserCommand.Parse(options);
+            DevMaid.CLI.Commands.TableParserCommand.Parse(options);
         }
         catch (Exception)
         {
@@ -212,7 +212,7 @@ public class TableParserCommandTests
 
         try
         {
-            DevMaid.Commands.TableParserCommand.Parse(options);
+            DevMaid.CLI.Commands.TableParserCommand.Parse(options);
         }
         catch (Exception)
         {

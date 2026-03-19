@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMaid.Tui;
+namespace DevMaid.CLI.Tui;
 
 public class MenuItem
 {

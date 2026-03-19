@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DevMaid.CommandOptions;
+namespace DevMaid.CLI.CommandOptions;
 
 /// <summary>
 /// Configuration for a single PostgreSQL server

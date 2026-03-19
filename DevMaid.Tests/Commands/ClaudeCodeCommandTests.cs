@@ -34,7 +34,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_ReturnsCommandWithCorrectName()
     {
-        var command = DevMaid.Commands.ClaudeCodeCommand.Build();
+        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
 
         Assert.AreEqual("claude", command.Name);
     }
@@ -42,7 +42,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_ContainsInstallSubcommand()
     {
-        var command = DevMaid.Commands.ClaudeCodeCommand.Build();
+        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
 
         var installCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "install");
         Assert.IsNotNull(installCommand);
@@ -51,7 +51,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_ContainsSettingsSubcommand()
     {
-        var command = DevMaid.Commands.ClaudeCodeCommand.Build();
+        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
 
         var settingsCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "settings");
         Assert.IsNotNull(settingsCommand);
@@ -60,7 +60,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_SettingsContainsMcpDatabaseCommand()
     {
-        var command = DevMaid.Commands.ClaudeCodeCommand.Build();
+        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
 
         var settingsCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "settings");
         Assert.IsNotNull(settingsCommand);
@@ -72,7 +72,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_SettingsContainsWinEnvCommand()
     {
-        var command = DevMaid.Commands.ClaudeCodeCommand.Build();
+        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
 
         var settingsCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "settings");
         Assert.IsNotNull(settingsCommand);
@@ -92,7 +92,7 @@ public class ClaudeCodeCommandTests
 
         try
         {
-            DevMaid.Commands.ClaudeCodeCommand.Install();
+            DevMaid.CLI.Commands.ClaudeCodeCommand.Install();
             Assert.Fail("Expected exception was not thrown");
         }
         catch (PlatformNotSupportedException)
@@ -111,7 +111,7 @@ public class ClaudeCodeCommandTests
 
         try
         {
-            DevMaid.Commands.ClaudeCodeCommand.ConfigureWindowsEnvironment();
+            DevMaid.CLI.Commands.ClaudeCodeCommand.ConfigureWindowsEnvironment();
             Assert.Fail("Expected exception was not thrown");
         }
         catch (PlatformNotSupportedException)
@@ -173,7 +173,7 @@ public class ClaudeCodeCommandTests
 
     private JsonObject InvokePrivateLoadSettingsFile(string settingsPath)
     {
-        var method = typeof(DevMaid.Commands.ClaudeCodeCommand).GetMethod("LoadSettingsFile", 
+        var method = typeof(DevMaid.CLI.Commands.ClaudeCodeCommand).GetMethod("LoadSettingsFile", 
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         
         return (JsonObject)method!.Invoke(null, new object[] { settingsPath })!;

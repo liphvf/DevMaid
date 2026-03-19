@@ -1,12 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using System.CommandLine;
 
-using DevMaid.Commands;
-using DevMaid.Core.Interfaces;
+using DevMaid.CLI.Commands;
 using DevMaid.Core.Services;
 
-namespace DevMaid;
+namespace DevMaid.CLI;
 
 internal static class Program
 {
@@ -24,9 +24,9 @@ internal static class Program
         var serviceProvider = scope.ServiceProvider;
 
         // Set service provider for static services (for backward compatibility)
-        DevMaid.Services.Logging.Logger.SetServiceProvider(serviceProvider);
-        DevMaid.Services.ConfigurationService.SetServiceProvider(serviceProvider);
-        DevMaid.Services.PostgresDatabaseLister.SetServiceProvider(serviceProvider);
+        DevMaid.CLI.Services.Logging.Logger.SetServiceProvider(serviceProvider);
+        DevMaid.CLI.Services.ConfigurationService.SetServiceProvider(serviceProvider);
+        DevMaid.CLI.Services.PostgresDatabaseLister.SetServiceProvider(serviceProvider);
 
         var rootCommand = new RootCommand("DevMaid command line tools")
         {

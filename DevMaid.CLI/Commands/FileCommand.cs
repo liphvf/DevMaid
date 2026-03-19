@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-using DevMaid.CommandOptions;
+using DevMaid.CLI.CommandOptions;
 
-namespace DevMaid.Commands;
+namespace DevMaid.CLI.Commands;
 
 public static class FileCommand
 {

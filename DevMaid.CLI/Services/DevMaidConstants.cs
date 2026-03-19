@@ -1,4 +1,4 @@
-namespace DevMaid.Services;
+namespace DevMaid.CLI.Services;
 
 /// <summary>
 /// Contains constant values used throughout the DevMaid application.

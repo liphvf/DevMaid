@@ -1,4 +1,4 @@
-namespace DevMaid.Services;
+namespace DevMaid.CLI.Services;
 
 /// <summary>
 /// Provides methods to locate PostgreSQL binary executables.
