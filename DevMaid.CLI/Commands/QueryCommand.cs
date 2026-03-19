@@ -200,12 +200,13 @@ public static class QueryCommand
             throw new ArgumentException("Input file path is required.");
         }
 
-        var inputFullPath = Path.GetFullPath(options.InputFile);
-        if (!SecurityUtils.IsValidPath(inputFullPath))
+        // Validate for path traversal before normalizing the path
+        if (!SecurityUtils.IsValidPath(options.InputFile))
         {
             throw new ArgumentException($"Invalid input path: '{options.InputFile}'. Path traversal not allowed.");
         }
 
+        var inputFullPath = Path.GetFullPath(options.InputFile);
         if (!File.Exists(inputFullPath))
         {
             throw new FileNotFoundException($"SQL input file not found: {inputFullPath}");
@@ -283,11 +284,13 @@ public static class QueryCommand
             throw new ArgumentException("Output directory path is required when using --all.");
         }
 
-        var outputDirectory = Path.GetFullPath(options.OutputFile);
-        if (!SecurityUtils.IsValidPath(outputDirectory))
+        // Validate for path traversal before normalizing the path
+        if (!SecurityUtils.IsValidPath(options.OutputFile))
         {
             throw new ArgumentException($"Invalid output path: '{options.OutputFile}'. Path traversal not allowed.");
         }
+
+        var outputDirectory = Path.GetFullPath(options.OutputFile);
 
         // Create output directory if it doesn't exist
         if (!Directory.Exists(outputDirectory))

@@ -60,7 +60,9 @@ public class WingetCommandTests
         var backupCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "backup");
         Assert.IsNotNull(backupCommand);
 
-        var outputOption = backupCommand!.Options.FirstOrDefault(o => o.Name == "output");
+        // Check for --output or -o option
+        var outputOption = backupCommand!.Options.FirstOrDefault(o => o.Name == "output" || o.Aliases.Contains("-o") || o.Aliases.Contains("--output"));
+        Assert.IsNotNull(outputOption, "Backup command should have an output option");
     }
 
     [TestMethod]
@@ -71,6 +73,8 @@ public class WingetCommandTests
         var restoreCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "restore");
         Assert.IsNotNull(restoreCommand);
 
-        var inputOption = restoreCommand!.Options.FirstOrDefault(o => o.Name == "input");
+        // Check for --input or -i option
+        var inputOption = restoreCommand!.Options.FirstOrDefault(o => o.Name == "input" || o.Aliases.Contains("-i") || o.Aliases.Contains("--input"));
+        Assert.IsNotNull(inputOption, "Restore command should have an input option");
     }
 }

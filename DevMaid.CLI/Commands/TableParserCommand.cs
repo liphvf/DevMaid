@@ -134,25 +134,25 @@ public static class TableParserCommand
             options.Password = Utils.SecureStringToString(Utils.GetConsoleSecurePassword());
         }
 
-        var tableColumns = Database.GetColumnsInfo(options.ConnectionStringDatabase, options.Table);
-        if (tableColumns.Count <= 0)
-        {
-            throw new ArgumentException("Erro ao obter informações da tabela.");
-        }
-
         var outputPath = string.IsNullOrWhiteSpace(options.Output) ? "./Table.class" : options.Output;
         
-        // Validate output path to prevent path traversal
-        var fullOutputPath = Path.GetFullPath(outputPath);
-        if (!SecurityUtils.IsValidPath(fullOutputPath))
+        // Validate output path to prevent path traversal before normalizing
+        if (!SecurityUtils.IsValidPath(outputPath))
         {
             throw new ArgumentException($"Invalid output path: '{outputPath}'. Path traversal not allowed.");
         }
 
+        var fullOutputPath = Path.GetFullPath(outputPath);
         var outputDirectory = Path.GetDirectoryName(fullOutputPath);
         if (!string.IsNullOrWhiteSpace(outputDirectory))
         {
             Directory.CreateDirectory(outputDirectory);
+        }
+
+        var tableColumns = Database.GetColumnsInfo(options.ConnectionStringDatabase, options.Table);
+        if (tableColumns.Count <= 0)
+        {
+            throw new ArgumentException("Erro ao obter informações da tabela.");
         }
 
         using var file = new StreamWriter(fullOutputPath, append: false);

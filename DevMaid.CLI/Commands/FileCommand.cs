@@ -64,12 +64,13 @@ public static class FileCommand
             directory = Directory.GetCurrentDirectory();
         }
 
-        // Validate directory path to prevent path traversal
-        var fullDirectoryPath = Path.GetFullPath(directory);
-        if (!SecurityUtils.IsValidPath(fullDirectoryPath))
+        // Validate directory path to prevent path traversal before normalizing
+        if (!SecurityUtils.IsValidPath(directory))
         {
             throw new ArgumentException($"Invalid directory path: '{directory}'. Path traversal not allowed.");
         }
+
+        var fullDirectoryPath = Path.GetFullPath(directory);
 
         var extension = Path.GetExtension(options.Input);
         var outputPath = options.Output;
