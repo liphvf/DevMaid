@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 using DevMaid.CommandOptions;
 using DevMaid.Core.Models;
+using DevMaid.Core.Interfaces;
 
 namespace DevMaid.Services;
 
@@ -15,17 +17,41 @@ namespace DevMaid.Services;
 /// </summary>
 public static class ConfigurationService
 {
+    private static IServiceProvider? _serviceProvider;
+
+    /// <summary>
+    /// Sets the service provider.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    internal static void SetServiceProvider(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
+
+    /// <summary>
+    /// Gets the configuration service.
+    /// </summary>
+    private static IConfigurationService GetConfigurationService()
+    {
+        if (_serviceProvider == null)
+        {
+            throw new InvalidOperationException("Service provider not initialized. Call SetServiceProvider first.");
+        }
+
+        return _serviceProvider.GetRequiredService<IConfigurationService>();
+    }
+
     /// <summary>
     /// Gets the application configuration.
     /// </summary>
-    public static IConfiguration Configuration => ServiceContainer.ConfigurationService.Configuration;
+    public static IConfiguration Configuration => GetConfigurationService().Configuration;
 
     /// <summary>
     /// Gets the database connection configuration.
     /// </summary>
     public static DevMaid.CommandOptions.DatabaseConnectionConfig GetDatabaseConfig()
     {
-        var coreConfig = ServiceContainer.ConfigurationService.GetDatabaseConfig();
+        var coreConfig = GetConfigurationService().GetDatabaseConfig();
         return new DevMaid.CommandOptions.DatabaseConnectionConfig
         {
             Host = coreConfig.Host ?? "localhost",
@@ -40,6 +66,6 @@ public static class ConfigurationService
     /// </summary>
     public static void Reload()
     {
-        ServiceContainer.ConfigurationService.Reload();
+        GetConfigurationService().Reload();
     }
 }

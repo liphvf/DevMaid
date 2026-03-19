@@ -1,25 +1,49 @@
 namespace DevMaid.Services.Logging;
 
+using Microsoft.Extensions.DependencyInjection;
+
 /// <summary>
 /// Static logger class for backward compatibility.
 /// </summary>
 public static class Logger
 {
-    private static Core.Logging.ILogger? _logger;
+    private static IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Sets the logger instance.
+    /// Sets the service provider.
     /// </summary>
-    /// <param name="logger">The logger instance.</param>
-    public static void SetLogger(Core.Logging.ILogger logger)
+    /// <param name="serviceProvider">The service provider.</param>
+    public static void SetServiceProvider(IServiceProvider serviceProvider)
     {
-        _logger = logger;
+        _serviceProvider = serviceProvider;
     }
 
     /// <summary>
     /// Gets the current logger instance.
     /// </summary>
-    public static Core.Logging.ILogger Instance => _logger ?? throw new InvalidOperationException("Logger not set");
+    private static Core.Logging.ILogger? GetLogger()
+    {
+        if (_serviceProvider == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var msLoggerFactory = _serviceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>();
+            var msLogger = msLoggerFactory.CreateLogger("DevMaid");
+            return new Core.Logging.MicrosoftExtensionsLoggerAdapter(msLogger);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the current logger instance.
+    /// </summary>
+    public static Core.Logging.ILogger Instance => GetLogger() ?? throw new InvalidOperationException("Logger not initialized. Call SetServiceProvider first.");
 
     /// <summary>
     /// Logs a debug message.
@@ -27,7 +51,7 @@ public static class Logger
     /// <param name="message">The message to log.</param>
     public static void LogDebug(string message)
     {
-        _logger?.LogDebug(message);
+        GetLogger()?.LogDebug(message);
     }
 
     /// <summary>
@@ -36,7 +60,7 @@ public static class Logger
     /// <param name="message">The message to log.</param>
     public static void LogInformation(string message)
     {
-        _logger?.LogInformation(message);
+        GetLogger()?.LogInformation(message);
     }
 
     /// <summary>
@@ -45,7 +69,7 @@ public static class Logger
     /// <param name="message">The message to log.</param>
     public static void LogWarning(string message)
     {
-        _logger?.LogWarning(message);
+        GetLogger()?.LogWarning(message);
     }
 
     /// <summary>
@@ -54,7 +78,7 @@ public static class Logger
     /// <param name="message">The message to log.</param>
     public static void LogError(string message)
     {
-        _logger?.LogError(message);
+        GetLogger()?.LogError(message);
     }
 
     /// <summary>
@@ -64,7 +88,7 @@ public static class Logger
     /// <param name="args">The arguments to format.</param>
     public static void LogInformation(string message, params object[] args)
     {
-        _logger?.LogInformation(string.Format(message, args));
+        GetLogger()?.LogInformation(string.Format(message, args));
     }
 
     /// <summary>
@@ -74,7 +98,7 @@ public static class Logger
     /// <param name="args">The arguments to format.</param>
     public static void LogDebug(string message, params object[] args)
     {
-        _logger?.LogDebug(string.Format(message, args));
+        GetLogger()?.LogDebug(string.Format(message, args));
     }
 
     /// <summary>
@@ -84,7 +108,7 @@ public static class Logger
     /// <param name="args">The arguments to format.</param>
     public static void LogWarning(string message, params object[] args)
     {
-        _logger?.LogWarning(string.Format(message, args));
+        GetLogger()?.LogWarning(string.Format(message, args));
     }
 
     /// <summary>
@@ -94,6 +118,6 @@ public static class Logger
     /// <param name="args">The arguments to format.</param>
     public static void LogError(string message, params object[] args)
     {
-        _logger?.LogError(string.Format(message, args));
+        GetLogger()?.LogError(string.Format(message, args));
     }
 }

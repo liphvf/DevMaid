@@ -10,6 +10,7 @@ using DevMaid.Core.Interfaces;
 using DevMaid.Core.Logging;
 using DevMaid.Core.Services;
 using DevMaid.Services.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DevMaid.Tests.Commands;
 
@@ -39,22 +40,21 @@ public class TableParserCommandTests
         _fileService = new Core.Services.FileService(logger);
         _wingetService = new Core.Services.WingetService(_processExecutor, logger);
 
-        // Register services for commands to use via reflection
-        var serviceContainerType = typeof(DevMaid.ServiceContainer);
-        
-        // Set the private static fields using reflection
-        SetPrivateStaticField(serviceContainerType, "_configurationService", _configurationService);
-        SetPrivateStaticField(serviceContainerType, "_databaseService", _databaseService);
-        SetPrivateStaticField(serviceContainerType, "_fileService", _fileService);
-        SetPrivateStaticField(serviceContainerType, "_wingetService", _wingetService);
-        SetPrivateStaticField(serviceContainerType, "_processExecutor", _processExecutor);
-        SetPrivateStaticField(serviceContainerType, "_logger", _logger);
-    }
+        // Create service collection and register services
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfigurationService>(_configurationService);
+        services.AddSingleton<IDatabaseService>(_databaseService);
+        services.AddSingleton<IFileService>(_fileService);
+        services.AddSingleton<IWingetService>(_wingetService);
+        services.AddSingleton<IProcessExecutor>(_processExecutor);
+        services.AddSingleton<Core.Logging.ILogger>(_logger);
 
-    private static void SetPrivateStaticField(Type type, string fieldName, object? value)
-    {
-        var field = type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic);
-        field?.SetValue(null, value);
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Set service provider for static services
+        DevMaid.Services.Logging.Logger.SetServiceProvider(serviceProvider);
+        DevMaid.Services.ConfigurationService.SetServiceProvider(serviceProvider);
+        DevMaid.Services.PostgresDatabaseLister.SetServiceProvider(serviceProvider);
     }
 
     [TestInitialize]

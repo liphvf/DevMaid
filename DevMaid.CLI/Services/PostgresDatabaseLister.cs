@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using DevMaid.Core.Interfaces;
 
 namespace DevMaid.Services;
 
@@ -10,6 +12,30 @@ namespace DevMaid.Services;
 /// </summary>
 public static class PostgresDatabaseLister
 {
+    private static IServiceProvider? _serviceProvider;
+
+    /// <summary>
+    /// Sets the service provider.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider.</param>
+    internal static void SetServiceProvider(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
+
+    /// <summary>
+    /// Gets the database service.
+    /// </summary>
+    private static IDatabaseService GetDatabaseService()
+    {
+        if (_serviceProvider == null)
+        {
+            throw new InvalidOperationException("Service provider not initialized. Call SetServiceProvider first.");
+        }
+
+        return _serviceProvider.GetRequiredService<IDatabaseService>();
+    }
+
     /// <summary>
     /// Lists all non-template databases on the PostgreSQL server.
     /// </summary>
@@ -31,7 +57,7 @@ public static class PostgresDatabaseLister
                 Password = password
             };
 
-            return ServiceContainer.DatabaseService.ListDatabasesAsync(options).GetAwaiter().GetResult();
+            return GetDatabaseService().ListDatabasesAsync(options).GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {
