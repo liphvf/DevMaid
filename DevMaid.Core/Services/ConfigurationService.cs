@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using DevMaid.Core.Interfaces;
 using DevMaid.Core.Logging;
@@ -17,6 +18,9 @@ public class ConfigurationService : IConfigurationService
     private IConfigurationRoot? _configuration;
     private readonly ILogger _logger;
     private readonly object _lock = new object();
+    private static readonly Regex ValidHostnameRegex = new Regex(
+        @"^(localhost|127\.\d+\.\d+\.\d+|::1|[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])*(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])*)*)$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConfigurationService"/> class.
@@ -51,16 +55,62 @@ public class ConfigurationService : IConfigurationService
     /// <returns>The database connection configuration.</returns>
     public DatabaseConnectionConfig GetDatabaseConfig()
     {
-        // Try to get from "Database" section first (new format)
-        var dbConfig = Configuration.GetSection("Database").Get<DatabaseConnectionConfig>();
-        if (dbConfig != null)
+        var dbConfig = Configuration.GetSection("Database").Get<DatabaseConnectionConfig>() ?? new DatabaseConnectionConfig();
+
+        ValidateDatabaseConfig(dbConfig);
+
+        return dbConfig;
+    }
+
+    /// <summary>
+    /// Validates database configuration values.
+    /// </summary>
+    /// <param name="config">The configuration to validate.</param>
+    /// <exception cref="InvalidOperationException">Thrown when configuration is invalid.</exception>
+    public void ValidateDatabaseConfig(DatabaseConnectionConfig config)
+    {
+        if (!string.IsNullOrWhiteSpace(config.Host) && !IsValidHost(config.Host))
         {
-            return dbConfig;
+            _logger.LogWarning("Invalid database host format: {Host}. Using default.", config.Host);
         }
 
-        // Fallback to default values
-        _logger.LogDebug("No database configuration found, using defaults");
-        return new DatabaseConnectionConfig();
+        if (!string.IsNullOrWhiteSpace(config.Port))
+        {
+            if (!int.TryParse(config.Port, out var port) || port < 1 || port > 65535)
+            {
+                _logger.LogWarning("Invalid database port: {Port}. Using default.", config.Port);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.Username) && !IsValidUsername(config.Username))
+        {
+            _logger.LogWarning("Invalid database username format: {Username}.", config.Username);
+        }
+    }
+
+    private static bool IsValidHost(string host)
+    {
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            return false;
+        }
+
+        if (host == "localhost" || host == "127.0.0.1" || host == "::1")
+        {
+            return true;
+        }
+
+        return ValidHostnameRegex.IsMatch(host);
+    }
+
+    private static bool IsValidUsername(string username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return false;
+        }
+
+        return Regex.IsMatch(username, @"^[a-zA-Z_][a-zA-Z0-9_]*$");
     }
 
     /// <summary>
@@ -79,7 +129,6 @@ public class ConfigurationService : IConfigurationService
         var configFolder = Path.Combine(localAppData, "DevMaid");
         Directory.CreateDirectory(configFolder);
 
-        // Read existing configuration
         var existingConfig = new Dictionary<string, string?>();
         if (File.Exists(configPath))
         {
@@ -94,13 +143,11 @@ public class ConfigurationService : IConfigurationService
             }
         }
 
-        // Update database configuration
         existingConfig["Database:Host"] = config.Host ?? "localhost";
         existingConfig["Database:Port"] = config.Port ?? "5432";
         existingConfig["Database:Username"] = config.Username;
         existingConfig["Database:Password"] = config.Password;
 
-        // Write updated configuration
         var configLines = existingConfig
             .Where(kvp => kvp.Value != null)
             .Select(kvp => $"{kvp.Key}={kvp.Value}")
@@ -110,7 +157,6 @@ public class ConfigurationService : IConfigurationService
 
         _logger.LogDebug("Database configuration updated");
 
-        // Reload configuration
         Reload();
     }
 
@@ -153,7 +199,6 @@ public class ConfigurationService : IConfigurationService
         var configFolder = Path.Combine(localAppData, "DevMaid");
         Directory.CreateDirectory(configFolder);
 
-        // Read existing configuration
         var existingConfig = new Dictionary<string, string?>();
         if (File.Exists(configPath))
         {
@@ -168,10 +213,8 @@ public class ConfigurationService : IConfigurationService
             }
         }
 
-        // Update or add value
         existingConfig[key] = value;
 
-        // Write updated configuration
         var configLines = existingConfig
             .Where(kvp => kvp.Value != null)
             .Select(kvp => $"{kvp.Key}={kvp.Value}")
@@ -181,7 +224,6 @@ public class ConfigurationService : IConfigurationService
 
         _logger.LogDebug($"Configuration value '{key}' updated");
 
-        // Reload configuration
         Reload();
     }
 

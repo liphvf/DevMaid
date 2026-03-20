@@ -30,29 +30,3 @@ public record FileCombineOptions
     /// </summary>
     public string? Separator { get; init; }
 }
-
-/// <summary>
-/// Represents options for a file split operation.
-/// </summary>
-public record FileSplitOptions
-{
-    /// <summary>
-    /// Gets or sets the input file path.
-    /// </summary>
-    public string Input { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the output directory path.
-    /// </summary>
-    public string? Output { get; init; }
-
-    /// <summary>
-    /// Gets or sets the number of lines per split file.
-    /// </summary>
-    public int LinesPerFile { get; init; }
-
-    /// <summary>
-    /// Gets or sets the prefix for split files.
-    /// </summary>
-    public string? Prefix { get; init; }
-}

@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using DevMaid.Core.Interfaces;
 using DevMaid.Core.Logging;
+using DevMaid.Core.HealthChecks;
 
 namespace DevMaid.Core.Services;
 
@@ -17,19 +19,20 @@ public static class ServiceCollectionExtensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddDevMaidServices(this IServiceCollection services)
     {
-        // Register logging
         services.AddLogging(builder =>
         {
             builder.AddConsole();
             builder.SetMinimumLevel(LogLevel.Information);
         });
 
-        // Register core services
+        services.AddHealthChecks()
+            .AddCheck<PostgresBinaryHealthCheck>("postgres_binaries", tags: ["infrastructure"])
+            .AddCheck<ConfigurationHealthCheck>("configuration", tags: ["core"]);
+
         services.AddSingleton<IConfigurationService, ConfigurationService>();
         services.AddSingleton<IProcessExecutor, ProcessExecutor>();
         services.AddSingleton<IDatabaseService, DatabaseService>();
         services.AddSingleton<IFileService, FileService>();
-        services.AddSingleton<IWingetService, WingetService>();
 
         return services;
     }
