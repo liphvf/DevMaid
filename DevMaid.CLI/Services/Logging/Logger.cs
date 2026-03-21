@@ -34,8 +34,10 @@ public static class Logger
             var msLogger = msLoggerFactory.CreateLogger("DevMaid");
             return new Core.Logging.MicrosoftExtensionsLoggerAdapter(msLogger);
         }
-        catch
+        catch (Exception ex)
         {
+            // For production-readiness, do not silently swallow DI resolution errors.
+            Console.Error.WriteLine($"[DevMaid.CLI Logger] Failed to initialize logger from ServiceProvider: {ex.Message}");
             return null;
         }
     }
