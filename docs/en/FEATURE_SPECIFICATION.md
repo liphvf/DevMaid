@@ -13,12 +13,15 @@ The tool offers two modes of operation:
 ### Core Features
 
 1. **Table Parser**
-2. **Combine**
-3. **Database Utilities**
+2. **Database Utilities**
+3. **File Utilities (Combine)**
 4. **Claude Code Integration**
 5. **OpenCode Integration**
 6. **Winget Package Manager**
-7. **Interactive TUI Mode**
+7. **SQL Query & CSV Exportation**
+8. **Project Cleaner (.NET Clean)**
+9. **Windows Features Manager**
+10. **Interactive TUI Mode**
 
 ---
 
@@ -175,7 +178,7 @@ devmaid database restore --all
 
 ---
 
-## Feature 2: Combine
+## Feature 3: File Utilities (Combine)
 
 ### Objective
 
@@ -385,7 +388,53 @@ devmaid winget restore -i "C:\backups\backup-winget.json"
 
 ---
 
-## Feature 7: Interactive TUI Mode
+## Feature 7: SQL Query & CSV Exportation
+
+### Objective
+Execute SQL commands against a single database, multiple databases on a single server, or even across multiple servers defined in appsettings.json, automatically exporting the data to `.csv`.
+
+### Detailed Description
+Provides high flexibility for querying data with automated output generation supporting local, multi-database, and multi-server distribution modes for massive reporting routines.
+
+### Usage Flow
+```bash
+devmaid query run --input script.sql --output result.csv -h localhost -d mydb
+devmaid query run --all --input script.sql --output ./results
+```
+
+---
+
+## Feature 8: Project Cleaner (.NET Clean)
+
+### Objective
+Liberate disk space and resolve `.NET` build cache issues by fully deleting any `bin` and `obj` output directories found recursively.
+
+### Usage Flow
+```bash
+# Clean recursively starting from the current directory:
+devmaid clean
+
+# Clean a specific solution folder
+devmaid clean "C:\MyProjects"
+```
+
+---
+
+## Feature 9: Windows Features Manager
+
+### Objective
+Export your activated Windows Optional Features to a JSON backup file using dism, and subsequently import/enable them on new environments.
+
+### Usage Flow
+```bash
+devmaid windowsfeatures list --enabled-only
+devmaid windowsfeatures export "C:\backups\windowsfeatures.json"
+devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
+```
+
+---
+
+## Feature 10: Interactive TUI Mode
 
 ### Objective
 
@@ -551,6 +600,9 @@ Commands execute asynchronously with real-time output display:
 | `devmaid database` | - | Database commands |
 | `devmaid database backup` | - | Backup database |
 | `devmaid database restore` | - | Restore database |
+| `devmaid query run` | - | Run multi-database query and export CSV |
+| `devmaid clean` | - | Recursively clean bin/obj output folders |
+| `devmaid windowsfeatures` | - | Manage Windows Optional Features |
 | `devmaid tui` | - | Launch TUI |
 
 ---

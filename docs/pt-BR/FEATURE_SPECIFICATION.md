@@ -13,12 +13,15 @@ A ferramenta oferece dois modos de operação:
 ### Funcionalidades Principais
 
 1. **Table Parser**
-2. **Combine**
-3. **Utilitários de Banco de Dados**
+2. **Utilitários de Banco de Dados**
+3. **Utilitário de Arquivos (Combine)**
 4. **Integração com Claude Code**
 5. **Integração com OpenCode**
 6. **Gerenciador de Pacotes Winget**
-7. **Modo TUI Interativo**
+7. **Query SQL & Exportação**
+8. **Limpeza de Build (.NET Clean)**
+9. **Gerenciador de Features Windows**
+10. **Modo TUI Interativo**
 
 ---
 
@@ -175,7 +178,7 @@ devmaid database restore --all
 
 ---
 
-## Funcionalidade 2: Combine
+## Funcionalidade 3: Utilitários de Arquivo (Combine)
 
 ### Objetivo
 
@@ -385,7 +388,50 @@ devmaid winget restore -i "C:\backups\backup-winget.json"
 
 ---
 
-## Funcionalidade 7: Modo TUI Interativo
+## Funcionalidade 7: Query SQL & Exportação
+
+### Objetivo
+Executa comandos SQL (script) em diversos lugares e gera uma lista consolidada em CSV automaticamente.
+
+### Descrição Detalhada
+Suporta banco de dados único, múltiplos bancos de dados num mesmo localhost ou distribuição em diversos servidores usando configurações do appsettings.json, exportando uma saída formatada e unificada no final do processamento.
+
+### Fluxo de Uso
+```bash
+devmaid query run --input script.sql --output result.csv -h localhost -d mydb
+devmaid query run --all --input script.sql --output ./resultados -h localhost
+```
+
+---
+
+## Funcionalidade 8: Limpeza de Build (.NET Clean)
+
+### Objetivo
+Libera espaço e resolve possíveis problemas de cache removendo os diretórios de saída bin e obj.
+
+### Fluxo de Uso
+```bash
+devmaid clean
+devmaid clean "C:\MeusProjetos"
+```
+
+---
+
+## Funcionalidade 9: Gerenciador de Funcionalidades do Windows
+
+### Objetivo
+Permite o backup de Features nativas ativadas no Windows para arquivos JSON, podendo restaurá-las usando o dism.
+
+### Fluxo de Uso
+```bash
+devmaid windowsfeatures list
+devmaid windowsfeatures export "C:\backups\windowsfeatures.json"
+devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
+```
+
+---
+
+## Funcionalidade 10: Modo TUI Interativo
 
 ### Objetivo
 
@@ -549,6 +595,9 @@ Comandos executam de forma assíncrona com exibição de saída em tempo real:
 | `devmaid database` | - | Comandos de banco de dados |
 | `devmaid database backup` | - | Backup de banco de dados |
 | `devmaid database restore` | - | Restore de banco de dados |
+| `devmaid query run` | - | Consultar multi-database exportando CSV |
+| `devmaid clean` | - | Limpar pastas bin e obj de um diretorio |
+| `devmaid windowsfeatures` | - | Gerenciar Optional Features |
 | `devmaid tui` | - | Iniciar TUI |
 
 ---

@@ -23,6 +23,9 @@ The architecture is built on top of System.CommandLine for CLI argument parsing,
 │  ├── ClaudeCodeCommand                                          │
 │  ├── OpenCodeCommand                                            │
 │  ├── WingetCommand                                              │
+│  ├── QueryCommand                                               │
+│  ├── CleanCommand                                               │
+│  ├── WindowsFeaturesCommand                                     │
 │  └── TuiCommand                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │  TUI Layer (Tui/)                                               │
@@ -78,6 +81,19 @@ Each command follows the builder pattern with a static `Build()` method that ret
 - Exports installed packages to JSON
 - Imports packages from backup
 - Cross-package dependency resolution
+
+#### QueryCommand
+- Executes SQL queries and exports results to CSV
+- Supports multiple databases and servers configuration via appsettings.json
+
+#### CleanCommand
+- Recursively cleans bin and obj folders from the current working directory or solution
+- Frees up space and solves compilation caching issues
+
+#### WindowsFeaturesCommand
+- Exports currently activated Windows optional features to JSON
+- Imports features from JSON using dism.exe
+- Allows listing activated features
 
 #### TuiCommand
 - Launches the interactive Terminal User Interface
@@ -336,26 +352,20 @@ Expand beyond Windows:
 
 ```
 DevMaid/
-├── Program.cs                 # Entry point
-├── DevMaid.csproj            # Project file
-├── Commands/                  # Command implementations
-│   ├── TuiCommand.cs
-│   ├── TableParserCommand.cs
-│   ├── FileCommand.cs
-│   ├── ClaudeCodeCommand.cs
-│   ├── OpenCodeCommand.cs
-│   └── WingetCommand.cs
-├── CommandOptions/            # DTOs for commands
-├── Tui/                       # TUI components
-│   ├── TuiApp.cs
-│   └── MenuItem.cs
-├── Utils.cs                   # Helper functions
-├── Database.cs               # Database utilities
-└── docs/                     # Documentation
-    ├── en/
+├── DevMaid.CLI/               # Command line app project
+│   ├── Program.cs             # Entry point
+│   ├── Commands/              # Command implementations (TableParser, Winget, Query, etc.)
+│   ├── CommandOptions/        # Commands options and DTOs
+│   └── Services/              # Services like Logging, Database listing, etc.
+├── DevMaid.Core/              # Main library containing shared logic
+│   ├── Interfaces/            # Contracts (ILogger, IFileService, etc.)
+│   └── Services/              # Core business services
+├── DevMaid.Tests/             # Testing package (MSTest)
+└── docs/                      # Documentation
+    ├── en/                    # English Documentation
     │   ├── ARCHITECTURE.md
     │   └── FEATURE_SPECIFICATION.md
-    └── pt-BR/
+    └── pt-BR/                 # Portuguese Documentation
         ├── ARCHITECTURE.md
         └── FEATURE_SPECIFICATION.md
 ```

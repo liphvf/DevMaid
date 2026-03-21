@@ -23,6 +23,9 @@ A arquitetura é construída sobre System.CommandLine para parsing de argumentos
 │  ├── ClaudeCodeCommand                                         │
 │  ├── OpenCodeCommand                                           │
 │  ├── WingetCommand                                             │
+│  ├── QueryCommand                                              │
+│  ├── CleanCommand                                              │
+│  ├── WindowsFeaturesCommand                                    │
 │  └── TuiCommand                                                │
 ├─────────────────────────────────────────────────────────────────┤
 │  Camada TUI (Tui/)                                             │
@@ -78,6 +81,21 @@ Cada comando segue o padrão builder com um método estático `Build()` que reto
 - Exporta pacotes instalados para JSON
 - Importa pacotes do backup
 - Resolução de dependências entre pacotes
+
+#### QueryCommand
+- Executa consultas SQL e exporta os resultados para CSV
+- Suporta múltiplos bancos de dados e servidores via configuração
+- Integrado ao appsettings.json para servidores remotos
+
+#### CleanCommand
+- Exclui diretórios bin e obj do projeto ou solução selecionada
+- Útil para debugar problemas de compilação ou economizar espaço
+- Busca recursivamente os subdiretórios
+
+#### WindowsFeaturesCommand
+- Exporta as features opcionais do Windows atualmente ativadas em um JSON
+- Importa features de um arquivo JSON (via dism.exe)
+- Permite listar funcionalidades ativadas
 
 #### TuiCommand
 - Inicia a interface de terminal interativa
@@ -336,22 +354,16 @@ Expansão além do Windows:
 
 ```
 DevMaid/
-├── Program.cs                 # Ponto de entrada
-├── DevMaid.csproj            # Arquivo do projeto
-├── Commands/                  # Implementações de comandos
-│   ├── TuiCommand.cs
-│   ├── TableParserCommand.cs
-│   ├── FileCommand.cs
-│   ├── ClaudeCodeCommand.cs
-│   ├── OpenCodeCommand.cs
-│   └── WingetCommand.cs
-├── CommandOptions/            # DTOs para comandos
-├── Tui/                       # Componentes TUI
-│   ├── TuiApp.cs
-│   └── MenuItem.cs
-├── Utils.cs                   # Funções auxiliares
-├── Database.cs               # Utilitários de banco de dados
-└── docs/                     # Documentação
+├── DevMaid.CLI/               # Projeto principal (Linha de Comando)
+│   ├── Program.cs             # Ponto de entrada
+│   ├── Commands/              # Implementações de comandos (TableParser, Winget, Query, etc.)
+│   ├── CommandOptions/        # Objetos DTOs de Options dos Comandos
+│   └── Services/              # Logging, Utilitarios, Componentes da Aplicação, Listadores
+├── DevMaid.Core/              # Bibliotecas Centrais e Utilitários de Domínio
+│   ├── Interfaces/            # Contratos Injetáveis Compartilhados (ILogger, IFileService, etc.)
+│   └── Services/              # Implementação de Executores (WingetService, DatabaseService, etc.)
+├── DevMaid.Tests/             # Projeto de Bateria de Testes Unidade e Integração (MSTest)
+└── docs/                      # Documentação
     ├── en/
     │   ├── ARCHITECTURE.md
     │   └── FEATURE_SPECIFICATION.md
