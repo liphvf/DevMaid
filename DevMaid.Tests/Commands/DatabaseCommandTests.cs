@@ -1,18 +1,13 @@
 using System;
-using System.CommandLine;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using DevMaid.CLI.CommandOptions;
 using DevMaid.CLI.Services;
-using DevMaid.Core.Interfaces;
-using DevMaid.Core.Logging;
-using DevMaid.Core.Services;
 using DevMaid.CLI.Services.Logging;
+using DevMaid.Core.Interfaces;
+
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DevMaid.Tests.Commands;
 
@@ -52,9 +47,9 @@ public class DatabaseCommandTests
         var serviceProvider = services.BuildServiceProvider();
 
         // Set service provider for static services
-        DevMaid.CLI.Services.Logging.Logger.SetServiceProvider(serviceProvider);
-        DevMaid.CLI.Services.ConfigurationService.SetServiceProvider(serviceProvider);
-        DevMaid.CLI.Services.PostgresDatabaseLister.SetServiceProvider(serviceProvider);
+        Logger.SetServiceProvider(serviceProvider);
+        CLI.Services.ConfigurationService.SetServiceProvider(serviceProvider);
+        PostgresDatabaseLister.SetServiceProvider(serviceProvider);
     }
 
     [ClassCleanup]
@@ -66,7 +61,7 @@ public class DatabaseCommandTests
     [TestMethod]
     public void Build_ReturnsCommandWithCorrectName()
     {
-        var command = DevMaid.CLI.Commands.DatabaseCommand.Build();
+        var command = CLI.Commands.DatabaseCommand.Build();
 
         Assert.AreEqual("database", command.Name);
         Assert.AreEqual("Database utilities.", command.Description);
@@ -75,10 +70,10 @@ public class DatabaseCommandTests
     [TestMethod]
     public void Build_ContainsBackupAndRestoreSubcommands()
     {
-        var command = DevMaid.CLI.Commands.DatabaseCommand.Build();
+        var command = CLI.Commands.DatabaseCommand.Build();
 
         Assert.AreEqual(2, command.Children.Count());
-        
+
         var backupCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "backup");
         var restoreCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "restore");
 
@@ -100,7 +95,7 @@ public class DatabaseCommandTests
 
         try
         {
-            DevMaid.CLI.Commands.DatabaseCommand.Backup(options);
+            CLI.Commands.DatabaseCommand.Backup(options);
         }
         catch (PostgresBinaryNotFoundException)
         {
@@ -124,7 +119,7 @@ public class DatabaseCommandTests
             Password = "test"
         };
 
-        try { DevMaid.CLI.Commands.DatabaseCommand.Backup(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.DatabaseCommand.Backup(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -139,7 +134,7 @@ public class DatabaseCommandTests
             Password = "test"
         };
 
-        try { DevMaid.CLI.Commands.DatabaseCommand.Backup(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.DatabaseCommand.Backup(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -154,7 +149,7 @@ public class DatabaseCommandTests
             Password = "test"
         };
 
-        try { DevMaid.CLI.Commands.DatabaseCommand.Backup(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.DatabaseCommand.Backup(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -171,7 +166,7 @@ public class DatabaseCommandTests
 
         try
         {
-            DevMaid.CLI.Commands.DatabaseCommand.Restore(options);
+            CLI.Commands.DatabaseCommand.Restore(options);
         }
         catch (PostgresBinaryNotFoundException)
         {
@@ -195,7 +190,7 @@ public class DatabaseCommandTests
             Password = "test"
         };
 
-        try { DevMaid.CLI.Commands.DatabaseCommand.Restore(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.DatabaseCommand.Restore(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -210,7 +205,7 @@ public class DatabaseCommandTests
             Password = "test"
         };
 
-        try { DevMaid.CLI.Commands.DatabaseCommand.Restore(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.DatabaseCommand.Restore(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -228,7 +223,7 @@ public class DatabaseCommandTests
 
         try
         {
-            DevMaid.CLI.Commands.DatabaseCommand.Backup(options);
+            CLI.Commands.DatabaseCommand.Backup(options);
         }
         catch (PostgresBinaryNotFoundException)
         {
@@ -256,7 +251,7 @@ public class DatabaseCommandTests
 
         try
         {
-            DevMaid.CLI.Commands.DatabaseCommand.Restore(options);
+            CLI.Commands.DatabaseCommand.Restore(options);
         }
         catch (PostgresBinaryNotFoundException)
         {

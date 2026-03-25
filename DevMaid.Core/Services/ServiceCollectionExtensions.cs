@@ -1,9 +1,7 @@
 using DevMaid.Core.HealthChecks;
 using DevMaid.Core.Interfaces;
-using DevMaid.Core.Logging;
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
 namespace DevMaid.Core.Services;

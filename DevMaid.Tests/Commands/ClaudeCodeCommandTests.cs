@@ -31,7 +31,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_ReturnsCommandWithCorrectName()
     {
-        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
+        var command = CLI.Commands.ClaudeCodeCommand.Build();
 
         Assert.AreEqual("claude", command.Name);
     }
@@ -39,7 +39,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_ContainsInstallSubcommand()
     {
-        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
+        var command = CLI.Commands.ClaudeCodeCommand.Build();
 
         var installCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "install");
         Assert.IsNotNull(installCommand);
@@ -48,7 +48,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_ContainsSettingsSubcommand()
     {
-        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
+        var command = CLI.Commands.ClaudeCodeCommand.Build();
 
         var settingsCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "settings");
         Assert.IsNotNull(settingsCommand);
@@ -57,7 +57,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_SettingsContainsMcpDatabaseCommand()
     {
-        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
+        var command = CLI.Commands.ClaudeCodeCommand.Build();
 
         var settingsCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "settings");
         Assert.IsNotNull(settingsCommand);
@@ -69,7 +69,7 @@ public class ClaudeCodeCommandTests
     [TestMethod]
     public void Build_SettingsContainsWinEnvCommand()
     {
-        var command = DevMaid.CLI.Commands.ClaudeCodeCommand.Build();
+        var command = CLI.Commands.ClaudeCodeCommand.Build();
 
         var settingsCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "settings");
         Assert.IsNotNull(settingsCommand);
@@ -89,7 +89,7 @@ public class ClaudeCodeCommandTests
 
         try
         {
-            DevMaid.CLI.Commands.ClaudeCodeCommand.Install();
+            CLI.Commands.ClaudeCodeCommand.Install();
             Assert.Fail("Expected exception was not thrown");
         }
         catch (PlatformNotSupportedException)
@@ -108,7 +108,7 @@ public class ClaudeCodeCommandTests
 
         try
         {
-            DevMaid.CLI.Commands.ClaudeCodeCommand.ConfigureWindowsEnvironment();
+            CLI.Commands.ClaudeCodeCommand.ConfigureWindowsEnvironment();
             Assert.Fail("Expected exception was not thrown");
         }
         catch (PlatformNotSupportedException)

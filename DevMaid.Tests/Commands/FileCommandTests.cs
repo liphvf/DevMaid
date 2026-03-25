@@ -1,12 +1,10 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using DevMaid.CLI.CommandOptions;
 
-using Command = System.CommandLine.Command;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DevMaid.Tests.Commands;
 
@@ -34,7 +32,7 @@ public class FileCommandTests
     [TestMethod]
     public void Build_ReturnsCommandWithCorrectName()
     {
-        var command = DevMaid.CLI.Commands.FileCommand.Build();
+        var command = CLI.Commands.FileCommand.Build();
 
         Assert.AreEqual("file", command.Name);
         Assert.AreEqual("File utilities.", command.Description);
@@ -43,7 +41,7 @@ public class FileCommandTests
     [TestMethod]
     public void Build_ContainsCombineSubcommand()
     {
-        var command = DevMaid.CLI.Commands.FileCommand.Build();
+        var command = CLI.Commands.FileCommand.Build();
 
         var combineCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "combine");
         Assert.IsNotNull(combineCommand);
@@ -54,7 +52,7 @@ public class FileCommandTests
     {
         var file1 = Path.Combine(_testDirectory, "file1.txt");
         var file2 = Path.Combine(_testDirectory, "file2.txt");
-        
+
         File.WriteAllText(file1, "Content 1");
         File.WriteAllText(file2, "Content 2");
 
@@ -64,7 +62,7 @@ public class FileCommandTests
             Output = Path.Combine(_testDirectory, "combined.txt")
         };
 
-        DevMaid.CLI.Commands.FileCommand.Combine(options);
+        CLI.Commands.FileCommand.Combine(options);
 
         Assert.IsTrue(File.Exists(options.Output));
         var content = File.ReadAllText(options.Output);
@@ -81,7 +79,7 @@ public class FileCommandTests
             Output = Path.Combine(_testDirectory, "output.txt")
         };
 
-        try { DevMaid.CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -93,7 +91,7 @@ public class FileCommandTests
             Output = Path.Combine(Path.GetTempPath(), "outside", "output.txt")
         };
 
-        try { DevMaid.CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -105,7 +103,7 @@ public class FileCommandTests
             Output = Path.Combine(_testDirectory, "output.txt")
         };
 
-        try { DevMaid.CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (Exception) { }
+        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (Exception) { }
     }
 
     [TestMethod]
@@ -117,7 +115,7 @@ public class FileCommandTests
             Output = Path.Combine(_testDirectory, "output.txt")
         };
 
-        try { DevMaid.CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -132,7 +130,7 @@ public class FileCommandTests
             Output = Path.Combine(_testDirectory, "..", "output.txt")
         };
 
-        try { DevMaid.CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -146,7 +144,7 @@ public class FileCommandTests
             Input = Path.Combine(_testDirectory, "*.sql")
         };
 
-        DevMaid.CLI.Commands.FileCommand.Combine(options);
+        CLI.Commands.FileCommand.Combine(options);
 
         var expectedOutput = Path.Combine(_testDirectory, "CombineFiles.sql");
         Assert.IsTrue(File.Exists(expectedOutput));
@@ -157,10 +155,10 @@ public class FileCommandTests
     {
         var file1 = Path.Combine(_testDirectory, "file1.txt");
         var file2 = Path.Combine(_testDirectory, "file2.txt");
-        
+
         var content1 = "Content with special chars: áéíóú";
         var content2 = "More content: ãõû";
-        
+
         File.WriteAllText(file1, content1, Encoding.UTF8);
         File.WriteAllText(file2, content2, Encoding.UTF8);
 
@@ -170,7 +168,7 @@ public class FileCommandTests
             Output = Path.Combine(_testDirectory, "combined.txt")
         };
 
-        DevMaid.CLI.Commands.FileCommand.Combine(options);
+        CLI.Commands.FileCommand.Combine(options);
 
         var result = File.ReadAllText(options.Output, Encoding.UTF8);
         Assert.IsTrue(result.Contains(content1));

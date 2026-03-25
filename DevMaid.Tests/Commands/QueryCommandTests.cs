@@ -1,21 +1,13 @@
 using System;
-using System.CommandLine;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Reflection;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using DevMaid.CLI.CommandOptions;
 using DevMaid.CLI.Services;
-using DevMaid.Core.Interfaces;
-using DevMaid.Core.Logging;
-using DevMaid.Core.Services;
 using DevMaid.CLI.Services.Logging;
-using Microsoft.Extensions.DependencyInjection;
+using DevMaid.Core.Interfaces;
 
-using Command = System.CommandLine.Command;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace DevMaid.Tests.Commands;
 
@@ -58,9 +50,9 @@ public class QueryCommandTests
         var serviceProvider = services.BuildServiceProvider();
 
         // Set service provider for static services
-        DevMaid.CLI.Services.Logging.Logger.SetServiceProvider(serviceProvider);
-        DevMaid.CLI.Services.ConfigurationService.SetServiceProvider(serviceProvider);
-        DevMaid.CLI.Services.PostgresDatabaseLister.SetServiceProvider(serviceProvider);
+        Logger.SetServiceProvider(serviceProvider);
+        CLI.Services.ConfigurationService.SetServiceProvider(serviceProvider);
+        PostgresDatabaseLister.SetServiceProvider(serviceProvider);
     }
 
     [TestInitialize]
@@ -68,7 +60,7 @@ public class QueryCommandTests
     {
         _testDirectory = Path.Combine(Path.GetTempPath(), $"QueryCommandTests_{Guid.NewGuid():N}");
         Directory.CreateDirectory(_testDirectory);
-        
+
         _sqlInputFile = Path.Combine(_testDirectory, "test.sql");
         File.WriteAllText(_sqlInputFile, "SELECT * FROM users;");
     }
@@ -85,7 +77,7 @@ public class QueryCommandTests
     [TestMethod]
     public void Build_ReturnsCommandWithCorrectName()
     {
-        var command = DevMaid.CLI.Commands.QueryCommand.Build();
+        var command = CLI.Commands.QueryCommand.Build();
 
         Assert.AreEqual("query", command.Name);
     }
@@ -93,10 +85,10 @@ public class QueryCommandTests
     [TestMethod]
     public void Build_ContainsRunSubcommand()
     {
-        var command = DevMaid.CLI.Commands.QueryCommand.Build();
+        var command = CLI.Commands.QueryCommand.Build();
 
         Assert.AreEqual(1, command.Children.Count());
-        
+
         var runCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "run");
         Assert.IsNotNull(runCommand);
     }
@@ -110,7 +102,7 @@ public class QueryCommandTests
             OutputFile = Path.Combine(_testDirectory, "output.csv")
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -122,7 +114,7 @@ public class QueryCommandTests
             OutputFile = Path.Combine(_testDirectory, "output.csv")
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (FileNotFoundException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (FileNotFoundException) { }
     }
 
     [TestMethod]
@@ -130,14 +122,14 @@ public class QueryCommandTests
     {
         var emptyFile = Path.Combine(_testDirectory, "empty.sql");
         File.WriteAllText(emptyFile, "");
-        
+
         var options = new QueryCommandOptions
         {
             InputFile = emptyFile,
             OutputFile = Path.Combine(_testDirectory, "output.csv")
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -149,7 +141,7 @@ public class QueryCommandTests
             OutputFile = ""
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -161,7 +153,8 @@ public class QueryCommandTests
             OutputFile = Path.Combine(_testDirectory, "output.csv")
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); }
+        catch (ArgumentException) { }
         catch (FileNotFoundException) { Assert.Fail("Should throw ArgumentException before checking file existence"); }
     }
 
@@ -174,7 +167,7 @@ public class QueryCommandTests
             OutputFile = Path.Combine(_testDirectory, "..", "..", "output.csv")
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -187,7 +180,7 @@ public class QueryCommandTests
             All = true
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -200,7 +193,7 @@ public class QueryCommandTests
             Servers = true
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -214,7 +207,7 @@ public class QueryCommandTests
             Password = "test" // Provide password to avoid console input
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
     [TestMethod]
@@ -227,6 +220,6 @@ public class QueryCommandTests
             Servers = true
         };
 
-        try { DevMaid.CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 }

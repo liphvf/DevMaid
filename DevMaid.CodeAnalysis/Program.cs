@@ -1,5 +1,4 @@
 using Microsoft.Build.Locator;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
 var solutionPath = args.Length > 0 ? args[0] : "..\\DevMaid.slnx";

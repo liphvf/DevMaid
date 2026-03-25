@@ -12,7 +12,7 @@ public static class PostgresBinaryLocator
     /// <returns>The full path to pg_dump, or null if not found.</returns>
     public static string? FindPgDump()
     {
-        return DevMaid.Core.Services.PostgresBinaryLocator.FindPgDump();
+        return Core.Services.PostgresBinaryLocator.FindPgDump();
     }
 
     /// <summary>
@@ -21,7 +21,7 @@ public static class PostgresBinaryLocator
     /// <returns>The full path to pg_restore, or null if not found.</returns>
     public static string? FindPgRestore()
     {
-        return DevMaid.Core.Services.PostgresBinaryLocator.FindPgRestore();
+        return Core.Services.PostgresBinaryLocator.FindPgRestore();
     }
 
     /// <summary>
@@ -30,6 +30,6 @@ public static class PostgresBinaryLocator
     /// <returns>The full path to psql, or null if not found.</returns>
     public static string? FindPsql()
     {
-        return DevMaid.Core.Services.PostgresBinaryLocator.FindPsql();
+        return Core.Services.PostgresBinaryLocator.FindPsql();
     }
 }

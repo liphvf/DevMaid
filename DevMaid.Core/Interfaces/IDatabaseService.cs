@@ -1,5 +1,3 @@
-
-using DevMaid.Core.Logging;
 using DevMaid.Core.Models;
 
 namespace DevMaid.Core.Interfaces;

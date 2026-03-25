@@ -30,9 +30,9 @@ internal static class Program
         using var scope = host.Services.CreateScope();
         var serviceProvider = scope.ServiceProvider;
 
-        DevMaid.CLI.Services.Logging.Logger.SetServiceProvider(serviceProvider);
-        DevMaid.CLI.Services.ConfigurationService.SetServiceProvider(serviceProvider);
-        DevMaid.CLI.Services.PostgresDatabaseLister.SetServiceProvider(serviceProvider);
+        Services.Logging.Logger.SetServiceProvider(serviceProvider);
+        Services.ConfigurationService.SetServiceProvider(serviceProvider);
+        Services.PostgresDatabaseLister.SetServiceProvider(serviceProvider);
 
         AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
         {

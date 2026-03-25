@@ -1,7 +1,4 @@
-
-using DevMaid.CLI.CommandOptions;
 using DevMaid.Core.Interfaces;
-using DevMaid.Core.Models;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

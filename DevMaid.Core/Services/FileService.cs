@@ -1,5 +1,3 @@
-using System.Text;
-
 using DevMaid.Core.Interfaces;
 using DevMaid.Core.Logging;
 using DevMaid.Core.Models;

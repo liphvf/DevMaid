@@ -2,8 +2,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-using NStack;
-
 using Terminal.Gui;
 
 namespace DevMaid.CLI.Tui;
@@ -449,35 +447,35 @@ public static class TuiApp
             var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "./Table.class" : outputField.Text.ToString();
 
             // Validate database name
-            if (!DevMaid.CLI.SecurityUtils.IsValidPostgreSQLIdentifier(db!))
+            if (!SecurityUtils.IsValidPostgreSQLIdentifier(db!))
             {
                 MessageBox.ErrorQuery("Error", "Invalid database name. Use only letters, numbers, and underscores.", "OK");
                 return;
             }
 
             // Validate table name
-            if (!DevMaid.CLI.SecurityUtils.IsValidPostgreSQLIdentifier(table!))
+            if (!SecurityUtils.IsValidPostgreSQLIdentifier(table!))
             {
                 MessageBox.ErrorQuery("Error", "Invalid table name. Use only letters, numbers, and underscores.", "OK");
                 return;
             }
 
             // Validate host
-            if (!DevMaid.CLI.SecurityUtils.IsValidHost(host!))
+            if (!SecurityUtils.IsValidHost(host!))
             {
                 MessageBox.ErrorQuery("Error", "Invalid host.", "OK");
                 return;
             }
 
             // Validate username
-            if (!DevMaid.CLI.SecurityUtils.IsValidUsername(user!))
+            if (!SecurityUtils.IsValidUsername(user!))
             {
                 MessageBox.ErrorQuery("Error", "Invalid username. Use only letters, numbers, underscores, hyphens, and dots.", "OK");
                 return;
             }
 
             // Validate output path
-            if (!DevMaid.CLI.SecurityUtils.IsValidPath(output!))
+            if (!SecurityUtils.IsValidPath(output!))
             {
                 MessageBox.ErrorQuery("Error", "Invalid output path.", "OK");
                 return;
@@ -630,35 +628,35 @@ public static class TuiApp
             var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "" : outputField.Text.ToString();
 
             // Validate database name
-            if (!allDatabases && !string.IsNullOrWhiteSpace(db) && !DevMaid.CLI.SecurityUtils.IsValidPostgreSQLIdentifier(db))
+            if (!allDatabases && !string.IsNullOrWhiteSpace(db) && !SecurityUtils.IsValidPostgreSQLIdentifier(db))
             {
                 MessageBox.ErrorQuery("Error", "Invalid database name. Use only letters, numbers, and underscores.", "OK");
                 return;
             }
 
             // Validate host
-            if (!string.IsNullOrWhiteSpace(host) && !DevMaid.CLI.SecurityUtils.IsValidHost(host))
+            if (!string.IsNullOrWhiteSpace(host) && !SecurityUtils.IsValidHost(host))
             {
                 MessageBox.ErrorQuery("Error", "Invalid host.", "OK");
                 return;
             }
 
             // Validate port
-            if (!string.IsNullOrWhiteSpace(port) && !DevMaid.CLI.SecurityUtils.IsValidPort(port))
+            if (!string.IsNullOrWhiteSpace(port) && !SecurityUtils.IsValidPort(port))
             {
                 MessageBox.ErrorQuery("Error", "Invalid port. Must be between 1 and 65535.", "OK");
                 return;
             }
 
             // Validate username
-            if (!string.IsNullOrWhiteSpace(user) && !DevMaid.CLI.SecurityUtils.IsValidUsername(user))
+            if (!string.IsNullOrWhiteSpace(user) && !SecurityUtils.IsValidUsername(user))
             {
                 MessageBox.ErrorQuery("Error", "Invalid username. Use only letters, numbers, underscores, hyphens, and dots.", "OK");
                 return;
             }
 
             // Validate output path
-            if (!string.IsNullOrWhiteSpace(output) && !DevMaid.CLI.SecurityUtils.IsValidPath(output))
+            if (!string.IsNullOrWhiteSpace(output) && !SecurityUtils.IsValidPath(output))
             {
                 MessageBox.ErrorQuery("Error", "Invalid output path.", "OK");
                 return;
@@ -825,35 +823,35 @@ public static class TuiApp
             var user = string.IsNullOrWhiteSpace(userField.Text.ToString()) ? "" : userField.Text.ToString();
 
             // Validate database name
-            if (!allDatabases && !string.IsNullOrWhiteSpace(db) && !DevMaid.CLI.SecurityUtils.IsValidPostgreSQLIdentifier(db))
+            if (!allDatabases && !string.IsNullOrWhiteSpace(db) && !SecurityUtils.IsValidPostgreSQLIdentifier(db))
             {
                 MessageBox.ErrorQuery("Error", "Invalid database name. Use only letters, numbers, and underscores.", "OK");
                 return;
             }
 
             // Validate host
-            if (!string.IsNullOrWhiteSpace(host) && !DevMaid.CLI.SecurityUtils.IsValidHost(host))
+            if (!string.IsNullOrWhiteSpace(host) && !SecurityUtils.IsValidHost(host))
             {
                 MessageBox.ErrorQuery("Error", "Invalid host.", "OK");
                 return;
             }
 
             // Validate port
-            if (!string.IsNullOrWhiteSpace(port) && !DevMaid.CLI.SecurityUtils.IsValidPort(port))
+            if (!string.IsNullOrWhiteSpace(port) && !SecurityUtils.IsValidPort(port))
             {
                 MessageBox.ErrorQuery("Error", "Invalid port. Must be between 1 and 65535.", "OK");
                 return;
             }
 
             // Validate username
-            if (!string.IsNullOrWhiteSpace(user) && !DevMaid.CLI.SecurityUtils.IsValidUsername(user))
+            if (!string.IsNullOrWhiteSpace(user) && !SecurityUtils.IsValidUsername(user))
             {
                 MessageBox.ErrorQuery("Error", "Invalid username. Use only letters, numbers, underscores, hyphens, and dots.", "OK");
                 return;
             }
 
             // Validate file/directory path
-            if (!string.IsNullOrWhiteSpace(file) && !DevMaid.CLI.SecurityUtils.IsValidPath(file))
+            if (!string.IsNullOrWhiteSpace(file) && !SecurityUtils.IsValidPath(file))
             {
                 MessageBox.ErrorQuery("Error", "Invalid file path.", "OK");
                 return;
@@ -1085,7 +1083,7 @@ public static class TuiApp
             var output = string.IsNullOrWhiteSpace(outputField.Text.ToString()) ? "" : outputField.Text.ToString();
 
             // Validate output path
-            if (!string.IsNullOrWhiteSpace(output) && !DevMaid.CLI.SecurityUtils.IsValidPath(output))
+            if (!string.IsNullOrWhiteSpace(output) && !SecurityUtils.IsValidPath(output))
             {
                 MessageBox.ErrorQuery("Error", "Invalid output path.", "OK");
                 return;
