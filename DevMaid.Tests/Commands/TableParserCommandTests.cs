@@ -83,7 +83,7 @@ public class TableParserCommandTests
     {
         var command = CLI.Commands.TableParserCommand.Build();
 
-        Assert.IsTrue(command.Aliases.Contains("tableparser"));
+        Assert.Contains("tableparser", command.Aliases);
     }
 
     [TestMethod]

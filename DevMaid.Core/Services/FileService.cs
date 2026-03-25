@@ -7,18 +7,13 @@ namespace DevMaid.Core.Services;
 /// <summary>
 /// Provides methods for file operations including combining files.
 /// </summary>
-public class FileService : IFileService
+/// <remarks>
+/// Initializes a new instance of the <see cref="FileService"/> class.
+/// </remarks>
+/// <param name="logger">The logger instance.</param>
+public class FileService(ILogger logger) : IFileService
 {
-    private readonly ILogger _logger;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="FileService"/> class.
-    /// </summary>
-    /// <param name="logger">The logger instance.</param>
-    public FileService(ILogger logger)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+    private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <summary>
     /// Combines multiple files into a single output file.
@@ -32,10 +27,7 @@ public class FileService : IFileService
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         var startTime = DateTime.UtcNow;
 
@@ -250,7 +242,7 @@ public class FileService : IFileService
         }
     }
 
-    private List<string> GetInputFiles(FileCombineOptions options)
+    private static List<string> GetInputFiles(FileCombineOptions options)
     {
         var input = options.Input;
         var files = new List<string>();

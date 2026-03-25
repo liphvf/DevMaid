@@ -36,7 +36,7 @@ public static class PostgresBinaryLocator
     private static string? FindExecutable(string executableName)
     {
         // Try to find executable in PATH
-        var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
+        var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? [];
 
         foreach (var path in paths)
         {

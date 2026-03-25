@@ -5,14 +5,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace DevMaid.Core.HealthChecks;
 
-public class ConfigurationHealthCheck : IHealthCheck
+public class ConfigurationHealthCheck(IConfigurationService configurationService) : IHealthCheck
 {
-    private readonly IConfigurationService _configurationService;
-
-    public ConfigurationHealthCheck(IConfigurationService configurationService)
-    {
-        _configurationService = configurationService;
-    }
+    private readonly IConfigurationService _configurationService = configurationService;
 
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,

@@ -5,14 +5,9 @@ namespace DevMaid.Core.Logging;
 /// <summary>
 /// Adapter for Microsoft.Extensions.Logging.ILogger to DevMaid.Core.Logging.ILogger.
 /// </summary>
-public sealed class MicrosoftExtensionsLoggerAdapter : ILogger
+public sealed class MicrosoftExtensionsLoggerAdapter(Microsoft.Extensions.Logging.ILogger logger) : ILogger
 {
-    private readonly Microsoft.Extensions.Logging.ILogger _logger;
-
-    public MicrosoftExtensionsLoggerAdapter(Microsoft.Extensions.Logging.ILogger logger)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+    private readonly Microsoft.Extensions.Logging.ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public void LogInformation(string message, params object[] args)
     {

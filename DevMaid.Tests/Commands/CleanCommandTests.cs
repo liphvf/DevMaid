@@ -146,7 +146,7 @@ public class CleanCommandTests
     {
         var command = CLI.Commands.CleanCommand.Build();
 
-        Assert.AreEqual(1, command.Arguments.Count);
+        Assert.HasCount(1, command.Arguments);
         Assert.AreEqual("directory", command.Arguments[0].Name);
     }
 }

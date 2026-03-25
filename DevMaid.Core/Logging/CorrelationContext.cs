@@ -10,7 +10,7 @@ public class CorrelationContext
     public string CorrelationId { get; }
     public DateTime StartTimeUtc { get; }
     public string CommandName { get; set; } = string.Empty;
-    public Dictionary<string, object> Properties { get; } = new();
+    public Dictionary<string, object> Properties { get; } = [];
 
     private CorrelationContext(string correlationId)
     {
@@ -60,10 +60,7 @@ public static class LoggerExtensions
     public static IDisposable BeginCorrelationScope(this Microsoft.Extensions.Logging.ILogger logger, string commandName)
     {
         var correlation = CorrelationContext.Current;
-        if (correlation != null)
-        {
-            correlation.CommandName = commandName;
-        }
+        correlation?.CommandName = commandName;
 
         var correlationId = correlation?.CorrelationId ?? "no-correlation";
         return new CorrelationScopeWrapper(logger, correlationId, commandName);

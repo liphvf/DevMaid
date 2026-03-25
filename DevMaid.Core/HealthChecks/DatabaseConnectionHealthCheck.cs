@@ -6,18 +6,12 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace DevMaid.Core.HealthChecks;
 
-public class DatabaseConnectionHealthCheck : IHealthCheck
+public class DatabaseConnectionHealthCheck(
+    IConfigurationService configurationService,
+    IDatabaseService databaseService) : IHealthCheck
 {
-    private readonly IConfigurationService _configurationService;
-    private readonly IDatabaseService _databaseService;
-
-    public DatabaseConnectionHealthCheck(
-        IConfigurationService configurationService,
-        IDatabaseService databaseService)
-    {
-        _configurationService = configurationService;
-        _databaseService = databaseService;
-    }
+    private readonly IConfigurationService _configurationService = configurationService;
+    private readonly IDatabaseService _databaseService = databaseService;
 
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,

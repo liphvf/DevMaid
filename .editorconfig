@@ -388,8 +388,9 @@ dotnet_naming_style.s_camelcase.word_separator =
 dotnet_naming_style.s_camelcase.capitalization = camel_case
 
 # Name can be simplified IDE0002
-dotnet_diagnostic.IDE0002.severity = warning
-dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0002.severity = suggestion
+dotnet_diagnostic.IDE0005.severity = suggestion
+dotnet_diagnostic.IDE0046.severity = none
 
 # # força praticamente tudo de estilo
 # dotnet_analyzer_diagnostic.category-Style.severity = warning

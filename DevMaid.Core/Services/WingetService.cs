@@ -9,21 +9,15 @@ namespace DevMaid.Core.Services;
 /// <summary>
 /// Provides methods for Winget package operations including backup and restore.
 /// </summary>
-public class WingetService : IWingetService
+/// <remarks>
+/// Initializes a new instance of the <see cref="WingetService"/> class.
+/// </remarks>
+/// <param name="processExecutor">The process executor instance.</param>
+/// <param name="logger">The logger instance.</param>
+public class WingetService(IProcessExecutor processExecutor, ILogger logger) : IWingetService
 {
-    private readonly IProcessExecutor _processExecutor;
-    private readonly ILogger _logger;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="WingetService"/> class.
-    /// </summary>
-    /// <param name="processExecutor">The process executor instance.</param>
-    /// <param name="logger">The logger instance.</param>
-    public WingetService(IProcessExecutor processExecutor, ILogger logger)
-    {
-        _processExecutor = processExecutor ?? throw new ArgumentNullException(nameof(processExecutor));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+    private readonly IProcessExecutor _processExecutor = processExecutor ?? throw new ArgumentNullException(nameof(processExecutor));
+    private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <summary>
     /// Creates a backup of installed Winget packages.
@@ -37,10 +31,7 @@ public class WingetService : IWingetService
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         var startTime = DateTime.UtcNow;
 
@@ -129,10 +120,7 @@ public class WingetService : IWingetService
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         var startTime = DateTime.UtcNow;
 
@@ -267,7 +255,7 @@ public class WingetService : IWingetService
             if (!result.Success)
             {
                 _logger.LogWarning($"Failed to list packages: {result.StandardError}");
-                return new List<string>();
+                return [];
             }
 
             // Parse output to get package IDs
@@ -287,7 +275,7 @@ public class WingetService : IWingetService
                 }
 
                 // Parse package ID (usually the second column)
-                var parts = trimmedLine.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                var parts = trimmedLine.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length >= 2)
                 {
                     packages.Add(parts[1]);
@@ -299,7 +287,7 @@ public class WingetService : IWingetService
         catch (Exception ex)
         {
             _logger.LogError($"Failed to list packages: {ex.Message}");
-            return new List<string>();
+            return [];
         }
     }
 
@@ -352,7 +340,7 @@ public class WingetService : IWingetService
             {
                 if (line.Contains("Source"))
                 {
-                    var parts = line.Split(new[] { ':' }, 2);
+                    var parts = line.Split([':'], 2);
                     if (parts.Length == 2)
                     {
                         return parts[1].Trim();
@@ -391,7 +379,7 @@ public class WingetService : IWingetService
             {
                 if (line.Contains("Version"))
                 {
-                    var parts = line.Split(new[] { ':' }, 2);
+                    var parts = line.Split([':'], 2);
                     if (parts.Length == 2)
                     {
                         return parts[1].Trim();

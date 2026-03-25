@@ -79,14 +79,9 @@ public class ClaudeCodeCommandTests
     }
 
     [TestMethod]
+    [OSCondition(ConditionMode.Exclude, OperatingSystems.Windows)]
     public void Install_NonWindows_ThrowsPlatformNotSupportedException()
     {
-        if (OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("Test only runs on non-Windows platforms");
-            return;
-        }
-
         try
         {
             CLI.Commands.ClaudeCodeCommand.Install();
@@ -98,14 +93,9 @@ public class ClaudeCodeCommandTests
     }
 
     [TestMethod]
+    [OSCondition(ConditionMode.Exclude, OperatingSystems.Windows)]
     public void ConfigureWindowsEnvironment_NonWindows_ThrowsPlatformNotSupportedException()
     {
-        if (OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("Test only runs on non-Windows platforms");
-            return;
-        }
-
         try
         {
             CLI.Commands.ClaudeCodeCommand.ConfigureWindowsEnvironment();
@@ -168,11 +158,11 @@ public class ClaudeCodeCommandTests
         }
     }
 
-    private JsonObject InvokePrivateLoadSettingsFile(string settingsPath)
+    private static JsonObject InvokePrivateLoadSettingsFile(string settingsPath)
     {
         var method = typeof(DevMaid.CLI.Commands.ClaudeCodeCommand).GetMethod("LoadSettingsFile",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
-        return (JsonObject)method!.Invoke(null, new object[] { settingsPath })!;
+        return (JsonObject)method!.Invoke(null, [settingsPath])!;
     }
 }

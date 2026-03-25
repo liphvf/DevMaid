@@ -4,18 +4,13 @@ namespace DevMaid.Core.Logging;
 /// <summary>
 /// Console-based implementation of the <see cref="ILogger"/> interface.
 /// </summary>
-public class ConsoleLogger : ILogger
+/// <remarks>
+/// Initializes a new instance of the <see cref="ConsoleLogger"/> class.
+/// </remarks>
+/// <param name="useColors">Whether to use colors in the console output.</param>
+public class ConsoleLogger(bool useColors = true) : ILogger
 {
-    private readonly bool _useColors;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ConsoleLogger"/> class.
-    /// </summary>
-    /// <param name="useColors">Whether to use colors in the console output.</param>
-    public ConsoleLogger(bool useColors = true)
-    {
-        _useColors = useColors;
-    }
+    private readonly bool _useColors = useColors;
 
     /// <inheritdoc/>
     public void LogInformation(string message, params object[] args)

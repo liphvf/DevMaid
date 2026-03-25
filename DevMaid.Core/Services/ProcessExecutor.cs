@@ -10,18 +10,13 @@ namespace DevMaid.Core.Services;
 /// <summary>
 /// Provides methods for executing external processes with progress reporting.
 /// </summary>
-public class ProcessExecutor : IProcessExecutor
+/// <remarks>
+/// Initializes a new instance of the <see cref="ProcessExecutor"/> class.
+/// </remarks>
+/// <param name="logger">The logger instance.</param>
+public class ProcessExecutor(ILogger logger) : IProcessExecutor
 {
-    private readonly ILogger _logger;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ProcessExecutor"/> class.
-    /// </summary>
-    /// <param name="logger">The logger instance.</param>
-    public ProcessExecutor(ILogger logger)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+    private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <summary>
     /// Executes a process with the specified options.
@@ -35,10 +30,7 @@ public class ProcessExecutor : IProcessExecutor
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         _logger.LogDebug($"Starting process: {options.FileName} {options.Arguments}");
 

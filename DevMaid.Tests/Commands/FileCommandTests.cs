@@ -66,8 +66,8 @@ public class FileCommandTests
 
         Assert.IsTrue(File.Exists(options.Output));
         var content = File.ReadAllText(options.Output);
-        Assert.IsTrue(content.Contains("Content 1"));
-        Assert.IsTrue(content.Contains("Content 2"));
+        Assert.Contains("Content 1", content);
+        Assert.Contains("Content 2", content);
     }
 
     [TestMethod]
@@ -171,7 +171,7 @@ public class FileCommandTests
         CLI.Commands.FileCommand.Combine(options);
 
         var result = File.ReadAllText(options.Output, Encoding.UTF8);
-        Assert.IsTrue(result.Contains(content1));
-        Assert.IsTrue(result.Contains(content2));
+        Assert.Contains(content1, result);
+        Assert.Contains(content2, result);
     }
 }

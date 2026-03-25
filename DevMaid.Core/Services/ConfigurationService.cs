@@ -11,23 +11,16 @@ namespace DevMaid.Core.Services;
 /// <summary>
 /// Provides centralized configuration management for the DevMaid application.
 /// </summary>
-public class ConfigurationService : IConfigurationService
+/// <remarks>
+/// Initializes a new instance of the <see cref="ConfigurationService"/> class.
+/// </remarks>
+/// <param name="logger">The logger instance.</param>
+public partial class ConfigurationService(ILogger logger) : IConfigurationService
 {
     private IConfigurationRoot? _configuration;
-    private readonly ILogger _logger;
-    private readonly object _lock = new object();
-    private static readonly Regex ValidHostnameRegex = new Regex(
-        @"^(localhost|127\.\d+\.\d+\.\d+|::1|[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])*(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])*)*)$",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ConfigurationService"/> class.
-    /// </summary>
-    /// <param name="logger">The logger instance.</param>
-    public ConfigurationService(ILogger logger)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+    private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly Lock _lock = new();
+    private static readonly Regex ValidHostnameRegex = ValidHostnameRegexGenerated();
 
     /// <summary>
     /// Gets the application configuration.
@@ -117,10 +110,7 @@ public class ConfigurationService : IConfigurationService
     /// <param name="config">The configuration to set.</param>
     public void UpdateDatabaseConfig(DatabaseConnectionConfig config)
     {
-        if (config == null)
-        {
-            throw new ArgumentNullException(nameof(config));
-        }
+        ArgumentNullException.ThrowIfNull(config);
 
         var configPath = GetConfigFilePath();
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -133,7 +123,7 @@ public class ConfigurationService : IConfigurationService
             var lines = File.ReadAllLines(configPath);
             foreach (var line in lines)
             {
-                var parts = line.Split(new[] { '=' }, 2);
+                var parts = line.Split(['='], 2);
                 if (parts.Length == 2)
                 {
                     existingConfig[parts[0].Trim()] = parts[1].Trim();
@@ -203,7 +193,7 @@ public class ConfigurationService : IConfigurationService
             var lines = File.ReadAllLines(configPath);
             foreach (var line in lines)
             {
-                var parts = line.Split(new[] { '=' }, 2);
+                var parts = line.Split(['='], 2);
                 if (parts.Length == 2)
                 {
                     existingConfig[parts[0].Trim()] = parts[1].Trim();
@@ -242,10 +232,13 @@ public class ConfigurationService : IConfigurationService
             .Build();
     }
 
-    private string GetConfigFilePath()
+    private static string GetConfigFilePath()
     {
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var configFolder = Path.Combine(localAppData, "DevMaid");
         return Path.Combine(configFolder, "appsettings.json");
     }
+
+    [GeneratedRegex(@"^(localhost|127\.\d+\.\d+\.\d+|::1|[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])*(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])*)*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+    private static partial Regex ValidHostnameRegexGenerated();
 }

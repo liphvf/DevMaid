@@ -9,21 +9,15 @@ namespace DevMaid.Core.Services;
 /// <summary>
 /// Provides methods for database operations including backup and restore.
 /// </summary>
-public class DatabaseService : IDatabaseService
+/// <remarks>
+/// Initializes a new instance of the <see cref="DatabaseService"/> class.
+/// </remarks>
+/// <param name="processExecutor">The process executor instance.</param>
+/// <param name="logger">The logger instance.</param>
+public class DatabaseService(IProcessExecutor processExecutor, ILogger logger) : IDatabaseService
 {
-    private readonly IProcessExecutor _processExecutor;
-    private readonly ILogger _logger;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DatabaseService"/> class.
-    /// </summary>
-    /// <param name="processExecutor">The process executor instance.</param>
-    /// <param name="logger">The logger instance.</param>
-    public DatabaseService(IProcessExecutor processExecutor, ILogger logger)
-    {
-        _processExecutor = processExecutor ?? throw new ArgumentNullException(nameof(processExecutor));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
+    private readonly IProcessExecutor _processExecutor = processExecutor ?? throw new ArgumentNullException(nameof(processExecutor));
+    private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     /// <summary>
     /// Creates a backup of a PostgreSQL database.
@@ -37,10 +31,7 @@ public class DatabaseService : IDatabaseService
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         var startTime = DateTime.UtcNow;
 
@@ -84,10 +75,7 @@ public class DatabaseService : IDatabaseService
         IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         var startTime = DateTime.UtcNow;
 
@@ -195,17 +183,9 @@ public class DatabaseService : IDatabaseService
         DatabaseConnectionOptions options,
         CancellationToken cancellationToken = default)
     {
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
-        var psqlPath = PostgresBinaryLocator.FindPsql();
-        if (psqlPath == null)
-        {
-            throw new InvalidOperationException("psql executable not found. Please ensure PostgreSQL is installed.");
-        }
-
+        var psqlPath = PostgresBinaryLocator.FindPsql() ?? throw new InvalidOperationException("psql executable not found. Please ensure PostgreSQL is installed.");
         var arguments = $"-h \"{options.Host}\" -p {options.Port} -U \"{options.Username}\" -d postgres -c \"SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;\"";
         var environmentVariables = new Dictionary<string, string>
         {
@@ -245,7 +225,7 @@ public class DatabaseService : IDatabaseService
             // Remove trailing | and whitespace
             if (trimmedLine.EndsWith("|"))
             {
-                trimmedLine = trimmedLine.Substring(0, trimmedLine.Length - 1).Trim();
+                trimmedLine = trimmedLine[..^1].Trim();
             }
 
             if (!string.IsNullOrWhiteSpace(trimmedLine))
@@ -444,11 +424,7 @@ public class DatabaseService : IDatabaseService
         string databaseName,
         CancellationToken cancellationToken)
     {
-        var psqlPath = PostgresBinaryLocator.FindPsql();
-        if (psqlPath == null)
-        {
-            throw new InvalidOperationException("psql executable not found. Please ensure PostgreSQL is installed.");
-        }
+        var psqlPath = PostgresBinaryLocator.FindPsql() ?? throw new InvalidOperationException("psql executable not found. Please ensure PostgreSQL is installed.");
 
         // Check if database exists
         var checkArguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"SELECT 1 FROM pg_database WHERE datname = '{databaseName}'\"";
@@ -486,7 +462,7 @@ public class DatabaseService : IDatabaseService
         }
     }
 
-    private string BuildPgDumpArguments(DatabaseBackupOptions options, string outputPath)
+    private static string BuildPgDumpArguments(DatabaseBackupOptions options, string outputPath)
     {
         var arguments = new StringBuilder();
 
@@ -528,7 +504,7 @@ public class DatabaseService : IDatabaseService
         return arguments.ToString();
     }
 
-    private string BuildPgRestoreArguments(DatabaseRestoreOptions options, string inputPath)
+    private static string BuildPgRestoreArguments(DatabaseRestoreOptions options, string inputPath)
     {
         var arguments = new StringBuilder();
 
