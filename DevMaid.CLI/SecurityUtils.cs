@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace DevMaid.CLI;
@@ -133,7 +130,7 @@ public static class SecurityUtils
 
             foreach (var sensitivePath in sensitivePaths)
             {
-                if (!string.IsNullOrEmpty(sensitivePath) && 
+                if (!string.IsNullOrEmpty(sensitivePath) &&
                     fullPath.StartsWith(sensitivePath, StringComparison.OrdinalIgnoreCase))
                 {
                     return false;

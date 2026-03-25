@@ -1,13 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 using DevMaid.CLI.CommandOptions;
-using DevMaid.Core.Models;
 using DevMaid.Core.Interfaces;
+using DevMaid.Core.Models;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DevMaid.CLI.Services;
 

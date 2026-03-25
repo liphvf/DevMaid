@@ -1,8 +1,6 @@
-using System;
 using System.CommandLine;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -94,7 +92,7 @@ public static class ClaudeCodeCommand
         // Create CLAUDE.md file with global shell rules
         var claudeMdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude", "CLAUDE.md");
         var claudeMdDirectory = Path.GetDirectoryName(claudeMdPath);
-        
+
         if (claudeMdDirectory != null && !Directory.Exists(claudeMdDirectory))
         {
             Directory.CreateDirectory(claudeMdDirectory);

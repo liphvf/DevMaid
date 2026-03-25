@@ -1,10 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
+
 using NStack;
+
 using Terminal.Gui;
 
 namespace DevMaid.CLI.Tui;
@@ -133,7 +132,7 @@ public static class TuiApp
                         // Extract background color from wAttributes
                         // The background color is in the upper 4 bits of wAttributes
                         short bgColor = (short)((csbi.wAttributes >> 4) & 0x0F);
-                        
+
                         // Check if background is dark (0-7) or light (8-15)
                         // Windows console colors: 0=Black, 1=DarkBlue, 2=DarkGreen, 3=DarkCyan, 
                         // 4=DarkRed, 5=DarkMagenta, 6=DarkYellow, 7=DarkGray,
@@ -154,7 +153,7 @@ public static class TuiApp
         var term = Environment.GetEnvironmentVariable("TERM") ?? "";
         var colorTerm = Environment.GetEnvironmentVariable("COLORTERM") ?? "";
         var wtSession = Environment.GetEnvironmentVariable("WT_SESSION");
-        
+
         if (term.Contains("light") || colorTerm.Contains("truecolor") || colorTerm.Contains("24bit"))
         {
             _isDarkTerminal = false;
@@ -1325,7 +1324,7 @@ public static class TuiApp
         dialog.Add(outputText, exitCodeLabel, cancelButton);
 
         Application.MainLoop.EventsPending(true);
-        
+
         return (dialog, outputText, exitCodeLabel);
     }
 
@@ -1439,7 +1438,7 @@ public static class TuiApp
     {
         // Check for command injection characters
         var dangerousChars = new[] { '&', '|', ';', '$', '`', '\\', '<', '>', '\n', '\r' };
-        
+
         foreach (var dangerousChar in dangerousChars)
         {
             if (command.Contains(dangerousChar))

@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Text;
 
 using DevMaid.CLI.CommandOptions;
@@ -212,7 +208,7 @@ public static class QueryCommand
             throw new FileNotFoundException($"SQL input file not found: {inputFullPath}");
         }
 
-// Read SQL query
+        // Read SQL query
         var sqlQuery = File.ReadAllText(inputFullPath, Encoding.UTF8);
         if (string.IsNullOrWhiteSpace(sqlQuery))
         {
@@ -1018,7 +1014,7 @@ public static class QueryCommand
 
         // Load servers configuration from appsettings.json
         var servers = LoadServersConfiguration();
-        
+
         if (servers == null || servers.Count == 0)
         {
             throw new ArgumentException("No servers configured in appsettings.json. Please add servers configuration under 'Servers:ServersList'.");
@@ -1049,7 +1045,7 @@ public static class QueryCommand
         foreach (var server in filteredServers)
         {
             var serverOutputDir = Path.Combine(outputDirectory, server.Name);
-            
+
             Console.WriteLine($"========================================");
             Console.WriteLine($"Processing server: {server.Name}");
             Console.WriteLine($"Host: {server.Host}:{server.Port}");
@@ -1060,7 +1056,7 @@ public static class QueryCommand
             {
                 // Determine databases to query
                 List<string> databasesToQuery;
-                
+
                 if (server.Databases != null && server.Databases.Count > 0)
                 {
                     // Use specific databases from server config
@@ -1072,7 +1068,7 @@ public static class QueryCommand
                     // Query all databases on the server
                     Console.WriteLine("Querying all databases on server...");
                     databasesToQuery = ListAllDatabases(server.Host, server.Port, server.Username, server.Password);
-                    
+
                     // Apply exclude filter if provided
                     if (!string.IsNullOrWhiteSpace(options.Exclude))
                     {
@@ -1185,7 +1181,7 @@ public static class QueryCommand
             // Parse JSON configuration
             var serversJson = $"{{\"Servers\":{serversSection}}}";
             var config = System.Text.Json.JsonSerializer.Deserialize<ServersConfig>(serversJson);
-            
+
             return config?.Servers;
         }
         catch (Exception ex)

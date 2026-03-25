@@ -1,12 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Configuration;
+
 using DevMaid.Core.Interfaces;
 using DevMaid.Core.Logging;
 using DevMaid.Core.Models;
+
+using Microsoft.Extensions.Configuration;
 
 namespace DevMaid.Core.Services;
 

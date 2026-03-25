@@ -1,12 +1,12 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-
 using System.CommandLine;
 using System.Text.Json;
 
 using DevMaid.CLI.Commands;
 using DevMaid.Core.Services;
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace DevMaid.CLI;
 

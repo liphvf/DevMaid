@@ -1,4 +1,3 @@
-using System;
 
 namespace DevMaid.CLI.Services.Logging;
 

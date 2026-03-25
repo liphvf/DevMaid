@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.Diagnostics;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -130,7 +127,7 @@ public static class WindowsFeaturesCommand
         Console.WriteLine("Retrieving Windows features...");
 
         var result = RunDismCommand("/online /get-features /format:table", captureOutput: true);
-        
+
         if (result != 0)
         {
             Console.WriteLine("Error retrieving features. Make sure you're running as Administrator.");

@@ -1,6 +1,4 @@
-using System;
 using System.CommandLine;
-using System.IO;
 
 namespace DevMaid.CLI.Commands;
 
@@ -29,8 +27,8 @@ public static class CleanCommand
     public static void Clean(string? directoryPath)
     {
         var path = directoryPath ?? Directory.GetCurrentDirectory();
-        var directory = File.Exists(path) 
-            ? Path.GetDirectoryName(path) 
+        var directory = File.Exists(path)
+            ? Path.GetDirectoryName(path)
             : path;
 
         if (string.IsNullOrWhiteSpace(directory))
@@ -43,13 +41,13 @@ public static class CleanCommand
         Console.WriteLine($"Cleaning directory: {directory}");
 
         var removedCount = 0;
-        
+
         var directories = Directory.GetDirectories(directory, "*", SearchOption.AllDirectories);
-        
+
         foreach (var dir in directories)
         {
             var dirName = Path.GetFileName(dir);
-            if (dirName.Equals("bin", StringComparison.OrdinalIgnoreCase) || 
+            if (dirName.Equals("bin", StringComparison.OrdinalIgnoreCase) ||
                 dirName.Equals("obj", StringComparison.OrdinalIgnoreCase))
             {
                 try

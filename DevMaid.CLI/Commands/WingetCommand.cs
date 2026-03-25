@@ -1,7 +1,5 @@
-using System;
 using System.CommandLine;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 
 namespace DevMaid.CLI.Commands;
@@ -39,7 +37,7 @@ public static class WingetCommand
         {
             inputOption
         };
-        
+
         restoreCommand.SetAction(parseResult =>
         {
             var inputFile = parseResult.GetValue(inputOption);

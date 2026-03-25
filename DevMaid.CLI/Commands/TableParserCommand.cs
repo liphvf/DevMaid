@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.Globalization;
-using System.IO;
 using System.Text;
 
 using DevMaid.CLI.CommandOptions;
@@ -135,7 +132,7 @@ public static class TableParserCommand
         }
 
         var outputPath = string.IsNullOrWhiteSpace(options.Output) ? "./Table.class" : options.Output;
-        
+
         // Validate output path to prevent path traversal before normalizing
         if (!SecurityUtils.IsValidPath(outputPath))
         {

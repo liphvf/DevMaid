@@ -1,7 +1,5 @@
-using System;
 using System.CommandLine;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 
 using DevMaid.CLI.CommandOptions;

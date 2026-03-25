@@ -1,5 +1,6 @@
-using Microsoft.Extensions.Configuration;
 using DevMaid.Core.Models;
+
+using Microsoft.Extensions.Configuration;
 
 namespace DevMaid.Core.Interfaces;
 
