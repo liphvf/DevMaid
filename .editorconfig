@@ -390,3 +390,9 @@ dotnet_naming_style.s_camelcase.capitalization = camel_case
 # Name can be simplified IDE0002
 dotnet_diagnostic.IDE0002.severity = warning
 dotnet_diagnostic.IDE0005.severity = warning
+
+# # força praticamente tudo de estilo
+# dotnet_analyzer_diagnostic.category-Style.severity = warning
+
+# # força qualidade também (opcional)
+# dotnet_analyzer_diagnostic.category-CodeQuality.severity = warning

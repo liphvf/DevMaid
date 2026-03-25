@@ -51,7 +51,7 @@ public class QueryCommandTests
 
         // Set service provider for static services
         Logger.SetServiceProvider(serviceProvider);
-        CLI.Services.ConfigurationService.SetServiceProvider(serviceProvider);
+        ConfigurationService.SetServiceProvider(serviceProvider);
         PostgresDatabaseLister.SetServiceProvider(serviceProvider);
     }
 
