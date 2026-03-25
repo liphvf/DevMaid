@@ -1,12 +1,9 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-using Command = System.CommandLine.Command;
 
 namespace DevMaid.Tests.Commands;
 
@@ -123,7 +120,7 @@ public class ClaudeCodeCommandTests
     public void LoadSettingsFile_NonExistentFile_ReturnsEmptyJsonObject()
     {
         var nonExistentPath = Path.Combine(_testDirectory, "nonexistent.json");
-        
+
         var result = InvokePrivateLoadSettingsFile(nonExistentPath);
 
         Assert.IsNotNull(result);
@@ -173,9 +170,9 @@ public class ClaudeCodeCommandTests
 
     private JsonObject InvokePrivateLoadSettingsFile(string settingsPath)
     {
-        var method = typeof(DevMaid.CLI.Commands.ClaudeCodeCommand).GetMethod("LoadSettingsFile", 
+        var method = typeof(DevMaid.CLI.Commands.ClaudeCodeCommand).GetMethod("LoadSettingsFile",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        
+
         return (JsonObject)method!.Invoke(null, new object[] { settingsPath })!;
     }
 }
