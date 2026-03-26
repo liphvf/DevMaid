@@ -6,6 +6,20 @@ root = true
 #             https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/
 # =============================================================================
 
+# Níveis de severidade dos analyzers (.editorconfig)
+#
+# none        → desativa a regra (não aparece, não aplica no format)
+# silent      → invisível na IDE (só refactoring), não aplica no format
+# suggestion  → sugestão leve na IDE, aplica com `dotnet format --severity info`
+# warning     → aviso visível, aplica no `dotnet format` padrão
+# error       → erro de build, sempre aplicado pelo format
+#
+# Dica:
+# - use 'warning' para regras que quer aplicar automaticamente
+# - use 'suggestion' para estilo opcional
+# - use 'silent' para deixar disponível manualmente (sem interferência)
+# - use 'none' para desativar completamente
+
 # -----------------------------------------------------------------------------
 # Configurações universais (todos os arquivos)
 # -----------------------------------------------------------------------------
@@ -79,16 +93,16 @@ file_header_template = unset
 
 # IDE0003 (false): Não use this. em eventos (this.MyEvent -> MyEvent)
 # IDE0009 (true):  Use this. em eventos
-dotnet_style_qualification_for_event = false:silent
+dotnet_style_qualification_for_event = false:suggestion
 
 # IDE0003 (false): Não use this. em campos (this._name -> _name)
-dotnet_style_qualification_for_field = false:silent
+dotnet_style_qualification_for_field = false:suggestion
 
 # IDE0003 (false): Não use this. em métodos (this.Run() -> Run())
-dotnet_style_qualification_for_method = false:silent
+dotnet_style_qualification_for_method = false:suggestion
 
 # IDE0003 (false): Não use this. em propriedades (this.Name -> Name)
-dotnet_style_qualification_for_property = false:silent
+dotnet_style_qualification_for_property = false:suggestion
 
 # -----------------------------------------------------------------------------
 # IDE0049 — Palavras-chave vs nomes de tipos BCL
@@ -96,11 +110,11 @@ dotnet_style_qualification_for_property = false:silent
 
 # true: Use int em vez de Int32 para variáveis e parâmetros
 # Sim: int x = 0;   Não: Int32 x = 0;
-dotnet_style_predefined_type_for_locals_parameters_members = true:silent
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
 
 # true: Use int.MaxValue em vez de Int32.MaxValue para acesso a membros
 # Sim: int.MaxValue   Não: Int32.MaxValue
-dotnet_style_predefined_type_for_member_access = true:silent
+dotnet_style_predefined_type_for_member_access = true:suggestion
 
 # -----------------------------------------------------------------------------
 # IDE0047 / IDE0048 — Parênteses
@@ -108,19 +122,19 @@ dotnet_style_predefined_type_for_member_access = true:silent
 
 # always_for_clarity: Mantém parênteses em operadores aritméticos para clareza
 # Sim: var x = (a * b) + c;
-dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:silent
+dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:suggestion
 
 # always_for_clarity: Mantém parênteses em outros operadores binários (&&, ||, ??)
 # Sim: var r = (a && b) || c;
-dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:silent
+dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:suggestion
 
 # never_if_unnecessary: Remove parênteses desnecessários em outros operadores
 # Sim: var x = -a;   Não: var x = (-a);
-dotnet_style_parentheses_in_other_operators = never_if_unnecessary:silent
+dotnet_style_parentheses_in_other_operators = never_if_unnecessary:warning
 
 # always_for_clarity: Mantém parênteses em operadores relacionais
 # Sim: var r = (a < b) == (c > d);
-dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:silent
+dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:suggestion
 
 # -----------------------------------------------------------------------------
 # IDE0040 — Modificadores de acessibilidade
@@ -136,25 +150,27 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
 # Preferências de nível de expressão
 # -----------------------------------------------------------------------------
 
+# #DUVIDA, talvez warning
 # IDE0029/IDE0030/IDE0270: Prefere ?? em vez de verificações de nulo ternárias
 # Sim: var x = a ?? b;   Não: var x = a != null ? a : b;
 dotnet_style_coalesce_expression = true:suggestion
 
+# #DUVIDA, talvez warning
 # IDE0028: Usa inicializadores de coleção
 # Sim: var l = new List<int> { 1, 2, 3 };   Não: var l = new List<int>(); l.Add(1);
 dotnet_style_collection_initializer = true:suggestion
 
 # IDE0033: Usa nomes explícitos de tupla em vez de Item1/Item2
 # Sim: tuple.Name   Não: tuple.Item1
-dotnet_style_explicit_tuple_names = true:suggestion
+dotnet_style_explicit_tuple_names = true:warning
 
 # IDE0130: Namespace deve corresponder à estrutura de pastas
 # Sim (em pasta Foo/Bar): namespace MyApp.Foo.Bar;
-dotnet_style_namespace_match_folder = true:suggestion
+dotnet_style_namespace_match_folder = true:warning
 
 # IDE0031: Prefere propagação de nulo (?.)
 # Sim: var x = obj?.Property;   Não: var x = obj != null ? obj.Property : null;
-dotnet_style_null_propagation = true:suggestion
+dotnet_style_null_propagation = true:warning
 
 # IDE0017: Usa inicializadores de objeto
 # Sim: var p = new Person { Name = "Ana" };   Não: var p = new Person(); p.Name = "Ana";
@@ -163,6 +179,7 @@ dotnet_style_object_initializer = true:suggestion
 # Posição do operador ao quebrar linha: no início da nova linha
 # Sim:   var x = a
 #            + b;
+# end_of_line: Final da linha 
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 
 # IDE0032: Prefere propriedades automáticas
