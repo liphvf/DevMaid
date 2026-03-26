@@ -16,7 +16,7 @@ root = true
 #
 # Dica:
 # - use 'warning' para regras que quer aplicar automaticamente
-# - use 'suggestion' para estilo opcional
+# - use 'suggestion' para estilo opcional (dotnet format --severity info) para aplica-los
 # - use 'silent' para deixar disponível manualmente (sem interferência)
 # - use 'none' para desativar completamente
 
@@ -172,11 +172,11 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
 dotnet_style_coalesce_expression = true:suggestion
 
 # #DUVIDA, talvez warning
-# IDE0028: Usa inicializadores de coleção
+# IDE0028: Usa collection initializers
 # Sim: var l = new List<int> { 1, 2, 3 };   Não: var l = new List<int>(); l.Add(1);
 dotnet_style_collection_initializer = true:suggestion
 
-# IDE0033: Usa nomes explícitos de tupla em vez de Item1/Item2
+# IDE0033: Usa nomes explícitos de tuple em vez de Item1/Item2
 # Sim: tuple.Name   Não: tuple.Item1
 dotnet_style_explicit_tuple_names = true:warning
 
@@ -184,11 +184,11 @@ dotnet_style_explicit_tuple_names = true:warning
 # Sim (em pasta Foo/Bar): namespace MyApp.Foo.Bar;
 dotnet_style_namespace_match_folder = true:warning
 
-# IDE0031: Prefere propagação de nulo (?.)
+# IDE0031: Prefere null propagation (?.)
 # Sim: var x = obj?.Property;   Não: var x = obj != null ? obj.Property : null;
 dotnet_style_null_propagation = true:warning
 
-# IDE0017: Usa inicializadores de objeto
+# IDE0017: Usa object initializers
 # Sim: var p = new Person { Name = "Ana" };   Não: var p = new Person(); p.Name = "Ana";
 dotnet_style_object_initializer = true:suggestion
 
@@ -219,7 +219,7 @@ dotnet_style_prefer_auto_properties = true:suggestion
 #   false | never → desativa completamente
 dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
 
-# IDE0054/IDE0074: Prefere atribuição composta
+# IDE0054/IDE0074: Prefere compound assignment
 # Sim: x += 1;   Não: x = x + 1;
 # IDE0074 cobre ??= especificamente
 dotnet_style_prefer_compound_assignment = true:suggestion
@@ -236,19 +236,19 @@ dotnet_style_prefer_conditional_expression_over_return = true:suggestion
 # Valores possíveis:
 #   always             → exige cast explícito em todos os casos
 #     foreach (string s in list.Cast<string>()) { }
-#   when_strongly_typed → exige cast apenas em coleções genéricas (fortemente tipadas)
-#     — não aplica para coleções legadas como ArrayList
+#   when_strongly_typed → exige cast apenas em generic collections (strongly typeds)
+#     — não aplica para legacy collections como ArrayList
 dotnet_style_prefer_foreach_explicit_cast_in_source = when_strongly_typed:suggestion
 
-# IDE0037: Prefere nomes inferidos em tipos anônimos
+# IDE0037: Prefere nomes inferidos em anonymous types
 # Sim: new { Name }   Não: new { Name = Name }
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
 
-# IDE0037: Prefere nomes inferidos em tuplas
+# IDE0037: Prefere nomes inferidos em tuples
 # Sim: (Name, Age)   Não: (Name: Name, Age: Age)
 dotnet_style_prefer_inferred_tuple_names = true:suggestion
 
-# IDE0041: Prefere verificação de nulo com is null em vez de ReferenceEquals
+# IDE0041: Prefere null check com is null em vez de ReferenceEquals
 # Sim: obj is null   Não: object.ReferenceEquals(obj, null)
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
 
@@ -278,7 +278,7 @@ dotnet_style_readonly_field = true:warning
 #                (public, internal, private, protected)
 #   non_public → reporta apenas em métodos não-públicos (internal, private, protected)
 #                — evita falsos positivos em APIs públicas/contratos de interface
-dotnet_code_quality_unused_parameters = all:warning
+dotnet_code_quality_unused_parameters = all:suggestion
 
 # -----------------------------------------------------------------------------
 # IDE0079 — Supressões desnecessárias
@@ -314,59 +314,59 @@ csharp_style_var_when_type_is_apparent = false:suggestion
 csharp_style_var_elsewhere = false:suggestion
 
 # -----------------------------------------------------------------------------
-# IDE0021-IDE0027 / IDE0053 / IDE0061 — Membros com corpo de expressão
+# IDE0021-IDE0027 / IDE0053 / IDE0061 — Membros com expression body
 # -----------------------------------------------------------------------------
 
-# IDE0027 — Acessores de propriedade com corpo de expressão.
+# IDE0027 — accessors de propriedade com expression body.
 # Valores possíveis:
 #   true              → prefere sempre:  get => _name;
 #   false             → prefere sempre:  get { return _name; }
 #   when_on_single_line → usa expressão apenas quando o corpo cabe em uma única linha
 csharp_style_expression_bodied_accessors = false:silent
 
-# IDE0021 — Construtores com corpo de expressão.
+# IDE0021 — Construtores com expression body.
 # Valores possíveis:
 #   true              → prefere:  public Foo() => _x = 1;
 #   false             → prefere:  public Foo() { _x = 1; }
 #   when_on_single_line → usa expressão apenas se o construtor cabe em uma linha
 csharp_style_expression_bodied_constructors = false:silent
 
-# IDE0026 — Indexadores com corpo de expressão.
+# IDE0026 — indexers com expression body.
 # Valores possíveis:
 #   true              → prefere:  public int this[int i] => _items[i];
 #   false             → prefere bloco com return
 #   when_on_single_line → usa expressão apenas se cabe em uma linha
 csharp_style_expression_bodied_indexers = true:silent
 
-# IDE0053 — Lambdas com corpo de expressão.
+# IDE0053 — Lambdas com expression body.
 # Valores possíveis:
 #   true              → prefere:  Func<int,int> f = x => x + 1;
 #   false             → prefere:  Func<int,int> f = x => { return x + 1; };
 #   when_on_single_line → usa expressão apenas se cabe em uma linha
 csharp_style_expression_bodied_lambdas = true:suggestion
 
-# IDE0061 — Funções locais com corpo de expressão.
+# IDE0061 — Funções locais com expression body.
 # Valores possíveis:
 #   true              → prefere:  int Local() => 1;
 #   false             → prefere:  int Local() { return 1; }
 #   when_on_single_line → usa expressão apenas se cabe em uma linha
 csharp_style_expression_bodied_local_functions = true:silent
 
-# IDE0022 — Métodos com corpo de expressão.
+# IDE0022 — Métodos com expression body.
 # Valores possíveis:
 #   true              → prefere:  void Run() => DoWork();
 #   false             → prefere:  void Run() { DoWork(); }
 #   when_on_single_line → usa expressão apenas se cabe em uma linha
 csharp_style_expression_bodied_methods = false:silent
 
-# IDE0023/IDE0024 — Operadores com corpo de expressão.
+# IDE0023/IDE0024 — Operadores com expression body.
 # Valores possíveis:
 #   true              → prefere:  public static Foo operator +(Foo a, Foo b) => new(a.X + b.X);
 #   false             → prefere bloco com return
 #   when_on_single_line → usa expressão apenas se cabe em uma linha
 csharp_style_expression_bodied_operators = false:silent
 
-# IDE0025 — Propriedades com corpo de expressão.
+# IDE0025 — Propriedades com expression body.
 # Valores possíveis:
 #   true              → prefere:  public string Name => _name;
 #   false             → prefere:  public string Name { get { return _name; } }
@@ -385,7 +385,7 @@ csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
 # Sim: if (obj is int i) { }   Não: if (obj is int) { var i = (int)obj; }
 csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
 
-# IDE0170 (true): Simplifica padrão de propriedade estendido
+# IDE0170 (true): Simplifica extended property pattern
 # Sim: if (a is { B.C: 1 }) { }   Não: if (a is { B: { C: 1 } }) { }
 csharp_style_prefer_extended_property_pattern = true:suggestion
 
@@ -401,7 +401,7 @@ csharp_style_prefer_pattern_matching = true:silent
 # Sim: var x = y switch { 1 => "a", _ => "b" };
 csharp_style_prefer_switch_expression = true:suggestion
 
-# IDE0150 (true): Prefere null check a verificação de tipo
+# IDE0150 (true): Prefere null check a type check
 # Sim: if (obj is null) { }   Não: if (obj is not MyType) { }  (quando só verifica nulo)
 csharp_style_prefer_null_check_over_type_check = true:suggestion
 
@@ -417,11 +417,11 @@ csharp_style_conditional_delegate_call = true:suggestion
 # Modificadores
 # -----------------------------------------------------------------------------
 
-# IDE0320 (true): Prefere funções anônimas static quando não capturam estado
+# IDE0320 (true): Prefere funções anônimas static quando não capturam (capture) estado
 # Sim: Action f = static () => Console.WriteLine("hello");
 csharp_prefer_static_anonymous_function = true:suggestion
 
-# IDE0062 (true): Prefere funções locais static quando não capturam estado
+# IDE0062 (true): Prefere funções locais static quando não capturam (capture) estado
 # Sim: static void Local() { }
 csharp_prefer_static_local_function = true:warning
 
@@ -446,27 +446,27 @@ csharp_style_prefer_readonly_struct_member = true:suggestion
 # Preferências de bloco de código
 # -----------------------------------------------------------------------------
 
-# IDE0011 — Chaves em blocos de controle.
+# IDE0011 — Chaves em control flow blocks.
 # Valores possíveis:
-#   true         → exige chaves mesmo em blocos de uma linha
+#   true         → exige braces mesmo em single-line blocks
 #                  if (x) { DoIt(); }
-#   false        → prefere sem chaves quando possível
+#   false        → prefere sem braces quando possível
 #                  if (x) DoIt();
-#   when_multiline → exige chaves apenas quando o bloco tem múltiplas linhas
-#                    if (x) DoIt();           // sem chaves (uma linha)
-#                    else { A(); B(); }       // com chaves (múltiplas linhas)
+#   when_multiline → exige braces apenas quando o bloco tem múltiplas linhas
+#                    if (x) DoIt();           // sem braces (uma linha)
+#                    else { A(); B(); }       // com braces (múltiplas linhas)
 csharp_prefer_braces = true:none
 
-# IDE0063 (true): Usa declaração using simples (sem bloco)
+# IDE0063 (true): Usa simple using declaration (sem bloco)
 # Sim: using var fs = File.Open(...);   Não: using (var fs = File.Open(...)) { }
 csharp_prefer_simple_using_statement = true:suggestion
 
-# IDE0160/IDE0161: Estilo de declaração de namespace.
+# IDE0160/IDE0161: Estilo de namespace declaration.
 # Valores possíveis:
-#   file_scoped  → namespace sem chaves, ocupa o arquivo inteiro (C# 10+)
+#   file_scoped  → namespace sem braces, ocupa o arquivo inteiro (C# 10+)
 #                  namespace MyApp.Services;
 #                  class Foo { }
-#   block_scoped → namespace com chaves (estilo tradicional)
+#   block_scoped → namespace com braces (estilo tradicional)
 #                  namespace MyApp.Services
 #                  {
 #                      class Foo { }
@@ -493,7 +493,7 @@ csharp_style_prefer_top_level_statements = true:silent
 # Sim: default   Não: default(int)
 csharp_prefer_simple_default_expression = true:suggestion
 
-# IDE0042 (true): Deconstrói declaração de variável
+# IDE0042 (true): Deconstrói variable declaration
 # Sim: var (x, y) = GetPoint();   Não: var p = GetPoint(); var x = p.X;
 csharp_style_deconstructed_variable_declaration = true:suggestion
 
@@ -501,11 +501,11 @@ csharp_style_deconstructed_variable_declaration = true:suggestion
 # Sim: Customer c = new();   Não: Customer c = new Customer();
 csharp_style_implicit_object_creation_when_type_is_apparent = true:suggestion
 
-# IDE0018 (true): Declara variável inline em out
+# IDE0018 (true): Inline variable declaration em out
 # Sim: int.TryParse(s, out int n)   Não: int n; int.TryParse(s, out n);
 csharp_style_inlined_variable_declaration = true:suggestion
 
-# IDE0056 (true): Usa operador de índice ^
+# IDE0056 (true): Usa index operator (^)
 # Sim: var last = list[^1];   Não: var last = list[list.Count - 1];
 csharp_style_prefer_index_operator = true:suggestion
 
@@ -513,11 +513,11 @@ csharp_style_prefer_index_operator = true:suggestion
 # Sim: int Local() => 1;  em vez de  Func<int> f = () => 1;
 csharp_style_prefer_local_over_anonymous_function = true:suggestion
 
-# IDE0057 (true): Usa operador de intervalo ..
+# IDE0057 (true): Usa range operator (..)
 # Sim: var sub = arr[1..4];   Não: var sub = arr.Skip(1).Take(3);
 csharp_style_prefer_range_operator = true:suggestion
 
-# IDE0180 (true): Usa tupla para troca de valores
+# IDE0180 (true): Usa tuple swap de valores
 # Sim: (a, b) = (b, a);   Não: var tmp = a; a = b; b = tmp;
 csharp_style_prefer_tuple_swap = true:suggestion
 
@@ -525,21 +525,21 @@ csharp_style_prefer_tuple_swap = true:suggestion
 # Sim: ReadOnlySpan<byte> b = "hello"u8;
 csharp_style_prefer_utf8_string_literals = true:suggestion
 
-# IDE0016 (true): Usa throw expression em vez de bloco if throw
+# IDE0016 (true): Usa throw expression em vez de if+throw block
 # Sim: _name = name ?? throw new ArgumentNullException(nameof(name));
 csharp_style_throw_expression = true:suggestion
 
-# IDE0059 — Variável não utilizada em atribuição.
+# IDE0059 — Unused variable in assignment.
 # Valores possíveis:
-#   discard_variable    → usa _ para descartar explicitamente
+#   discard_variable    → usa _ para descartar (discard) explicitamente
 #                         _ = GetValue();
 #   unused_local_variable → atribui a variável local nunca lida
 #                           var unused = GetValue();
 csharp_style_unused_value_assignment_preference = discard_variable:suggestion
 
-# IDE0058 — Resultado de expressão não utilizado.
+# IDE0058 — Unused expression value.
 # Valores possíveis:
-#   discard_variable    → usa _ para descartar o resultado
+#   discard_variable    → usa _ para usar discard para o resultado
 #                         _ = list.Remove(item);
 #   unused_local_variable → atribui o resultado a variável local nunca lida
 #                           var unused = list.Remove(item);
@@ -549,15 +549,15 @@ csharp_style_unused_value_expression_statement_preference = discard_variable:sil
 # Sim: private readonly Lock _lock = new();   Não: private readonly object _lock = new();
 csharp_prefer_system_threading_lock = true:suggestion
 
-# IDE0340 (true): Prefere tipo genérico não vinculado em nameof
+# IDE0340 (true): Prefere unbound generic type em nameof
 # Sim: nameof(List<>)   Não: nameof(List<int>)
 csharp_style_prefer_unbound_generic_type_in_nameof = true:suggestion
 
-# IDE0350 (true): Prefere lambda implicitamente tipada quando o tipo pode ser inferido
+# IDE0350 (true): Prefere lambda implicitly typed quando o tipo pode ser inferido
 # Sim: var f = (int x) => x + 1;
 csharp_style_prefer_implicitly_typed_lambda_expression = true:suggestion
 
-# IDE0360 (true): Simplifica acessores de propriedade
+# IDE0360 (true): Simplifica accessors de propriedade
 # Sim: get => _value;   Não: get { return _value; }
 csharp_style_prefer_simple_property_accessors = true:suggestion
 
@@ -598,11 +598,11 @@ csharp_new_line_before_else = true
 # catch { } [NOVA LINHA] finally { }
 csharp_new_line_before_finally = true
 
-# true: Membros de tipos anônimos em linhas separadas
+# true: Membros de anonymous types em linhas separadas
 # var z = new { [NOVA LINHA] A = 1, [NOVA LINHA] B = 2 }
 csharp_new_line_before_members_in_anonymous_types = true
 
-# true: Membros de inicializadores de objeto em linhas separadas
+# true: Membros de object initializers em linhas separadas
 # var p = new Person { [NOVA LINHA] Name = "Ana", [NOVA LINHA] Age = 30 }
 csharp_new_line_before_members_in_object_initializers = true
 
@@ -774,11 +774,11 @@ csharp_space_between_square_brackets = false
 # Preferências de quebra de linha (wrapping)
 # -----------------------------------------------------------------------------
 
-# true: Mantém blocos de uma única instrução em uma linha
+# true: Mantém single-statement blocks em uma linha
 # Sim: public int X { get; set; }
 csharp_preserve_single_line_blocks = true
 
-# true: Mantém declarações simples em uma linha
+# true: Mantém single-line statements
 # Sim: if (x) return;
 csharp_preserve_single_line_statements = true
 
@@ -790,19 +790,19 @@ csharp_preserve_single_line_statements = true
 # true = permite; false = não permite
 dotnet_style_allow_multiple_blank_lines_experimental = false:silent
 
-# IDE2001: Declarações embutidas devem estar em linhas próprias
+# IDE2001: Embedded statements devem estar em linhas próprias
 # false = não permite if (x) return; (exige nova linha)
 csharp_style_allow_embedded_statements_on_same_line_experimental = false:silent
 
-# IDE2002: Não permite linha em branco entre chaves consecutivas
+# IDE2002: Não permite linha em branco entre consecutive braces
 # false = não permite linha em branco entre { e }
 csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false:silent
 
 # IDE2003: Exige linha em branco entre bloco e próxima declaração
-# true = permite instrução imediatamente após bloco
+# true = permite statement imediatamente após block
 dotnet_style_allow_statement_immediately_after_block_experimental = false:silent
 
-# IDE2004: Não permite linha em branco após : de inicializador de construtor
+# IDE2004: Não permite linha em branco após : de constructor initializer
 # false = não permite linha em branco após base(...):\n[linha]\n{
 csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = false:silent
 
@@ -1094,7 +1094,7 @@ dotnet_diagnostic.IDE0044.severity = suggestion
 # IDE0046: Simplifica return com ternário — desativado pois pode reduzir legibilidade
 dotnet_diagnostic.IDE0046.severity = none
 
-# IDE0050: Converte tipo anônimo para tupla
+# IDE0050: Converte anonymous type para tuple
 dotnet_diagnostic.IDE0050.severity = suggestion
 
 # IDE0051: Remove membro privado não usado
@@ -1118,10 +1118,10 @@ dotnet_diagnostic.IDE0076.severity = suggestion
 # IDE0077: Evita formato legado em SuppressMessageAttribute global
 dotnet_diagnostic.IDE0077.severity = suggestion
 
-# IDE0079: Remove supressão desnecessária (#pragma warning disable sem violação real)
+# IDE0079: Remove suppression desnecessária (#pragma warning disable sem violação real)
 dotnet_diagnostic.IDE0079.severity = suggestion
 
-# IDE0080: Remove operador de supressão desnecessário (!)
+# IDE0080: Remove suppression operator desnecessário (!)
 dotnet_diagnostic.IDE0080.severity = suggestion
 
 # IDE0082: Converte typeof para nameof quando possível
@@ -1132,13 +1132,13 @@ dotnet_diagnostic.IDE0082.severity = suggestion
 # Sim: if (b) { }   Não: if (b == true) { }
 dotnet_diagnostic.IDE0100.severity = suggestion
 
-# IDE0110: Remove descarte desnecessário (_)
+# IDE0110: Remove discard desnecessário (_)
 dotnet_diagnostic.IDE0110.severity = suggestion
 
 # IDE0120: Simplifica expressão LINQ
 dotnet_diagnostic.IDE0120.severity = suggestion
 
-# IDE0121: Simplifica verificação de tipo e cast em LINQ
+# IDE0121: Simplifica type check e cast em LINQ
 dotnet_diagnostic.IDE0121.severity = suggestion
 
 # IDE0240: Diretiva nullable é redundante (#nullable enable quando já está habilitada)
@@ -1151,7 +1151,7 @@ dotnet_diagnostic.IDE0241.severity = suggestion
 # Sim: nameof(MyProp)   Não: "MyProp"
 dotnet_diagnostic.IDE0280.severity = suggestion
 
-# IDE0370: Remove supressão desnecessária (variante mais recente do IDE0079)
+# IDE0370: Remove suppression desnecessária (variante mais recente do IDE0079)
 dotnet_diagnostic.IDE0370.severity = suggestion
 
 # IDE0380: Remove modificador unsafe desnecessário
@@ -1204,7 +1204,7 @@ dotnet_diagnostic.CA1017.severity = none
 # CA1018: Marque atributos com AttributeUsageAttribute
 dotnet_diagnostic.CA1018.severity = suggestion
 
-# CA1019: Defina acessores para argumentos de atributos (propriedades para ctor args)
+# CA1019: Defina accessors para argumentos de atributos (propriedades para ctor args)
 dotnet_diagnostic.CA1019.severity = suggestion
 
 # CA1021: Evite parâmetros out
@@ -1243,7 +1243,7 @@ dotnet_diagnostic.CA1040.severity = suggestion
 # CA1041: Forneça mensagem em ObsoleteAttribute
 dotnet_diagnostic.CA1041.severity = suggestion
 
-# CA1043: Use int ou string como índice de indexadores
+# CA1043: Use int ou string como índice de indexers
 dotnet_diagnostic.CA1043.severity = suggestion
 
 # CA1044: Propriedades não devem ser somente escrita (sem get)
@@ -1404,7 +1404,7 @@ dotnet_diagnostic.CA1509.severity = suggestion
 # Quality Rules (CA) — Throw helpers (CA1510–CA1513)
 # =============================================================================
 
-# CA1510: Use ArgumentNullException.ThrowIfNull em vez de bloco if+throw
+# CA1510: Use ArgumentNullException.ThrowIfNull em vez de if+throw block
 # Sim: ArgumentNullException.ThrowIfNull(arg);
 dotnet_diagnostic.CA1510.severity = suggestion
 
@@ -1493,7 +1493,7 @@ dotnet_diagnostic.CA1805.severity = suggestion
 # CA1806: Não ignore resultados de método (HRESULT, string criada, etc.)
 dotnet_diagnostic.CA1806.severity = suggestion
 
-# CA1810: Inicialize campos estáticos de tipo de referência inline (evite ctor estático)
+# CA1810: Inicialize campos estáticos de tipo de referência inline (evite static constructor)
 dotnet_diagnostic.CA1810.severity = suggestion
 
 # CA1812: Evite classes internas não instanciadas
@@ -1548,16 +1548,16 @@ dotnet_diagnostic.CA1828.severity = suggestion
 # CA1829: Use Length/Count em vez de Enumerable.Count()
 dotnet_diagnostic.CA1829.severity = suggestion
 
-# CA1830: Prefira sobrecargas strongly-typed de Append/Insert no StringBuilder
+# CA1830: Prefira strongly-typed overloads de Append/Insert no StringBuilder
 dotnet_diagnostic.CA1830.severity = suggestion
 
-# CA1831: Use AsSpan em vez de indexador de intervalo em strings quando adequado
+# CA1831: Use AsSpan em vez de indexer de intervalo em strings quando adequado
 dotnet_diagnostic.CA1831.severity = suggestion
 
-# CA1832: Use AsSpan/AsMemory em vez de indexador de intervalo para ReadOnlySpan/ReadOnlyMemory
+# CA1832: Use AsSpan/AsMemory em vez de indexer de intervalo para ReadOnlySpan/ReadOnlyMemory
 dotnet_diagnostic.CA1832.severity = suggestion
 
-# CA1833: Use AsSpan/AsMemory em vez de indexador de intervalo para Span/Memory
+# CA1833: Use AsSpan/AsMemory em vez de indexer de intervalo para Span/Memory
 dotnet_diagnostic.CA1833.severity = suggestion
 
 # CA1834: Use StringBuilder.Append(char) para strings com um único caractere
@@ -1613,7 +1613,7 @@ dotnet_diagnostic.CA1849.severity = suggestion
 # CA1850: Prefira método estático HashData a instância HashAlgorithm.ComputeHash
 dotnet_diagnostic.CA1850.severity = suggestion
 
-# CA1851: Possíveis múltiplas enumerações de coleção IEnumerable
+# CA1851: Possíveis múltiplas Enums de coleção IEnumerable
 dotnet_diagnostic.CA1851.severity = suggestion
 
 # CA1852: Sele tipos internos que não têm subtipos
@@ -1623,7 +1623,7 @@ dotnet_diagnostic.CA1852.severity = suggestion
 # Sim: dict.Remove(key)   Não: if (dict.ContainsKey(key)) dict.Remove(key)
 dotnet_diagnostic.CA1853.severity = suggestion
 
-# CA1854: Prefira TryGetValue a ContainsKey + indexador no Dictionary
+# CA1854: Prefira TryGetValue a ContainsKey + indexer no Dictionary
 # Sim: dict.TryGetValue(key, out var v)   Não: if (dict.ContainsKey(key)) v = dict[key]
 dotnet_diagnostic.CA1854.severity = suggestion
 
@@ -1660,7 +1660,7 @@ dotnet_diagnostic.CA1863.severity = suggestion
 # CA1864: Prefira TryAdd a ContainsKey + Add no Dictionary
 dotnet_diagnostic.CA1864.severity = suggestion
 
-# CA1865-CA1867: Use sobrecarga char em vez de string de um caractere
+# CA1865-CA1867: Use char overload em vez de string de um caractere
 dotnet_diagnostic.CA1865.severity = suggestion
 dotnet_diagnostic.CA1866.severity = suggestion
 dotnet_diagnostic.CA1867.severity = suggestion
@@ -1689,7 +1689,7 @@ dotnet_diagnostic.CA1874.severity = suggestion
 # CA1875: Use Regex.Count em vez de Regex.Matches(...).Count
 dotnet_diagnostic.CA1875.severity = suggestion
 
-# CA1877: Use sobrecargas de Path.Combine/Path.Join com mais argumentos
+# CA1877: Use overloads de Path.Combine/Path.Join com mais argumentos
 dotnet_diagnostic.CA1877.severity = suggestion
 
 # =============================================================================
@@ -1821,10 +1821,10 @@ dotnet_diagnostic.CA2219.severity = suggestion
 # CA2224: Sobrescreva Equals ao sobrecarregar operator==
 dotnet_diagnostic.CA2224.severity = suggestion
 
-# CA2225: Sobrecargas de operador devem ter alternativas nomeadas (op_Addition etc.)
+# CA2225: operator overloads devem ter alternativas nomeadas (op_Addition etc.)
 dotnet_diagnostic.CA2225.severity = suggestion
 
-# CA2226: Operadores devem ter sobrecargas simétricas (== e !=, < e >, etc.)
+# CA2226: Operadores devem ter symmetrical overloads (== e !=, < e >, etc.)
 dotnet_diagnostic.CA2226.severity = suggestion
 
 # CA2227: Propriedades de coleção devem ser somente leitura
