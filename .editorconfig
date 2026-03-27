@@ -75,13 +75,13 @@ tab_width = 4
 # -----------------------------------------------------------------------------
 
 # Separa grupos de using com linha em branco entre eles
-# Sim:  using System;
+# true:  using System;
 #       [linha em branco]
 #       using MyApp;
 dotnet_separate_import_directive_groups = true
 
 # Coloca diretivas System.* antes das demais
-# Sim:  using System;
+# true:  using System;
 #       using System.Collections.Generic;
 #       using MyLib;
 dotnet_sort_system_directives_first = true
@@ -115,11 +115,11 @@ dotnet_style_qualification_for_property = false:suggestion
 # -----------------------------------------------------------------------------
 
 # true: Use int em vez de Int32 para variáveis e parâmetros
-# Sim: int x = 0;   Não: Int32 x = 0;
+# true: int x = 0;   false: Int32 x = 0;
 dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
 
 # true: Use int.MaxValue em vez de Int32.MaxValue para acesso a membros
-# Sim: int.MaxValue   Não: Int32.MaxValue
+# true: int.MaxValue   false: Int32.MaxValue
 dotnet_style_predefined_type_for_member_access = true:suggestion
 
 # -----------------------------------------------------------------------------
@@ -127,9 +127,9 @@ dotnet_style_predefined_type_for_member_access = true:suggestion
 # Operadores aritméticos: *, /, %, +, -, <<, >>, &, ^, |
 # Valores possíveis:
 #   always_for_clarity  → mantém parênteses mesmo quando desnecessários (mais legível)
-#                         Sim: var x = (a * b) + c;
+#                         true: var x = (a * b) + c;
 #   never_if_unnecessary → remove parênteses quando a precedência é óbvia
-#                          Sim: var x = a * b + c;
+#                          true: var x = a * b + c;
 dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:suggestion
 
 # Operadores relacionais: >, <, <=, >=, is, as, ==, !=
@@ -168,16 +168,16 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
 
 # #DUVIDA, talvez warning
 # IDE0029/IDE0030/IDE0270: Prefere ?? em vez de verificações de nulo ternárias
-# Sim: var x = a ?? b;   Não: var x = a != null ? a : b;
+# true: var x = a ?? b;   false: var x = a != null ? a : b;
 dotnet_style_coalesce_expression = true:suggestion
 
 # #DUVIDA, talvez warning
 # IDE0028: Usa collection initializers
-# Sim: var l = new List<int> { 1, 2, 3 };   Não: var l = new List<int>(); l.Add(1);
+# true: var l = new List<int> { 1, 2, 3 };   false: var l = new List<int>(); l.Add(1);
 dotnet_style_collection_initializer = true:suggestion
 
 # IDE0033: Usa nomes explícitos de tuple em vez de Item1/Item2
-# Sim: tuple.Name   Não: tuple.Item1
+# true: tuple.Name   false: tuple.Item1
 dotnet_style_explicit_tuple_names = true:warning
 
 # IDE0130: Namespace deve corresponder à estrutura de pastas
@@ -185,11 +185,11 @@ dotnet_style_explicit_tuple_names = true:warning
 dotnet_style_namespace_match_folder = true:warning
 
 # IDE0031: Prefere null propagation (?.)
-# Sim: var x = obj?.Property;   Não: var x = obj != null ? obj.Property : null;
+# true: var x = obj?.Property;   false: var x = obj != null ? obj.Property : null;
 dotnet_style_null_propagation = true:warning
 
 # IDE0017: Usa object initializers
-# Sim: var p = new Person { Name = "Ana" };   Não: var p = new Person(); p.Name = "Ana";
+# true: var p = new Person { Name = "Ana" };   false: var p = new Person(); p.Name = "Ana";
 dotnet_style_object_initializer = true:suggestion
 
 # Posição do operador ao quebrar linha em expressão multiline.
@@ -205,7 +205,7 @@ dotnet_style_object_initializer = true:suggestion
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 
 # IDE0032: Prefere propriedades automáticas
-# Sim: public int Age { get; set; }
+# true: public int Age { get; set; }
 # Não: private int _age; public int Age { get { return _age; } set { _age = value; } }
 dotnet_style_prefer_auto_properties = true:suggestion
 
@@ -220,16 +220,16 @@ dotnet_style_prefer_auto_properties = true:suggestion
 dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
 
 # IDE0054/IDE0074: Prefere compound assignment
-# Sim: x += 1;   Não: x = x + 1;
+# true: x += 1;   false: x = x + 1;
 # IDE0074 cobre ??= especificamente
 dotnet_style_prefer_compound_assignment = true:suggestion
 
 # IDE0045: Prefere expressão condicional em atribuição
-# Sim: var x = cond ? a : b;   Não: if (cond) x = a; else x = b;
+# true: var x = cond ? a : b;   false: if (cond) x = a; else x = b;
 dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
 
 # IDE0046: Prefere expressão condicional em return
-# Sim: return cond ? a : b;   Não: if (cond) return a; else return b;
+# true: return cond ? a : b;   false: if (cond) return a; else return b;
 dotnet_style_prefer_conditional_expression_over_return = true:suggestion
 
 # IDE0220: Prefere cast explícito no foreach quando o compilador adicionaria um cast oculto.
@@ -241,23 +241,23 @@ dotnet_style_prefer_conditional_expression_over_return = true:suggestion
 dotnet_style_prefer_foreach_explicit_cast_in_source = when_strongly_typed:suggestion
 
 # IDE0037: Prefere nomes inferidos em anonymous types
-# Sim: new { Name }   Não: new { Name = Name }
+# true: new { Name }   false: new { Name = Name }
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
 
 # IDE0037: Prefere nomes inferidos em tuples
-# Sim: (Name, Age)   Não: (Name: Name, Age: Age)
+# true: (Name, Age)   false: (Name: Name, Age: Age)
 dotnet_style_prefer_inferred_tuple_names = true:suggestion
 
 # IDE0041: Prefere null check com is null em vez de ReferenceEquals
-# Sim: obj is null   Não: object.ReferenceEquals(obj, null)
+# true: obj is null   false: object.ReferenceEquals(obj, null)
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
 
 # IDE0075: Simplifica expressões booleanas condicionais
-# Sim: return a && b;   Não: return a && b ? true : false;
+# true: return a && b;   false: return a && b ? true : false;
 dotnet_style_prefer_simplified_boolean_expressions = true:warning
 
 # IDE0071: Simplifica interpolação de strings
-# Sim: $"{x}"   Não: $"{x.ToString()}"
+# true: $"{x}"   false: $"{x.ToString()}"
 dotnet_style_prefer_simplified_interpolation = true:warning
 
 # -----------------------------------------------------------------------------
@@ -265,7 +265,7 @@ dotnet_style_prefer_simplified_interpolation = true:warning
 # -----------------------------------------------------------------------------
 
 # true: Adiciona readonly em campos que não são reatribuídos após o construtor
-# Sim: private readonly int _x;
+# true: private readonly int _x;
 dotnet_style_readonly_field = true:warning
 
 # -----------------------------------------------------------------------------
@@ -302,15 +302,15 @@ dotnet_remove_unnecessary_suppression_exclusions = none
 # -----------------------------------------------------------------------------
 
 # false: Use tipo explícito em vez de var para tipos primitivos
-# Sim: int x = 0;   Não: var x = 0;
+# true: int x = 0;   false: var x = 0;
 csharp_style_var_for_built_in_types = false:suggestion
 
 # false: Use tipo explícito quando o tipo é aparente pela expressão
-# Sim: Customer c = new Customer();   Não: var c = new Customer();
+# true: Customer c = new Customer();   false: var c = new Customer();
 csharp_style_var_when_type_is_apparent = false:suggestion
 
 # false: Use tipo explícito em demais casos
-# Sim: IEnumerable<int> e = GetItems();   Não: var e = GetItems();
+# true: IEnumerable<int> e = GetItems();   false: var e = GetItems();
 csharp_style_var_elsewhere = false:suggestion
 
 # -----------------------------------------------------------------------------
@@ -378,31 +378,31 @@ csharp_style_expression_bodied_properties = true:silent
 # -----------------------------------------------------------------------------
 
 # IDE0019 (true): Usa pattern matching em vez de as + null check
-# Sim: if (obj is string s) { }   Não: var s = obj as string; if (s != null) { }
+# true: if (obj is string s) { }   false: var s = obj as string; if (s != null) { }
 csharp_style_pattern_matching_over_as_with_null_check = true:warning
 
 # IDE0020/IDE0038 (true): Usa pattern matching em vez de is + cast
-# Sim: if (obj is int i) { }   Não: if (obj is int) { var i = (int)obj; }
+# true: if (obj is int i) { }   false: if (obj is int) { var i = (int)obj; }
 csharp_style_pattern_matching_over_is_with_cast_check = true:warning
 
 # IDE0170 (true): Simplifica extended property pattern
-# Sim: if (a is { B.C: 1 }) { }   Não: if (a is { B: { C: 1 } }) { }
+# true: if (a is { B.C: 1 }) { }   false: if (a is { B: { C: 1 } }) { }
 csharp_style_prefer_extended_property_pattern = true:warning
 
 # IDE0083 (true): Usa o operador not em patterns
-# Sim: if (obj is not null) { }   Não: if (!(obj is null)) { }
+# true: if (obj is not null) { }   false: if (!(obj is null)) { }
 csharp_style_prefer_not_pattern = true:warning
 
 # IDE0078 (true): Prefere pattern matching quando possível
-# Sim: if (obj is int or string) { }
+# true: if (obj is int or string) { }
 csharp_style_prefer_pattern_matching = true:suggestion
 
 # IDE0066 (true): Prefere switch expression em vez de switch statement
-# Sim: var x = y switch { 1 => "a", _ => "b" };
+# true: var x = y switch { 1 => "a", _ => "b" };
 csharp_style_prefer_switch_expression = true:warning
 
 # IDE0150 (true): Prefere null check a type check
-# Sim: if (obj is null) { }   Não: if (obj is not MyType) { }  (quando só verifica nulo)
+# true: if (obj is null) { }   false: if (obj is not MyType) { }  (quando só verifica nulo)
 csharp_style_prefer_null_check_over_type_check = true:suggestion
 
 # -----------------------------------------------------------------------------
@@ -410,7 +410,7 @@ csharp_style_prefer_null_check_over_type_check = true:suggestion
 # -----------------------------------------------------------------------------
 
 # true: Usa chamada de delegate condicional (?.)
-# Sim: handler?.Invoke(this, args);   Não: if (handler != null) handler(this, args);
+# true: handler?.Invoke(this, args);   false: if (handler != null) handler(this, args);
 csharp_style_conditional_delegate_call = true:warning
 
 # -----------------------------------------------------------------------------
@@ -418,11 +418,11 @@ csharp_style_conditional_delegate_call = true:warning
 # -----------------------------------------------------------------------------
 
 # IDE0320 (true): Prefere funções anônimas static quando não capturam (capture) estado
-# Sim: Action f = static () => Console.WriteLine("hello");
+# true: Action f = static () => Console.WriteLine("hello");
 csharp_prefer_static_anonymous_function = true:warning
 
 # IDE0062 (true): Prefere funções locais static quando não capturam (capture) estado
-# Sim: static void Local() { }
+# true: static void Local() { }
 csharp_prefer_static_local_function = true:warning
 
 # IDE0036: Ordem preferida dos modificadores (lista separada por vírgula).
@@ -435,11 +435,11 @@ csharp_prefer_static_local_function = true:warning
 csharp_preferred_modifier_order = public,private,protected,internal,file,const,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,required,volatile,async:suggestion
 
 # IDE0250 (true): Structs podem ser marcadas como readonly quando possível
-# Sim: readonly struct Point { public int X { get; init; } }
+# true: readonly struct Point { public int X { get; init; } }
 csharp_style_prefer_readonly_struct = true:warning
 
 # IDE0251 (true): Membros de struct podem ser readonly quando não modificam estado
-# Sim: public readonly int GetX() => X;
+# true: public readonly int GetX() => X;
 csharp_style_prefer_readonly_struct_member = true:warning
 
 # -----------------------------------------------------------------------------
@@ -458,7 +458,7 @@ csharp_style_prefer_readonly_struct_member = true:warning
 csharp_prefer_braces = true:none
 
 # IDE0063 (true): Usa simple using declaration (sem bloco)
-# Sim: using var fs = File.Open(...);   Não: using (var fs = File.Open(...)) { }
+# true: using var fs = File.Open(...);   false: using (var fs = File.Open(...)) { }
 csharp_prefer_simple_using_statement = true:suggestion
 
 # IDE0160/IDE0161: Estilo de namespace declaration.
@@ -474,11 +474,11 @@ csharp_prefer_simple_using_statement = true:suggestion
 csharp_style_namespace_declarations = file_scoped:warning
 
 # IDE0200 (true): Remove lambda desnecessária — usa method group
-# Sim: list.ForEach(Console.WriteLine);   Não: list.ForEach(x => Console.WriteLine(x));
+# true: list.ForEach(Console.WriteLine);   false: list.ForEach(x => Console.WriteLine(x));
 csharp_style_prefer_method_group_conversion = true:suggestion
 
 # IDE0290 (true): Prefere construtores primários (C# 12+)
-# Sim: class Point(int x, int y);
+# true: class Point(int x, int y);
 csharp_style_prefer_primary_constructors = true:warning
 
 # IDE0210/IDE0211: Prefere top-level statements (C# 9+)
@@ -490,43 +490,43 @@ csharp_style_prefer_top_level_statements = true:silent
 # -----------------------------------------------------------------------------
 
 # IDE0034 (true): Simplifica expressão default
-# Sim: default   Não: default(int)
+# true: default   false: default(int)
 csharp_prefer_simple_default_expression = true:warning
 
 # IDE0042 (true): Deconstrói variable declaration
-# Sim: var (x, y) = GetPoint();   Não: var p = GetPoint(); var x = p.X;
+# true: var (x, y) = GetPoint();   false: var p = GetPoint(); var x = p.X;
 csharp_style_deconstructed_variable_declaration = true:suggestion
 
 # IDE0090 (true): Cria objeto implicitamente quando o tipo é aparente (new())
-# Sim: Customer c = new();   Não: Customer c = new Customer();
+# true: Customer c = new();   false: Customer c = new Customer();
 csharp_style_implicit_object_creation_when_type_is_apparent = true:suggestion
 
 # IDE0018 (true): Inline variable declaration em out
-# Sim: int.TryParse(s, out int n)   Não: int n; int.TryParse(s, out n);
+# true: int.TryParse(s, out int n)   false: int n; int.TryParse(s, out n);
 csharp_style_inlined_variable_declaration = true:suggestion
 
 # IDE0056 (true): Usa index operator (^)
-# Sim: var last = list[^1];   Não: var last = list[list.Count - 1];
+# true: var last = list[^1];   false: var last = list[list.Count - 1];
 csharp_style_prefer_index_operator = true:suggestion
 
 # IDE0039 (true): Prefere função local a função anônima
-# Sim: int Local() => 1;  em vez de  Func<int> f = () => 1;
+# true: int Local() => 1;  em vez de  Func<int> f = () => 1;
 csharp_style_prefer_local_over_anonymous_function = true:warning
 
 # IDE0057 (true): Usa range operator (..)
-# Sim: var sub = arr[1..4];   Não: var sub = arr.Skip(1).Take(3);
+# true: var sub = arr[1..4];   false: var sub = arr.Skip(1).Take(3);
 csharp_style_prefer_range_operator = true:suggestion
 
 # IDE0180 (true): Usa tuple swap de valores
-# Sim: (a, b) = (b, a);   Não: var tmp = a; a = b; b = tmp;
+# true: (a, b) = (b, a);   false: var tmp = a; a = b; b = tmp;
 csharp_style_prefer_tuple_swap = true:warning
 
 # IDE0230 (true): Prefere literal de string UTF-8
-# Sim: ReadOnlySpan<byte> b = "hello"u8;
+# true: ReadOnlySpan<byte> b = "hello"u8;
 csharp_style_prefer_utf8_string_literals = true:warning
 
 # IDE0016 (true): Usa throw expression em vez de if+throw block
-# Sim: _name = name ?? throw new ArgumentNullException(nameof(name));
+# true: _name = name ?? throw new ArgumentNullException(nameof(name));
 csharp_style_throw_expression = true:suggestion
 
 # IDE0059 — Unused variable in assignment.
@@ -546,19 +546,19 @@ csharp_style_unused_value_assignment_preference = discard_variable:warning
 csharp_style_unused_value_expression_statement_preference = discard_variable:warning
 
 # IDE0330 (true): Prefere System.Threading.Lock em vez de object para locks (C# 13+)
-# Sim: private readonly Lock _lock = new();   Não: private readonly object _lock = new();
+# true: private readonly Lock _lock = new();   false: private readonly object _lock = new();
 csharp_prefer_system_threading_lock = true:warning
 
 # IDE0340 (true): Prefere unbound generic type em nameof
-# Sim: nameof(List<>)   Não: nameof(List<int>)
+# true: nameof(List<>)   false: nameof(List<int>)
 csharp_style_prefer_unbound_generic_type_in_nameof = true:suggestion
 
 # IDE0350 (true): Prefere lambda implicitly typed quando o tipo pode ser inferido
-# Sim: var f = (int x) => x + 1;
+# true: var f = (int x) => x + 1;
 csharp_style_prefer_implicitly_typed_lambda_expression = true:warning
 
 # IDE0360 (true): Simplifica accessors de propriedade
-# Sim: get => _value;   Não: get { return _value; }
+# true: get => _value;   false: get { return _value; }
 csharp_style_prefer_simple_property_accessors = true:suggestion
 
 # -----------------------------------------------------------------------------
@@ -673,27 +673,27 @@ csharp_indent_switch_labels = true
 # -----------------------------------------------------------------------------
 
 # false: Sem espaço após cast
-# Sim: (int)x   Não: (int) x
+# true: (int)x   false: (int) x
 csharp_space_after_cast = false
 
 # true: Espaço após : na cláusula de herança
-# Sim: class Foo : IBar { }   (espaço após :)
+# true: class Foo : IBar { }   (espaço após :)
 csharp_space_after_colon_in_inheritance_clause = true
 
 # true: Espaço após vírgula
-# Sim: Foo(a, b, c)   Não: Foo(a,b,c)
+# true: Foo(a, b, c)   false: Foo(a,b,c)
 csharp_space_after_comma = true
 
 # false: Sem espaço após ponto
-# Sim: obj.Method()   Não: obj. Method()
+# true: obj. Method()   false: obj.Method()
 csharp_space_after_dot = false
 
 # true: Espaço após palavra-chave de controle de fluxo
-# Sim: if (x)   Não: if(x)
+# true: if (x)   false: if(x)
 csharp_space_after_keywords_in_control_flow_statements = true
 
 # true: Espaço após ; no for
-# Sim: for (int i = 0; i < 10; i++)
+# true: for (int i = 0; i < 10; i++)
 csharp_space_after_semicolon_in_for_statement = true
 
 # csharp_space_around_binary_operators — Espaços ao redor de operadores binários.
@@ -709,51 +709,51 @@ csharp_space_around_binary_operators = before_and_after
 csharp_space_around_declaration_statements = false
 
 # true: Espaço antes de : na cláusula de herança
-# Sim: class Foo : IBar { }   (espaço antes de :)
+# true: class Foo : IBar { }   (espaço antes de :)
 csharp_space_before_colon_in_inheritance_clause = true
 
 # false: Sem espaço antes de vírgula
-# Sim: Foo(a, b)   Não: Foo(a , b)
+# true: Foo(a, b)   false: Foo(a , b)
 csharp_space_before_comma = false
 
 # false: Sem espaço antes de ponto
-# Sim: obj.Method()   Não: obj .Method()
+# true: obj.Method()   false: obj .Method()
 csharp_space_before_dot = false
 
 # false: Sem espaço antes de colchete de abertura
-# Sim: arr[0]   Não: arr [0]
+# true: arr[0]   false: arr [0]
 csharp_space_before_open_square_brackets = false
 
 # false: Sem espaço antes de ; no for
-# Sim: for (int i = 0; i < 10; i++)
+# true: for (int i = 0; i < 10; i++)
 csharp_space_before_semicolon_in_for_statement = false
 
 # false: Sem espaço entre colchetes vazios
-# Sim: int[]   Não: int[ ]
+# true: int[]   false: int[ ]
 csharp_space_between_empty_square_brackets = false
 
 # false: Sem espaço em lista de parâmetros vazia na chamada
-# Sim: Foo()   Não: Foo( )
+# true: Foo()   false: Foo( )
 csharp_space_between_method_call_empty_parameter_list_parentheses = false
 
 # false: Sem espaço entre nome do método e ( na chamada
-# Sim: Foo()   Não: Foo ()
+# true: Foo()   false: Foo ()
 csharp_space_between_method_call_name_and_opening_parenthesis = false
 
 # false: Sem espaço dentro dos parênteses na chamada
-# Sim: Foo(a, b)   Não: Foo( a, b )
+# true: Foo(a, b)   false: Foo( a, b )
 csharp_space_between_method_call_parameter_list_parentheses = false
 
 # false: Sem espaço em lista de parâmetros vazia na declaração
-# Sim: void Foo()   Não: void Foo( )
+# true: void Foo()   false: void Foo( )
 csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
 
 # false: Sem espaço entre nome do método e ( na declaração
-# Sim: void Foo(int x)   Não: void Foo (int x)
+# true: void Foo(int x)   false: void Foo (int x)
 csharp_space_between_method_declaration_name_and_open_parenthesis = false
 
 # false: Sem espaço dentro dos parênteses na declaração
-# Sim: void Foo(int x)   Não: void Foo( int x )
+# true: void Foo(int x)   false: void Foo( int x )
 csharp_space_between_method_declaration_parameter_list_parentheses = false
 
 # csharp_space_between_parentheses — Espaços dentro de parênteses.
@@ -767,7 +767,7 @@ csharp_space_between_method_declaration_parameter_list_parentheses = false
 csharp_space_between_parentheses = false
 
 # false: Sem espaço entre colchetes em array não vazio
-# Sim: arr[0]   Não: arr[ 0 ]
+# true: arr[0]   false: arr[ 0 ]
 csharp_space_between_square_brackets = false
 
 # -----------------------------------------------------------------------------
@@ -775,11 +775,11 @@ csharp_space_between_square_brackets = false
 # -----------------------------------------------------------------------------
 
 # true: Mantém single-statement blocks em uma linha
-# Sim: public int X { get; set; }
+# true: public int X { get; set; }
 csharp_preserve_single_line_blocks = true
 
 # true: Mantém single-line statements
-# Sim: if (x) return;
+# true: if (x) return;
 csharp_preserve_single_line_statements = true
 
 # =============================================================================
@@ -825,109 +825,109 @@ csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimenta
 # -----------------------------------------------------------------------------
 
 # Tipos e namespaces → PascalCase
-# Sim: class MyService { }   namespace MyApp.Services { }
+# true: class MyService { }   namespace MyApp.Services { }
 dotnet_naming_rule.types_and_namespaces_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.types_and_namespaces_should_be_pascalcase.symbols = types_and_namespaces
 dotnet_naming_rule.types_and_namespaces_should_be_pascalcase.style = pascalcase
 
 # Interfaces → IPascalCase (prefixo I)
-# Sim: interface IRepository { }
+# true: interface IRepository { }
 dotnet_naming_rule.interfaces_should_be_ipascalcase.severity = suggestion
 dotnet_naming_rule.interfaces_should_be_ipascalcase.symbols = interfaces
 dotnet_naming_rule.interfaces_should_be_ipascalcase.style = ipascalcase
 
 # Parâmetros de tipo genérico → TPascalCase (prefixo T)
-# Sim: class Container<TItem> { }
+# true: class Container<TItem> { }
 dotnet_naming_rule.type_parameters_should_be_tpascalcase.severity = suggestion
 dotnet_naming_rule.type_parameters_should_be_tpascalcase.symbols = type_parameters
 dotnet_naming_rule.type_parameters_should_be_tpascalcase.style = tpascalcase
 
 # Métodos → PascalCase
-# Sim: public void ProcessOrder() { }
+# true: public void ProcessOrder() { }
 dotnet_naming_rule.methods_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.methods_should_be_pascalcase.symbols = methods
 dotnet_naming_rule.methods_should_be_pascalcase.style = pascalcase
 
 # Propriedades → PascalCase
-# Sim: public string FullName { get; set; }
+# true: public string FullName { get; set; }
 dotnet_naming_rule.properties_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.properties_should_be_pascalcase.symbols = properties
 dotnet_naming_rule.properties_should_be_pascalcase.style = pascalcase
 
 # Eventos → PascalCase
-# Sim: public event EventHandler OrderPlaced;
+# true: public event EventHandler OrderPlaced;
 dotnet_naming_rule.events_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.events_should_be_pascalcase.symbols = events
 dotnet_naming_rule.events_should_be_pascalcase.style = pascalcase
 
 # Variáveis locais → camelCase
-# Sim: int orderCount = 0;
+# true: int orderCount = 0;
 dotnet_naming_rule.local_variables_should_be_camelcase.severity = suggestion
 dotnet_naming_rule.local_variables_should_be_camelcase.symbols = local_variables
 dotnet_naming_rule.local_variables_should_be_camelcase.style = camelcase
 
 # Constantes locais → camelCase
-# Sim: const int maxRetries = 3;
+# true: const int maxRetries = 3;
 dotnet_naming_rule.local_constants_should_be_camelcase.severity = suggestion
 dotnet_naming_rule.local_constants_should_be_camelcase.symbols = local_constants
 dotnet_naming_rule.local_constants_should_be_camelcase.style = camelcase
 
 # Parâmetros → camelCase
-# Sim: void Process(string orderName) { }
+# true: void Process(string orderName) { }
 dotnet_naming_rule.parameters_should_be_camelcase.severity = suggestion
 dotnet_naming_rule.parameters_should_be_camelcase.symbols = parameters
 dotnet_naming_rule.parameters_should_be_camelcase.style = camelcase
 
 # Campos públicos/internos → PascalCase
-# Sim: public int MaxItems;
+# true: public int MaxItems;
 dotnet_naming_rule.public_fields_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.public_fields_should_be_pascalcase.symbols = public_fields
 dotnet_naming_rule.public_fields_should_be_pascalcase.style = pascalcase
 
 # Campos privados/protegidos → _camelCase
-# Sim: private string _customerName;
+# true: private string _customerName;
 dotnet_naming_rule.private_fields_should_be__camelcase.severity = suggestion
 dotnet_naming_rule.private_fields_should_be__camelcase.symbols = private_fields
 dotnet_naming_rule.private_fields_should_be__camelcase.style = _camelcase
 
 # Campos privados estáticos → s_camelCase
-# Sim: private static int s_instanceCount;
+# true: private static int s_instanceCount;
 dotnet_naming_rule.private_static_fields_should_be_s_camelcase.severity = suggestion
 dotnet_naming_rule.private_static_fields_should_be_s_camelcase.symbols = private_static_fields
 dotnet_naming_rule.private_static_fields_should_be_s_camelcase.style = s_camelcase
 
 # Constantes públicas/internas → PascalCase
-# Sim: public const int MaxRetries = 5;
+# true: public const int MaxRetries = 5;
 dotnet_naming_rule.public_constant_fields_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.public_constant_fields_should_be_pascalcase.symbols = public_constant_fields
 dotnet_naming_rule.public_constant_fields_should_be_pascalcase.style = pascalcase
 
 # Constantes privadas/protegidas → PascalCase
-# Sim: private const int BufferSize = 1024;
+# true: private const int BufferSize = 1024;
 dotnet_naming_rule.private_constant_fields_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.private_constant_fields_should_be_pascalcase.symbols = private_constant_fields
 dotnet_naming_rule.private_constant_fields_should_be_pascalcase.style = pascalcase
 
 # Campos static readonly públicos/internos → PascalCase
-# Sim: public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
+# true: public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.symbols = public_static_readonly_fields
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.style = pascalcase
 
 # Campos static readonly privados/protegidos → PascalCase
-# Sim: private static readonly Regex EmailRegex = new(...);
+# true: private static readonly Regex EmailRegex = new(...);
 dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.symbols = private_static_readonly_fields
 dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.style = pascalcase
 
 # Enums → PascalCase
-# Sim: enum OrderStatus { Pending, Shipped }
+# true: enum OrderStatus { Pending, Shipped }
 dotnet_naming_rule.enums_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.enums_should_be_pascalcase.symbols = enums
 dotnet_naming_rule.enums_should_be_pascalcase.style = pascalcase
 
 # Funções locais → PascalCase
-# Sim: void ProcessOrder() { void ValidateInput() { } }
+# true: void ProcessOrder() { void ValidateInput() { } }
 dotnet_naming_rule.local_functions_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.local_functions_should_be_pascalcase.symbols = local_functions
 dotnet_naming_rule.local_functions_should_be_pascalcase.style = pascalcase
@@ -1125,11 +1125,11 @@ dotnet_diagnostic.IDE0079.severity = suggestion
 dotnet_diagnostic.IDE0080.severity = suggestion
 
 # IDE0082: Converte typeof para nameof quando possível
-# Sim: nameof(MyType)   Não: typeof(MyType).Name
+# true: nameof(MyType)   false: typeof(MyType).Name
 dotnet_diagnostic.IDE0082.severity = suggestion
 
 # IDE0100: Remove operador de igualdade desnecessário
-# Sim: if (b) { }   Não: if (b == true) { }
+# true: if (b) { }   false: if (b == true) { }
 dotnet_diagnostic.IDE0100.severity = suggestion
 
 # IDE0110: Remove discard desnecessário (_)
@@ -1148,7 +1148,7 @@ dotnet_diagnostic.IDE0240.severity = suggestion
 dotnet_diagnostic.IDE0241.severity = suggestion
 
 # IDE0280: Usa nameof em vez de string literal para nomes de membro
-# Sim: nameof(MyProp)   Não: "MyProp"
+# true: nameof(MyProp)   false: "MyProp"
 dotnet_diagnostic.IDE0280.severity = suggestion
 
 # IDE0370: Remove suppression desnecessária (variante mais recente do IDE0079)
@@ -1183,7 +1183,7 @@ dotnet_diagnostic.CA1003.severity = suggestion
 dotnet_diagnostic.CA1005.severity = suggestion
 
 # CA1008: Enums devem ter valor zero
-# Sim: enum Status { None = 0, Active = 1 }
+# true: enum Status { None = 0, Active = 1 }
 dotnet_diagnostic.CA1008.severity = suggestion
 
 # CA1010: Coleções devem implementar interface genérica (IEnumerable<T>)
@@ -1391,7 +1391,7 @@ dotnet_diagnostic.CA1505.severity = suggestion
 dotnet_diagnostic.CA1506.severity = suggestion
 
 # CA1507: Use nameof em vez de string literal para nomes de membro
-# Sim: nameof(MyProp)   Não: "MyProp"
+# true: nameof(MyProp)   false: "MyProp"
 dotnet_diagnostic.CA1507.severity = suggestion
 
 # CA1508: Evite código condicional morto (always true/false)
@@ -1405,7 +1405,7 @@ dotnet_diagnostic.CA1509.severity = suggestion
 # =============================================================================
 
 # CA1510: Use ArgumentNullException.ThrowIfNull em vez de if+throw block
-# Sim: ArgumentNullException.ThrowIfNull(arg);
+# true: ArgumentNullException.ThrowIfNull(arg);
 dotnet_diagnostic.CA1510.severity = suggestion
 
 # CA1511: Use ArgumentException.ThrowIfNullOrEmpty/ThrowIfNullOrWhiteSpace
@@ -1484,7 +1484,7 @@ dotnet_diagnostic.CA1727.severity = suggestion
 # =============================================================================
 
 # CA1802: Use literais (const) onde o valor é computável em tempo de compilação
-# Sim: const int Max = 10;   Não: static readonly int Max = 10;
+# true: const int Max = 10;   false: static readonly int Max = 10;
 dotnet_diagnostic.CA1802.severity = suggestion
 
 # CA1805: Não inicialize campos com valor padrão (já são zero/null/false por padrão)
@@ -1515,7 +1515,7 @@ dotnet_diagnostic.CA1816.severity = suggestion
 dotnet_diagnostic.CA1819.severity = suggestion
 
 # CA1820: Teste strings vazias usando string.Length ou string.IsNullOrEmpty
-# Sim: s.Length == 0   Não: s == ""
+# true: s.Length == 0   false: s == ""
 dotnet_diagnostic.CA1820.severity = suggestion
 
 # CA1821: Remova finalizadores vazios
@@ -1531,15 +1531,15 @@ dotnet_diagnostic.CA1823.severity = suggestion
 dotnet_diagnostic.CA1824.severity = suggestion
 
 # CA1825: Evite alocações de array de comprimento zero; use Array.Empty<T>()
-# Sim: Array.Empty<int>()   Não: new int[0]
+# true: Array.Empty<int>()   false: new int[0]
 dotnet_diagnostic.CA1825.severity = suggestion
 
 # CA1826: Use propriedade em vez de método LINQ Enumerable equivalente
-# Sim: list.Count   Não: list.Count()
+# true: list.Count   false: list.Count()
 dotnet_diagnostic.CA1826.severity = suggestion
 
 # CA1827: Não use Count/LongCount quando Any pode ser usado
-# Sim: list.Any()   Não: list.Count() > 0
+# true: list.Any()   false: list.Count() > 0
 dotnet_diagnostic.CA1827.severity = suggestion
 
 # CA1828: Não use CountAsync/LongCountAsync quando AnyAsync pode ser usado
@@ -1600,14 +1600,14 @@ dotnet_diagnostic.CA1845.severity = suggestion
 dotnet_diagnostic.CA1846.severity = suggestion
 
 # CA1847: Use literal char em vez de string de um caractere em Contains/IndexOf
-# Sim: s.Contains('.')   Não: s.Contains(".")
+# true: s.Contains('.')   false: s.Contains(".")
 dotnet_diagnostic.CA1847.severity = suggestion
 
 # CA1848: Use delegates LoggerMessage para log de alta performance
 dotnet_diagnostic.CA1848.severity = none
 
 # CA1849: Chame métodos async dentro de métodos async
-# Sim: await stream.ReadAsync(...)   Não: stream.Read(...) dentro de método async
+# true: await stream.ReadAsync(...)   false: stream.Read(...) dentro de método async
 dotnet_diagnostic.CA1849.severity = suggestion
 
 # CA1850: Prefira método estático HashData a instância HashAlgorithm.ComputeHash
@@ -1620,11 +1620,11 @@ dotnet_diagnostic.CA1851.severity = suggestion
 dotnet_diagnostic.CA1852.severity = suggestion
 
 # CA1853: Chamada desnecessária a Dictionary.ContainsKey antes de Remove
-# Sim: dict.Remove(key)   Não: if (dict.ContainsKey(key)) dict.Remove(key)
+# true: dict.Remove(key)   false: if (dict.ContainsKey(key)) dict.Remove(key)
 dotnet_diagnostic.CA1853.severity = suggestion
 
 # CA1854: Prefira TryGetValue a ContainsKey + indexer no Dictionary
-# Sim: dict.TryGetValue(key, out var v)   Não: if (dict.ContainsKey(key)) v = dict[key]
+# true: dict.TryGetValue(key, out var v)   false: if (dict.ContainsKey(key)) v = dict[key]
 dotnet_diagnostic.CA1854.severity = suggestion
 
 # CA1855: Use Span<T>.Clear() em vez de Span<T>.Fill(default)
@@ -1637,7 +1637,7 @@ dotnet_diagnostic.CA1856.severity = suggestion
 dotnet_diagnostic.CA1857.severity = suggestion
 
 # CA1858: Use StartsWith em vez de IndexOf para verificar prefixo
-# Sim: s.StartsWith("abc")   Não: s.IndexOf("abc") == 0
+# true: s.StartsWith("abc")   false: s.IndexOf("abc") == 0
 dotnet_diagnostic.CA1858.severity = suggestion
 
 # CA1859: Use tipos concretos em vez de interfaces/abstratos para melhor performance
@@ -1650,8 +1650,8 @@ dotnet_diagnostic.CA1860.severity = suggestion
 dotnet_diagnostic.CA1861.severity = suggestion
 
 # CA1862: Use sobrecargas StringComparison para comparação case-insensitive
-# Sim: s.Equals(other, StringComparison.OrdinalIgnoreCase)
-# Não: s.ToLower() == other.ToLower()
+# true: s.Equals(other, StringComparison.OrdinalIgnoreCase)
+# false: s.ToLower() == other.ToLower()
 dotnet_diagnostic.CA1862.severity = suggestion
 
 # CA1863: Use CompositeFormat em cache para String.Format de alta frequência
