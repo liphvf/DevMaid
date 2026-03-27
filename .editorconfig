@@ -379,27 +379,27 @@ csharp_style_expression_bodied_properties = true:silent
 
 # IDE0019 (true): Usa pattern matching em vez de as + null check
 # Sim: if (obj is string s) { }   Não: var s = obj as string; if (s != null) { }
-csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:warning
 
 # IDE0020/IDE0038 (true): Usa pattern matching em vez de is + cast
 # Sim: if (obj is int i) { }   Não: if (obj is int) { var i = (int)obj; }
-csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
 
 # IDE0170 (true): Simplifica extended property pattern
 # Sim: if (a is { B.C: 1 }) { }   Não: if (a is { B: { C: 1 } }) { }
-csharp_style_prefer_extended_property_pattern = true:suggestion
+csharp_style_prefer_extended_property_pattern = true:warning
 
 # IDE0083 (true): Usa o operador not em patterns
 # Sim: if (obj is not null) { }   Não: if (!(obj is null)) { }
-csharp_style_prefer_not_pattern = true:suggestion
+csharp_style_prefer_not_pattern = true:warning
 
 # IDE0078 (true): Prefere pattern matching quando possível
 # Sim: if (obj is int or string) { }
-csharp_style_prefer_pattern_matching = true:silent
+csharp_style_prefer_pattern_matching = true:suggestion
 
 # IDE0066 (true): Prefere switch expression em vez de switch statement
 # Sim: var x = y switch { 1 => "a", _ => "b" };
-csharp_style_prefer_switch_expression = true:suggestion
+csharp_style_prefer_switch_expression = true:warning
 
 # IDE0150 (true): Prefere null check a type check
 # Sim: if (obj is null) { }   Não: if (obj is not MyType) { }  (quando só verifica nulo)
@@ -411,7 +411,7 @@ csharp_style_prefer_null_check_over_type_check = true:suggestion
 
 # true: Usa chamada de delegate condicional (?.)
 # Sim: handler?.Invoke(this, args);   Não: if (handler != null) handler(this, args);
-csharp_style_conditional_delegate_call = true:suggestion
+csharp_style_conditional_delegate_call = true:warning
 
 # -----------------------------------------------------------------------------
 # Modificadores
@@ -419,7 +419,7 @@ csharp_style_conditional_delegate_call = true:suggestion
 
 # IDE0320 (true): Prefere funções anônimas static quando não capturam (capture) estado
 # Sim: Action f = static () => Console.WriteLine("hello");
-csharp_prefer_static_anonymous_function = true:suggestion
+csharp_prefer_static_anonymous_function = true:warning
 
 # IDE0062 (true): Prefere funções locais static quando não capturam (capture) estado
 # Sim: static void Local() { }
@@ -436,11 +436,11 @@ csharp_preferred_modifier_order = public,private,protected,internal,file,const,s
 
 # IDE0250 (true): Structs podem ser marcadas como readonly quando possível
 # Sim: readonly struct Point { public int X { get; init; } }
-csharp_style_prefer_readonly_struct = true:suggestion
+csharp_style_prefer_readonly_struct = true:warning
 
 # IDE0251 (true): Membros de struct podem ser readonly quando não modificam estado
 # Sim: public readonly int GetX() => X;
-csharp_style_prefer_readonly_struct_member = true:suggestion
+csharp_style_prefer_readonly_struct_member = true:warning
 
 # -----------------------------------------------------------------------------
 # Preferências de bloco de código
@@ -475,11 +475,11 @@ csharp_style_namespace_declarations = file_scoped:warning
 
 # IDE0200 (true): Remove lambda desnecessária — usa method group
 # Sim: list.ForEach(Console.WriteLine);   Não: list.ForEach(x => Console.WriteLine(x));
-csharp_style_prefer_method_group_conversion = true:silent
+csharp_style_prefer_method_group_conversion = true:suggestion
 
 # IDE0290 (true): Prefere construtores primários (C# 12+)
 # Sim: class Point(int x, int y);
-csharp_style_prefer_primary_constructors = true:suggestion
+csharp_style_prefer_primary_constructors = true:warning
 
 # IDE0210/IDE0211: Prefere top-level statements (C# 9+)
 # true = prefere top-level (sem class Program/Main explícitos)
@@ -491,7 +491,7 @@ csharp_style_prefer_top_level_statements = true:silent
 
 # IDE0034 (true): Simplifica expressão default
 # Sim: default   Não: default(int)
-csharp_prefer_simple_default_expression = true:suggestion
+csharp_prefer_simple_default_expression = true:warning
 
 # IDE0042 (true): Deconstrói variable declaration
 # Sim: var (x, y) = GetPoint();   Não: var p = GetPoint(); var x = p.X;
@@ -511,7 +511,7 @@ csharp_style_prefer_index_operator = true:suggestion
 
 # IDE0039 (true): Prefere função local a função anônima
 # Sim: int Local() => 1;  em vez de  Func<int> f = () => 1;
-csharp_style_prefer_local_over_anonymous_function = true:suggestion
+csharp_style_prefer_local_over_anonymous_function = true:warning
 
 # IDE0057 (true): Usa range operator (..)
 # Sim: var sub = arr[1..4];   Não: var sub = arr.Skip(1).Take(3);
@@ -519,11 +519,11 @@ csharp_style_prefer_range_operator = true:suggestion
 
 # IDE0180 (true): Usa tuple swap de valores
 # Sim: (a, b) = (b, a);   Não: var tmp = a; a = b; b = tmp;
-csharp_style_prefer_tuple_swap = true:suggestion
+csharp_style_prefer_tuple_swap = true:warning
 
 # IDE0230 (true): Prefere literal de string UTF-8
 # Sim: ReadOnlySpan<byte> b = "hello"u8;
-csharp_style_prefer_utf8_string_literals = true:suggestion
+csharp_style_prefer_utf8_string_literals = true:warning
 
 # IDE0016 (true): Usa throw expression em vez de if+throw block
 # Sim: _name = name ?? throw new ArgumentNullException(nameof(name));
@@ -535,7 +535,7 @@ csharp_style_throw_expression = true:suggestion
 #                         _ = GetValue();
 #   unused_local_variable → atribui a variável local nunca lida
 #                           var unused = GetValue();
-csharp_style_unused_value_assignment_preference = discard_variable:suggestion
+csharp_style_unused_value_assignment_preference = discard_variable:warning
 
 # IDE0058 — Unused expression value.
 # Valores possíveis:
@@ -543,11 +543,11 @@ csharp_style_unused_value_assignment_preference = discard_variable:suggestion
 #                         _ = list.Remove(item);
 #   unused_local_variable → atribui o resultado a variável local nunca lida
 #                           var unused = list.Remove(item);
-csharp_style_unused_value_expression_statement_preference = discard_variable:silent
+csharp_style_unused_value_expression_statement_preference = discard_variable:warning
 
 # IDE0330 (true): Prefere System.Threading.Lock em vez de object para locks (C# 13+)
 # Sim: private readonly Lock _lock = new();   Não: private readonly object _lock = new();
-csharp_prefer_system_threading_lock = true:suggestion
+csharp_prefer_system_threading_lock = true:warning
 
 # IDE0340 (true): Prefere unbound generic type em nameof
 # Sim: nameof(List<>)   Não: nameof(List<int>)
@@ -555,7 +555,7 @@ csharp_style_prefer_unbound_generic_type_in_nameof = true:suggestion
 
 # IDE0350 (true): Prefere lambda implicitly typed quando o tipo pode ser inferido
 # Sim: var f = (int x) => x + 1;
-csharp_style_prefer_implicitly_typed_lambda_expression = true:suggestion
+csharp_style_prefer_implicitly_typed_lambda_expression = true:warning
 
 # IDE0360 (true): Simplifica accessors de propriedade
 # Sim: get => _value;   Não: get { return _value; }
@@ -576,7 +576,7 @@ csharp_style_prefer_simple_property_accessors = true:suggestion
 #                           using System;
 #                           class Bar { }
 #                       }
-csharp_using_directive_placement = outside_namespace:silent
+csharp_using_directive_placement = outside_namespace:warning
 
 # =============================================================================
 # C# Formatting Rules (IDE0055)
