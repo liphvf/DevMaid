@@ -392,7 +392,7 @@ dotnet_remove_unnecessary_suppression_exclusions = none
 #            var x = 0;
 #   false → usa tipo explícito
 #            int x = 0;
-csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_for_built_in_types = true:suggestion
 
 # Descrição: Prefere tipo explícito quando o tipo já é aparente pela expressão
 # Valores possíveis:
@@ -400,7 +400,7 @@ csharp_style_var_for_built_in_types = false:suggestion
 #            var c = new Customer();
 #   false → usa tipo explícito mesmo quando aparente
 #            Customer c = new Customer();
-csharp_style_var_when_type_is_apparent = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
 
 # Descrição: Prefere tipo explícito em demais casos onde o tipo não é aparente
 # Valores possíveis:
@@ -408,7 +408,7 @@ csharp_style_var_when_type_is_apparent = false:suggestion
 #            var e = GetItems();
 #   false → usa tipo explícito
 #            IEnumerable<int> e = GetItems();
-csharp_style_var_elsewhere = false:suggestion
+csharp_style_var_elsewhere = true:suggestion
 
 # -----------------------------------------------------------------------------
 # IDE0021-IDE0027 / IDE0053 / IDE0061 — Membros com expression body
