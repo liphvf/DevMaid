@@ -74,16 +74,24 @@ tab_width = 4
 # Organização de usings (IDE0055 / formatting)
 # -----------------------------------------------------------------------------
 
-# Separa grupos de using com linha em branco entre eles
-# true:  using System;
-#       [linha em branco]
-#       using MyApp;
+# Descrição: Separa grupos de diretivas using com linha em branco entre os grupos
+# Valores possíveis:
+#   true  → insere linha em branco entre grupos de using
+#            using System;
+#
+#            using MyApp;
+#   false → sem separação entre grupos
+#            using System;
+#            using MyApp;
 dotnet_separate_import_directive_groups = true
 
-# Coloca diretivas System.* antes das demais
-# true:  using System;
-#       using System.Collections.Generic;
-#       using MyLib;
+# Descrição: Ordena diretivas System.* antes das demais
+# Valores possíveis:
+#   true  → System.* vem antes de outros usings
+#            using System;
+#            using System.Collections.Generic;
+#            using MyLib;
+#   false → não força ordem especial para System.*
 dotnet_sort_system_directives_first = true
 
 # IDE0073: Cabeçalho de arquivo. Valores possíveis:
@@ -97,29 +105,48 @@ file_header_template = unset
 # IDE0003 / IDE0009 — Qualificação com this. e Me.
 # -----------------------------------------------------------------------------
 
-# IDE0003 (false): Não use this. em eventos (this.MyEvent -> MyEvent)
-# IDE0009 (true):  Use this. em eventos
+# Descrição: Qualificação this. em eventos
+# Valores possíveis:
+#   true  → exige this. ao referenciar eventos: this.MyEvent += handler;
+#   false → omite this.: MyEvent += handler;
 dotnet_style_qualification_for_event = false:suggestion
 
-# IDE0003 (false): Não use this. em campos (this._name -> _name)
+# Descrição: Qualificação this. em campos
+# Valores possíveis:
+#   true  → exige this. ao referenciar campos: this._name = value;
+#   false → omite this.: _name = value;
 dotnet_style_qualification_for_field = false:suggestion
 
-# IDE0003 (false): Não use this. em métodos (this.Run() -> Run())
+# Descrição: Qualificação this. em métodos
+# Valores possíveis:
+#   true  → exige this. ao chamar métodos: this.Run();
+#   false → omite this.: Run();
 dotnet_style_qualification_for_method = false:suggestion
 
-# IDE0003 (false): Não use this. em propriedades (this.Name -> Name)
+# Descrição: Qualificação this. em propriedades
+# Valores possíveis:
+#   true  → exige this. ao acessar propriedades: this.Name = value;
+#   false → omite this.: Name = value;
 dotnet_style_qualification_for_property = false:suggestion
 
 # -----------------------------------------------------------------------------
 # IDE0049 — Palavras-chave vs nomes de tipos BCL
 # -----------------------------------------------------------------------------
 
-# true: Use int em vez de Int32 para variáveis e parâmetros
-# true: int x = 0;   false: Int32 x = 0;
+# Descrição: Prefere palavras-chave de linguagem (int, string) em vez de nomes BCL (Int32, String) para variáveis e parâmetros
+# Valores possíveis:
+#   true  → usa palavra-chave da linguagem
+#            int x = 0;
+#   false → usa nome do tipo BCL
+#            Int32 x = 0;
 dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
 
-# true: Use int.MaxValue em vez de Int32.MaxValue para acesso a membros
-# true: int.MaxValue   false: Int32.MaxValue
+# Descrição: Prefere palavras-chave de linguagem para acesso a membros estáticos de tipos
+# Valores possíveis:
+#   true  → usa palavra-chave da linguagem
+#            int.MaxValue
+#   false → usa nome do tipo BCL
+#            Int32.MaxValue
 dotnet_style_predefined_type_for_member_access = true:suggestion
 
 # -----------------------------------------------------------------------------
@@ -166,30 +193,51 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
 # Preferências de nível de expressão
 # -----------------------------------------------------------------------------
 
-# #DUVIDA, talvez warning
-# IDE0029/IDE0030/IDE0270: Prefere ?? em vez de verificações de nulo ternárias
-# true: var x = a ?? b;   false: var x = a != null ? a : b;
+# Descrição: Prefere operador de coalescência nula ?? em vez de verificações ternárias de nulo
+# Valores possíveis:
+#   true  → usa operador ??
+#            var x = a ?? b;
+#   false → usa expressão ternária
+#            var x = a != null ? a : b;
 dotnet_style_coalesce_expression = true:suggestion
 
-# #DUVIDA, talvez warning
-# IDE0028: Usa collection initializers
-# true: var l = new List<int> { 1, 2, 3 };   false: var l = new List<int>(); l.Add(1);
+# Descrição: Prefere collection initializers ao inicializar coleções
+# Valores possíveis:
+#   true  → usa inicializador de coleção
+#            var l = new List<int> { 1, 2, 3 };
+#   false → usa chamadas Add separadas
+#            var l = new List<int>(); l.Add(1);
 dotnet_style_collection_initializer = true:suggestion
 
-# IDE0033: Usa nomes explícitos de tuple em vez de Item1/Item2
-# true: tuple.Name   false: tuple.Item1
+# Descrição: Prefere nomes explícitos de tupla em vez de Item1/Item2
+# Valores possíveis:
+#   true  → usa nome explícito do campo da tupla
+#            tuple.Name
+#   false → usa acesso por índice
+#            tuple.Item1
 dotnet_style_explicit_tuple_names = true:warning
 
-# IDE0130: Namespace deve corresponder à estrutura de pastas
-# Sim (em pasta Foo/Bar): namespace MyApp.Foo.Bar;
+# Descrição: Namespace deve corresponder à estrutura de pastas do projeto
+# Valores possíveis:
+#   true  → exige que o namespace reflita o caminho de pasta
+#            Em pasta Foo/Bar: namespace MyApp.Foo.Bar;
+#   false → não verifica correspondência
 dotnet_style_namespace_match_folder = true:warning
 
-# IDE0031: Prefere null propagation (?.)
-# true: var x = obj?.Property;   false: var x = obj != null ? obj.Property : null;
+# Descrição: Prefere propagação de nulo (?.) em vez de verificação explícita
+# Valores possíveis:
+#   true  → usa operador ?.
+#            var x = obj?.Property;
+#   false → usa verificação ternária explícita
+#            var x = obj != null ? obj.Property : null;
 dotnet_style_null_propagation = true:warning
 
-# IDE0017: Usa object initializers
-# true: var p = new Person { Name = "Ana" };   false: var p = new Person(); p.Name = "Ana";
+# Descrição: Prefere object initializers ao inicializar objetos
+# Valores possíveis:
+#   true  → usa inicializador de objeto
+#            var p = new Person { Name = "Ana" };
+#   false → usa atribuições de propriedade separadas
+#            var p = new Person(); p.Name = "Ana";
 dotnet_style_object_initializer = true:suggestion
 
 # Posição do operador ao quebrar linha em expressão multiline.
@@ -204,9 +252,12 @@ dotnet_style_object_initializer = true:suggestion
 #         c;
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 
-# IDE0032: Prefere propriedades automáticas
-# true: public int Age { get; set; }
-# Não: private int _age; public int Age { get { return _age; } set { _age = value; } }
+# Descrição: Prefere propriedades automáticas quando não há lógica extra no accessor
+# Valores possíveis:
+#   true  → usa propriedade automática
+#            public int Age { get; set; }
+#   false → mantém campo de apoio explícito
+#            private int _age; public int Age { get { return _age; } set { _age = value; } }
 dotnet_style_prefer_auto_properties = true:suggestion
 
 # IDE0028/IDE0300-IDE0306: Prefere expressões de coleção [] (C# 12+)
@@ -219,17 +270,28 @@ dotnet_style_prefer_auto_properties = true:suggestion
 #   false | never → desativa completamente
 dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
 
-# IDE0054/IDE0074: Prefere compound assignment
-# true: x += 1;   false: x = x + 1;
-# IDE0074 cobre ??= especificamente
+# Descrição: Prefere compound assignment (+=, -=, ??=, etc.)
+# Valores possíveis:
+#   true  → usa operador de atribuição composta (IDE0054 para +=/-=, IDE0074 para ??=)
+#            x += 1;
+#   false → usa atribuição com operação separada
+#            x = x + 1;
 dotnet_style_prefer_compound_assignment = true:suggestion
 
-# IDE0045: Prefere expressão condicional em atribuição
-# true: var x = cond ? a : b;   false: if (cond) x = a; else x = b;
+# Descrição: Prefere expressão condicional em atribuição
+# Valores possíveis:
+#   true  → usa operador ternário
+#            var x = cond ? a : b;
+#   false → usa if/else
+#            if (cond) x = a; else x = b;
 dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
 
-# IDE0046: Prefere expressão condicional em return
-# true: return cond ? a : b;   false: if (cond) return a; else return b;
+# Descrição: Prefere expressão condicional em return
+# Valores possíveis:
+#   true  → usa operador ternário no return
+#            return cond ? a : b;
+#   false → usa if/else com return
+#            if (cond) return a; else return b;
 dotnet_style_prefer_conditional_expression_over_return = true:suggestion
 
 # IDE0220: Prefere cast explícito no foreach quando o compilador adicionaria um cast oculto.
@@ -240,32 +302,55 @@ dotnet_style_prefer_conditional_expression_over_return = true:suggestion
 #     — não aplica para legacy collections como ArrayList
 dotnet_style_prefer_foreach_explicit_cast_in_source = when_strongly_typed:suggestion
 
-# IDE0037: Prefere nomes inferidos em anonymous types
-# true: new { Name }   false: new { Name = Name }
+# Descrição: Prefere nomes inferidos em anonymous types quando o nome pode ser omitido
+# Valores possíveis:
+#   true  → usa nome inferido
+#            new { Name }
+#   false → usa nome explícito
+#            new { Name = Name }
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
 
-# IDE0037: Prefere nomes inferidos em tuples
-# true: (Name, Age)   false: (Name: Name, Age: Age)
+# Descrição: Prefere nomes inferidos em tuplas quando o nome pode ser omitido
+# Valores possíveis:
+#   true  → usa nome inferido
+#            (Name, Age)
+#   false → usa nome explícito
+#            (Name: Name, Age: Age)
 dotnet_style_prefer_inferred_tuple_names = true:suggestion
 
-# IDE0041: Prefere null check com is null em vez de ReferenceEquals
-# true: obj is null   false: object.ReferenceEquals(obj, null)
+# Descrição: Prefere null check com is null em vez de ReferenceEquals
+# Valores possíveis:
+#   true  → usa pattern matching
+#            obj is null
+#   false → usa chamada estática
+#            object.ReferenceEquals(obj, null)
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
 
-# IDE0075: Simplifica expressões booleanas condicionais
-# true: return a && b;   false: return a && b ? true : false;
+# Descrição: Simplifica expressões booleanas condicionais desnecessariamente complexas
+# Valores possíveis:
+#   true  → simplifica a expressão
+#            return a && b;
+#   false → mantém a expressão original
+#            return a && b ? true : false;
 dotnet_style_prefer_simplified_boolean_expressions = true:warning
 
-# IDE0071: Simplifica interpolação de strings
-# true: $"{x}"   false: $"{x.ToString()}"
+# Descrição: Simplifica interpolação de strings removendo chamadas ToString() redundantes
+# Valores possíveis:
+#   true  → simplifica a interpolação
+#            $"{x}"
+#   false → mantém a chamada explícita
+#            $"{x.ToString()}"
 dotnet_style_prefer_simplified_interpolation = true:warning
 
 # -----------------------------------------------------------------------------
 # IDE0044 — Preferências de campo
 # -----------------------------------------------------------------------------
 
-# true: Adiciona readonly em campos que não são reatribuídos após o construtor
-# true: private readonly int _x;
+# Descrição: Adiciona readonly em campos que não são reatribuídos após o construtor
+# Valores possíveis:
+#   true  → marca o campo como readonly
+#            private readonly int _x;
+#   false → não exige readonly
 dotnet_style_readonly_field = true:warning
 
 # -----------------------------------------------------------------------------
@@ -301,16 +386,28 @@ dotnet_remove_unnecessary_suppression_exclusions = none
 # IDE0007 / IDE0008 — Preferências de var
 # -----------------------------------------------------------------------------
 
-# false: Use tipo explícito em vez de var para tipos primitivos
-# true: int x = 0;   false: var x = 0;
+# Descrição: Prefere tipo explícito em vez de var para tipos primitivos (built-in)
+# Valores possíveis:
+#   true  → usa var para built-in types
+#            var x = 0;
+#   false → usa tipo explícito
+#            int x = 0;
 csharp_style_var_for_built_in_types = false:suggestion
 
-# false: Use tipo explícito quando o tipo é aparente pela expressão
-# true: Customer c = new Customer();   false: var c = new Customer();
+# Descrição: Prefere tipo explícito quando o tipo já é aparente pela expressão
+# Valores possíveis:
+#   true  → usa var quando o tipo é aparente
+#            var c = new Customer();
+#   false → usa tipo explícito mesmo quando aparente
+#            Customer c = new Customer();
 csharp_style_var_when_type_is_apparent = false:suggestion
 
-# false: Use tipo explícito em demais casos
-# true: IEnumerable<int> e = GetItems();   false: var e = GetItems();
+# Descrição: Prefere tipo explícito em demais casos onde o tipo não é aparente
+# Valores possíveis:
+#   true  → usa var em qualquer situação
+#            var e = GetItems();
+#   false → usa tipo explícito
+#            IEnumerable<int> e = GetItems();
 csharp_style_var_elsewhere = false:suggestion
 
 # -----------------------------------------------------------------------------
@@ -377,52 +474,88 @@ csharp_style_expression_bodied_properties = true:silent
 # IDE0019 / IDE0020 / IDE0038 / IDE0078 / IDE0083 / IDE0150 — Pattern matching
 # -----------------------------------------------------------------------------
 
-# IDE0019 (true): Usa pattern matching em vez de as + null check
-# true: if (obj is string s) { }   false: var s = obj as string; if (s != null) { }
+# Descrição: Prefere pattern matching com is em vez de as + null check
+# Valores possíveis:
+#   true  → usa pattern matching
+#            if (obj is string s) { }
+#   false → usa as com null check explícito
+#            var s = obj as string; if (s != null) { }
 csharp_style_pattern_matching_over_as_with_null_check = true:warning
 
-# IDE0020/IDE0038 (true): Usa pattern matching em vez de is + cast
-# true: if (obj is int i) { }   false: if (obj is int) { var i = (int)obj; }
+# Descrição: Prefere pattern matching com is em vez de is + cast explícito
+# Valores possíveis:
+#   true  → usa pattern matching
+#            if (obj is int i) { }
+#   false → usa is com cast separado
+#            if (obj is int) { var i = (int)obj; }
 csharp_style_pattern_matching_over_is_with_cast_check = true:warning
 
-# IDE0170 (true): Simplifica extended property pattern
-# true: if (a is { B.C: 1 }) { }   false: if (a is { B: { C: 1 } }) { }
+# Descrição: Simplifica extended property pattern aninhado
+# Valores possíveis:
+#   true  → usa property pattern compacto
+#            if (a is { B.C: 1 }) { }
+#   false → usa property pattern aninhado
+#            if (a is { B: { C: 1 } }) { }
 csharp_style_prefer_extended_property_pattern = true:warning
 
-# IDE0083 (true): Usa o operador not em patterns
-# true: if (obj is not null) { }   false: if (!(obj is null)) { }
+# Descrição: Prefere o operador not em patterns em vez de negação com !
+# Valores possíveis:
+#   true  → usa operador not
+#            if (obj is not null) { }
+#   false → usa negação com !
+#            if (!(obj is null)) { }
 csharp_style_prefer_not_pattern = true:warning
 
-# IDE0078 (true): Prefere pattern matching quando possível
-# true: if (obj is int or string) { }
+# Descrição: Prefere pattern matching quando há alternativa equivalente
+# Valores possíveis:
+#   true  → usa pattern matching
+#            if (obj is int or string) { }
+#   false → não força uso de pattern matching
 csharp_style_prefer_pattern_matching = true:suggestion
 
-# IDE0066 (true): Prefere switch expression em vez de switch statement
-# true: var x = y switch { 1 => "a", _ => "b" };
+# Descrição: Prefere switch expression em vez de switch statement
+# Valores possíveis:
+#   true  → usa switch expression
+#            var x = y switch { 1 => "a", _ => "b" };
+#   false → usa switch statement tradicional
 csharp_style_prefer_switch_expression = true:warning
 
-# IDE0150 (true): Prefere null check a type check
-# true: if (obj is null) { }   false: if (obj is not MyType) { }  (quando só verifica nulo)
+# Descrição: Prefere null check com is null em vez de verificação de tipo negada
+# Valores possíveis:
+#   true  → usa null check direto
+#            if (obj is null) { }
+#   false → usa negação de type check
+#            if (obj is not MyType) { }
 csharp_style_prefer_null_check_over_type_check = true:suggestion
 
 # -----------------------------------------------------------------------------
 # IDE1005 — Null-checking em delegates
 # -----------------------------------------------------------------------------
 
-# true: Usa chamada de delegate condicional (?.)
-# true: handler?.Invoke(this, args);   false: if (handler != null) handler(this, args);
+# Descrição: Usa chamada condicional de delegate (?.) em vez de null check explícito
+# Valores possíveis:
+#   true  → usa chamada condicional
+#            handler?.Invoke(this, args);
+#   false → usa null check explícito
+#            if (handler != null) handler(this, args);
 csharp_style_conditional_delegate_call = true:warning
 
 # -----------------------------------------------------------------------------
 # Modificadores
 # -----------------------------------------------------------------------------
 
-# IDE0320 (true): Prefere funções anônimas static quando não capturam (capture) estado
-# true: Action f = static () => Console.WriteLine("hello");
+# Descrição: Prefere funções anônimas static quando não capturam estado externo
+# Valores possíveis:
+#   true  → marca a função anônima como static
+#            Action f = static () => Console.WriteLine("hello");
+#   false → não exige static em funções anônimas
 csharp_prefer_static_anonymous_function = true:warning
 
-# IDE0062 (true): Prefere funções locais static quando não capturam (capture) estado
-# true: static void Local() { }
+# Descrição: Prefere funções locais static quando não capturam estado externo
+# Valores possíveis:
+#   true  → marca a função local como static
+#            static void Local() { }
+#   false → não exige static em funções locais
 csharp_prefer_static_local_function = true:warning
 
 # IDE0036: Ordem preferida dos modificadores (lista separada por vírgula).
@@ -434,12 +567,18 @@ csharp_prefer_static_local_function = true:warning
 # Exemplo: public static readonly string Name = ...;
 csharp_preferred_modifier_order = public,private,protected,internal,file,const,static,extern,new,virtual,abstract,sealed,override,readonly,unsafe,required,volatile,async:suggestion
 
-# IDE0250 (true): Structs podem ser marcadas como readonly quando possível
-# true: readonly struct Point { public int X { get; init; } }
+# Descrição: Structs podem ser marcadas como readonly quando não modificam estado
+# Valores possíveis:
+#   true  → marca a struct como readonly quando possível
+#            readonly struct Point { public int X { get; init; } }
+#   false → não exige readonly em structs
 csharp_style_prefer_readonly_struct = true:warning
 
-# IDE0251 (true): Membros de struct podem ser readonly quando não modificam estado
-# true: public readonly int GetX() => X;
+# Descrição: Membros de struct podem ser readonly quando não modificam estado
+# Valores possíveis:
+#   true  → marca o membro como readonly quando possível
+#            public readonly int GetX() => X;
+#   false → não exige readonly em membros de struct
 csharp_style_prefer_readonly_struct_member = true:warning
 
 # -----------------------------------------------------------------------------
@@ -457,8 +596,12 @@ csharp_style_prefer_readonly_struct_member = true:warning
 #                    else { A(); B(); }       // com braces (múltiplas linhas)
 csharp_prefer_braces = true:none
 
-# IDE0063 (true): Usa simple using declaration (sem bloco)
-# true: using var fs = File.Open(...);   false: using (var fs = File.Open(...)) { }
+# Descrição: Usa declaração using simplificada (sem bloco explícito)
+# Valores possíveis:
+#   true  → usa using declaration (sem bloco)
+#            using var fs = File.Open(...);
+#   false → usa using statement com bloco
+#            using (var fs = File.Open(...)) { }
 csharp_prefer_simple_using_statement = true:suggestion
 
 # IDE0160/IDE0161: Estilo de namespace declaration.
@@ -473,60 +616,107 @@ csharp_prefer_simple_using_statement = true:suggestion
 #                  }
 csharp_style_namespace_declarations = file_scoped:warning
 
-# IDE0200 (true): Remove lambda desnecessária — usa method group
-# true: list.ForEach(Console.WriteLine);   false: list.ForEach(x => Console.WriteLine(x));
+# Descrição: Remove lambda desnecessária e usa method group quando possível
+# Valores possíveis:
+#   true  → usa method group diretamente
+#            list.ForEach(Console.WriteLine);
+#   false → mantém a lambda explícita
+#            list.ForEach(x => Console.WriteLine(x));
 csharp_style_prefer_method_group_conversion = true:suggestion
 
-# IDE0290 (true): Prefere construtores primários (C# 12+)
-# true: class Point(int x, int y);
+# Descrição: Prefere construtores primários (C# 12+)
+# Valores possíveis:
+#   true  → usa construtor primário
+#            class Point(int x, int y);
+#   false → usa construtor tradicional com corpo
 csharp_style_prefer_primary_constructors = true:warning
 
-# IDE0210/IDE0211: Prefere top-level statements (C# 9+)
-# true = prefere top-level (sem class Program/Main explícitos)
+# Descrição: Prefere top-level statements em vez de classe Program/Main explícita (C# 9+)
+# Valores possíveis:
+#   true  → usa top-level statements (sem class Program/Main explícitos)
+#   false → usa estrutura tradicional com classe e método Main
 csharp_style_prefer_top_level_statements = true:silent
 
 # -----------------------------------------------------------------------------
 # Preferências de nível de expressão (C#)
 # -----------------------------------------------------------------------------
 
-# IDE0034 (true): Simplifica expressão default
-# true: default   false: default(int)
+# Descrição: Simplifica expressão default removendo o tipo explícito quando pode ser inferido
+# Valores possíveis:
+#   true  → usa default sem tipo
+#            default
+#   false → usa default com tipo explícito
+#            default(int)
 csharp_prefer_simple_default_expression = true:warning
 
-# IDE0042 (true): Deconstrói variable declaration
-# true: var (x, y) = GetPoint();   false: var p = GetPoint(); var x = p.X;
+# Descrição: Prefers deconstruction of variable declarations quando possível
+# Valores possíveis:
+#   true  → usa deconstruction
+#            var (x, y) = GetPoint();
+#   false → usa acesso a membros separado
+#            var p = GetPoint(); var x = p.X;
 csharp_style_deconstructed_variable_declaration = true:suggestion
 
-# IDE0090 (true): Cria objeto implicitamente quando o tipo é aparente (new())
-# true: Customer c = new();   false: Customer c = new Customer();
+# Descrição: Cria objeto implicitamente (new()) quando o tipo é aparente pelo contexto (C# 9+)
+# Valores possíveis:
+#   true  → usa target-typed new
+#            Customer c = new();
+#   false → usa construtor com tipo explícito
+#            Customer c = new Customer();
 csharp_style_implicit_object_creation_when_type_is_apparent = true:suggestion
 
-# IDE0018 (true): Inline variable declaration em out
-# true: int.TryParse(s, out int n)   false: int n; int.TryParse(s, out n);
+# Descrição: Declara variável inline em parâmetro out
+# Valores possíveis:
+#   true  → declara inline no out
+#            int.TryParse(s, out int n)
+#   false → declara separado antes da chamada
+#            int n; int.TryParse(s, out n);
 csharp_style_inlined_variable_declaration = true:suggestion
 
-# IDE0056 (true): Usa index operator (^)
-# true: var last = list[^1];   false: var last = list[list.Count - 1];
+# Descrição: Usa index operator (^) para acesso a partir do final de coleção
+# Valores possíveis:
+#   true  → usa operador ^
+#            var last = list[^1];
+#   false → usa cálculo manual de índice
+#            var last = list[list.Count - 1];
 csharp_style_prefer_index_operator = true:suggestion
 
-# IDE0039 (true): Prefere função local a função anônima
-# true: int Local() => 1;  em vez de  Func<int> f = () => 1;
+# Descrição: Prefere função local a função anônima (Func/Action) quando possível
+# Valores possíveis:
+#   true  → usa função local
+#            int Local() => 1;
+#   false → usa função anônima
+#            Func<int> f = () => 1;
 csharp_style_prefer_local_over_anonymous_function = true:warning
 
-# IDE0057 (true): Usa range operator (..)
-# true: var sub = arr[1..4];   false: var sub = arr.Skip(1).Take(3);
+# Descrição: Usa range operator (..) para fatiar sequências
+# Valores possíveis:
+#   true  → usa operador ..
+#            var sub = arr[1..4];
+#   false → usa métodos de extensão
+#            var sub = arr.Skip(1).Take(3);
 csharp_style_prefer_range_operator = true:suggestion
 
-# IDE0180 (true): Usa tuple swap de valores
-# true: (a, b) = (b, a);   false: var tmp = a; a = b; b = tmp;
+# Descrição: Prefere tuple swap para trocar valores de variáveis
+# Valores possíveis:
+#   true  → usa tuple para swap
+#            (a, b) = (b, a);
+#   false → usa variável temporária
+#            var tmp = a; a = b; b = tmp;
 csharp_style_prefer_tuple_swap = true:warning
 
-# IDE0230 (true): Prefere literal de string UTF-8
-# true: ReadOnlySpan<byte> b = "hello"u8;
+# Descrição: Prefere literal de string UTF-8 (C# 11+)
+# Valores possíveis:
+#   true  → usa literal u8
+#            ReadOnlySpan<byte> b = "hello"u8;
+#   false → usa outra forma de representar bytes
 csharp_style_prefer_utf8_string_literals = true:warning
 
-# IDE0016 (true): Usa throw expression em vez de if+throw block
-# true: _name = name ?? throw new ArgumentNullException(nameof(name));
+# Descrição: Usa throw expression em vez de if+throw em inicializações e atribuições
+# Valores possíveis:
+#   true  → usa throw expression
+#            _name = name ?? throw new ArgumentNullException(nameof(name));
+#   false → usa if+throw block separado
 csharp_style_throw_expression = true:suggestion
 
 # IDE0059 — Unused variable in assignment.
@@ -545,20 +735,35 @@ csharp_style_unused_value_assignment_preference = discard_variable:warning
 #                           var unused = list.Remove(item);
 csharp_style_unused_value_expression_statement_preference = discard_variable:warning
 
-# IDE0330 (true): Prefere System.Threading.Lock em vez de object para locks (C# 13+)
-# true: private readonly Lock _lock = new();   false: private readonly object _lock = new();
+# Descrição: Prefere System.Threading.Lock em vez de object para locks (C# 13+)
+# Valores possíveis:
+#   true  → usa o tipo Lock dedicado
+#            private readonly Lock _lock = new();
+#   false → usa object como lock
+#            private readonly object _lock = new();
 csharp_prefer_system_threading_lock = true:warning
 
-# IDE0340 (true): Prefere unbound generic type em nameof
-# true: nameof(List<>)   false: nameof(List<int>)
+# Descrição: Prefere unbound generic type em nameof (sem argumentos de tipo)
+# Valores possíveis:
+#   true  → usa unbound generic
+#            nameof(List<>)
+#   false → especifica tipo concreto
+#            nameof(List<int>)
 csharp_style_prefer_unbound_generic_type_in_nameof = true:suggestion
 
-# IDE0350 (true): Prefere lambda implicitly typed quando o tipo pode ser inferido
-# true: var f = (int x) => x + 1;
+# Descrição: Prefere lambda implicitly typed quando o tipo pode ser inferido pelo compilador (C# 10+)
+# Valores possíveis:
+#   true  → usa lambda com tipo implícito e var
+#            var f = (int x) => x + 1;
+#   false → usa tipo de delegate explícito
 csharp_style_prefer_implicitly_typed_lambda_expression = true:warning
 
-# IDE0360 (true): Simplifica accessors de propriedade
-# true: get => _value;   false: get { return _value; }
+# Descrição: Simplifica accessors de propriedade para expression body quando possível
+# Valores possíveis:
+#   true  → usa expression body no accessor
+#            get => _value;
+#   false → usa bloco com return
+#            get { return _value; }
 csharp_style_prefer_simple_property_accessors = true:suggestion
 
 # -----------------------------------------------------------------------------
@@ -586,24 +791,39 @@ csharp_using_directive_placement = outside_namespace:warning
 # Preferências de nova linha
 # -----------------------------------------------------------------------------
 
-# true: catch em nova linha
-# try { } [NOVA LINHA] catch { }
+# Descrição: Posiciona a cláusula catch em nova linha após o bloco try
+# Valores possíveis:
+#   true  → catch em nova linha
+#            try { } catch { }
+#   false → catch na mesma linha que a chave de fechamento do try
 csharp_new_line_before_catch = true
 
-# true: else em nova linha
-# if (...) { } [NOVA LINHA] else { }
+# Descrição: Posiciona a cláusula else em nova linha após o bloco if
+# Valores possíveis:
+#   true  → else em nova linha
+#            if (...) { } else { }
+#   false → else na mesma linha que a chave de fechamento do if
 csharp_new_line_before_else = true
 
-# true: finally em nova linha
-# catch { } [NOVA LINHA] finally { }
+# Descrição: Posiciona a cláusula finally em nova linha após o bloco catch
+# Valores possíveis:
+#   true  → finally em nova linha
+#            catch { } finally { }
+#   false → finally na mesma linha que a chave de fechamento do catch
 csharp_new_line_before_finally = true
 
-# true: Membros de anonymous types em linhas separadas
-# var z = new { [NOVA LINHA] A = 1, [NOVA LINHA] B = 2 }
+# Descrição: Membros de anonymous types ficam em linhas separadas
+# Valores possíveis:
+#   true  → cada membro em nova linha
+#            var z = new { A = 1, B = 2 }
+#   false → todos os membros na mesma linha
 csharp_new_line_before_members_in_anonymous_types = true
 
-# true: Membros de object initializers em linhas separadas
-# var p = new Person { [NOVA LINHA] Name = "Ana", [NOVA LINHA] Age = 30 }
+# Descrição: Membros de object initializers ficam em linhas separadas
+# Valores possíveis:
+#   true  → cada membro em nova linha
+#            var p = new Person { Name = "Ana", Age = 30 }
+#   false → todos os membros na mesma linha
 csharp_new_line_before_members_in_object_initializers = true
 
 # csharp_new_line_before_open_brace — Abre chave { em nova linha.
@@ -627,28 +847,43 @@ csharp_new_line_before_members_in_object_initializers = true
 #   Exemplo: methods, properties, types  (apenas nesses, resto na mesma linha)
 csharp_new_line_before_open_brace = all
 
-# true: Cláusulas de query expression em linhas separadas
-# var q = from a in e [NOVA LINHA] where a > 0 [NOVA LINHA] select a;
+# Descrição: Cláusulas de query expression ficam em linhas separadas
+# Valores possíveis:
+#   true  → cada cláusula em nova linha
+#            var q = from a in e where a > 0 select a;
+#   false → cláusulas na mesma linha
 csharp_new_line_between_query_expression_clauses = true
 
 # -----------------------------------------------------------------------------
 # Preferências de indentação
 # -----------------------------------------------------------------------------
 
-# true: Indenta o conteúdo de blocos
-# { [INDENTADO] Console.WriteLine(); }
+# Descrição: Indenta o conteúdo de blocos de código
+# Valores possíveis:
+#   true  → conteúdo do bloco é indentado
+#            { Console.WriteLine(); }
+#   false → conteúdo sem indentação adicional
 csharp_indent_block_contents = true
 
-# false: Não indenta as chaves em si
-# void Foo() [SEM INDENT] {
+# Descrição: Indenta as próprias chaves em vez de apenas o conteúdo
+# Valores possíveis:
+#   true  → as chaves são indentadas
+#   false → chaves ficam no nível do elemento pai
+#            void Foo() {
 csharp_indent_braces = false
 
-# true: Indenta o conteúdo de case no switch
-# switch(x) { case 1: [INDENTADO] break; }
+# Descrição: Indenta o conteúdo de case dentro de switch
+# Valores possíveis:
+#   true  → conteúdo de case é indentado
+#            switch(x) { case 1: break; }
+#   false → conteúdo de case no mesmo nível do case
 csharp_indent_case_contents = true
 
-# true: Indenta o bloco dentro de case como bloco separado
-# case 0: [NOVA LINHA] { [INDENTADO] break; }
+# Descrição: Indenta o bloco dentro de case como bloco separado
+# Valores possíveis:
+#   true  → bloco dentro do case é indentado separadamente
+#            case 0: { break; }
+#   false → sem indentação extra para o bloco
 csharp_indent_case_contents_when_block = true
 
 # csharp_indent_labels — Indentação de labels (goto).
@@ -664,36 +899,61 @@ csharp_indent_case_contents_when_block = true
 #   }
 csharp_indent_labels = one_less_than_current
 
-# true: Indenta os labels de case no switch
-# switch(x) { [INDENTADO] case 1: }
+# Descrição: Indenta os labels de case dentro do switch
+# Valores possíveis:
+#   true  → labels de case são indentados em relação ao switch
+#            switch(x) { case 1: }
+#   false → labels de case no mesmo nível do switch
 csharp_indent_switch_labels = true
 
 # -----------------------------------------------------------------------------
 # Preferências de espaçamento
 # -----------------------------------------------------------------------------
 
-# false: Sem espaço após cast
-# true: (int)x   false: (int) x
+# Descrição: Espaço após operador de cast
+# Valores possíveis:
+#   true  → insere espaço após o cast
+#            (int) x
+#   false → sem espaço após o cast
+#            (int)x
 csharp_space_after_cast = false
 
-# true: Espaço após : na cláusula de herança
-# true: class Foo : IBar { }   (espaço após :)
+# Descrição: Espaço após : na cláusula de herança de classe
+# Valores possíveis:
+#   true  → insere espaço após :
+#            class Foo : IBar { }
+#   false → sem espaço após :
 csharp_space_after_colon_in_inheritance_clause = true
 
-# true: Espaço após vírgula
-# true: Foo(a, b, c)   false: Foo(a,b,c)
+# Descrição: Espaço após vírgula em listas de argumentos e parâmetros
+# Valores possíveis:
+#   true  → insere espaço após ,
+#            Foo(a, b, c)
+#   false → sem espaço após ,
+#            Foo(a,b,c)
 csharp_space_after_comma = true
 
-# false: Sem espaço após ponto
-# true: obj. Method()   false: obj.Method()
+# Descrição: Espaço após ponto (.) em acesso a membros
+# Valores possíveis:
+#   true  → insere espaço após o ponto
+#            obj. Method()
+#   false → sem espaço após o ponto
+#            obj.Method()
 csharp_space_after_dot = false
 
-# true: Espaço após palavra-chave de controle de fluxo
-# true: if (x)   false: if(x)
+# Descrição: Espaço após palavra-chave de controle de fluxo antes do parêntese
+# Valores possíveis:
+#   true  → insere espaço após a palavra-chave
+#            if (x)
+#   false → sem espaço
+#            if(x)
 csharp_space_after_keywords_in_control_flow_statements = true
 
-# true: Espaço após ; no for
-# true: for (int i = 0; i < 10; i++)
+# Descrição: Espaço após ponto e vírgula (;) no cabeçalho do for
+# Valores possíveis:
+#   true  → insere espaço após ;
+#            for (int i = 0; i < 10; i++)
+#   false → sem espaço após ;
 csharp_space_after_semicolon_in_for_statement = true
 
 # csharp_space_around_binary_operators — Espaços ao redor de operadores binários.
@@ -705,55 +965,104 @@ csharp_space_after_semicolon_in_for_statement = true
 #   ignore           → preserva o espaçamento existente (não altera)
 csharp_space_around_binary_operators = before_and_after
 
-# false: Sem espaço em volta de declarações
+# Descrição: Espaço ao redor de declarações de variáveis
+# Valores possíveis:
+#   true  → insere espaço ao redor
+#   false → sem espaço extra ao redor de declarações
 csharp_space_around_declaration_statements = false
 
-# true: Espaço antes de : na cláusula de herança
-# true: class Foo : IBar { }   (espaço antes de :)
+# Descrição: Espaço antes de : na cláusula de herança de classe
+# Valores possíveis:
+#   true  → insere espaço antes de :
+#            class Foo : IBar { }
+#   false → sem espaço antes de :
 csharp_space_before_colon_in_inheritance_clause = true
 
-# false: Sem espaço antes de vírgula
-# true: Foo(a, b)   false: Foo(a , b)
+# Descrição: Espaço antes de vírgula em listas de argumentos e parâmetros
+# Valores possíveis:
+#   true  → insere espaço antes de ,
+#            Foo(a , b)
+#   false → sem espaço antes de ,
+#            Foo(a, b)
 csharp_space_before_comma = false
 
-# false: Sem espaço antes de ponto
-# true: obj.Method()   false: obj .Method()
+# Descrição: Espaço antes de ponto (.) em acesso a membros
+# Valores possíveis:
+#   true  → insere espaço antes do ponto
+#            obj .Method()
+#   false → sem espaço antes do ponto
+#            obj.Method()
 csharp_space_before_dot = false
 
-# false: Sem espaço antes de colchete de abertura
-# true: arr[0]   false: arr [0]
+# Descrição: Espaço antes de colchete de abertura em acesso a array/indexer
+# Valores possíveis:
+#   true  → insere espaço antes de [
+#            arr [0]
+#   false → sem espaço antes de [
+#            arr[0]
 csharp_space_before_open_square_brackets = false
 
-# false: Sem espaço antes de ; no for
-# true: for (int i = 0; i < 10; i++)
+# Descrição: Espaço antes de ponto e vírgula (;) no cabeçalho do for
+# Valores possíveis:
+#   true  → insere espaço antes de ;
+#   false → sem espaço antes de ;
+#            for (int i = 0; i < 10; i++)
 csharp_space_before_semicolon_in_for_statement = false
 
-# false: Sem espaço entre colchetes vazios
-# true: int[]   false: int[ ]
+# Descrição: Espaço entre colchetes vazios [] em declaração de array
+# Valores possíveis:
+#   true  → insere espaço dentro
+#            int[ ]
+#   false → sem espaço
+#            int[]
 csharp_space_between_empty_square_brackets = false
 
-# false: Sem espaço em lista de parâmetros vazia na chamada
-# true: Foo()   false: Foo( )
+# Descrição: Espaço dentro dos parênteses em chamada de método sem parâmetros
+# Valores possíveis:
+#   true  → insere espaço dentro
+#            Foo( )
+#   false → sem espaço
+#            Foo()
 csharp_space_between_method_call_empty_parameter_list_parentheses = false
 
-# false: Sem espaço entre nome do método e ( na chamada
-# true: Foo()   false: Foo ()
+# Descrição: Espaço entre o nome do método e o parêntese de abertura na chamada
+# Valores possíveis:
+#   true  → insere espaço
+#            Foo ()
+#   false → sem espaço
+#            Foo()
 csharp_space_between_method_call_name_and_opening_parenthesis = false
 
-# false: Sem espaço dentro dos parênteses na chamada
-# true: Foo(a, b)   false: Foo( a, b )
+# Descrição: Espaço dentro dos parênteses de argumentos na chamada de método
+# Valores possíveis:
+#   true  → insere espaço dentro dos parênteses
+#            Foo( a, b )
+#   false → sem espaço dentro
+#            Foo(a, b)
 csharp_space_between_method_call_parameter_list_parentheses = false
 
-# false: Sem espaço em lista de parâmetros vazia na declaração
-# true: void Foo()   false: void Foo( )
+# Descrição: Espaço dentro dos parênteses em declaração de método sem parâmetros
+# Valores possíveis:
+#   true  → insere espaço dentro
+#            void Foo( )
+#   false → sem espaço
+#            void Foo()
 csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
 
-# false: Sem espaço entre nome do método e ( na declaração
-# true: void Foo(int x)   false: void Foo (int x)
+# Descrição: Espaço entre o nome do método e o parêntese de abertura na declaração
+# Valores possíveis:
+#   true  → insere espaço
+#            void Foo (int x)
+#   false → sem espaço
+#            void Foo(int x)
 csharp_space_between_method_declaration_name_and_open_parenthesis = false
 
-# false: Sem espaço dentro dos parênteses na declaração
-# true: void Foo(int x)   false: void Foo( int x )
+# Descrição: Espaço dentro dos parênteses de parâmetros na declaração de método
+# Valores possíveis:
+#   true  → insere espaço dentro dos parênteses
+#            void Foo( int x )
+#   false → sem espaço dentro
+#            void Foo(int x)
 csharp_space_between_method_declaration_parameter_list_parentheses = false
 
 # csharp_space_between_parentheses — Espaços dentro de parênteses.
@@ -766,52 +1075,76 @@ csharp_space_between_method_declaration_parameter_list_parentheses = false
 #   if ( x ) { }    var y = ( int )x;
 csharp_space_between_parentheses = false
 
-# false: Sem espaço entre colchetes em array não vazio
-# true: arr[0]   false: arr[ 0 ]
+# Descrição: Espaço entre colchetes em acesso a array não vazio
+# Valores possíveis:
+#   true  → insere espaço dentro dos colchetes
+#            arr[ 0 ]
+#   false → sem espaço dentro
+#            arr[0]
 csharp_space_between_square_brackets = false
 
 # -----------------------------------------------------------------------------
 # Preferências de quebra de linha (wrapping)
 # -----------------------------------------------------------------------------
 
-# true: Mantém single-statement blocks em uma linha
-# true: public int X { get; set; }
+# Descrição: Mantém blocos de instrução única em uma única linha
+# Valores possíveis:
+#   true  → permite bloco de uma linha
+#            public int X { get; set; }
+#   false → força expansão do bloco em múltiplas linhas
 csharp_preserve_single_line_blocks = true
 
-# true: Mantém single-line statements
-# true: if (x) return;
+# Descrição: Mantém statements únicos na mesma linha sem forçar quebra
+# Valores possíveis:
+#   true  → permite statement de uma linha
+#            if (x) return;
+#   false → força o statement para nova linha
 csharp_preserve_single_line_statements = true
 
 # =============================================================================
 # Whitespace experimental (IDE2000–IDE2006)
 # =============================================================================
 
-# IDE2000: Evita múltiplas linhas em branco consecutivas
-# true = permite; false = não permite
+# Descrição: Permite múltiplas linhas em branco consecutivas no código
+# Valores possíveis:
+#   true  → permite múltiplas linhas em branco seguidas
+#   false → remove linhas em branco consecutivas extras
 dotnet_style_allow_multiple_blank_lines_experimental = false:silent
 
-# IDE2001: Embedded statements devem estar em linhas próprias
-# false = não permite if (x) return; (exige nova linha)
+# Descrição: Permite embedded statements (if, for, etc.) na mesma linha
+# Valores possíveis:
+#   true  → permite if (x) return; na mesma linha
+#   false → exige que o statement fique em nova linha
 csharp_style_allow_embedded_statements_on_same_line_experimental = false:silent
 
-# IDE2002: Não permite linha em branco entre consecutive braces
-# false = não permite linha em branco entre { e }
+# Descrição: Permite linha em branco entre chaves consecutivas
+# Valores possíveis:
+#   true  → permite linha em branco entre { e }
+#   false → não permite linha em branco entre chaves consecutivas
 csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false:silent
 
-# IDE2003: Exige linha em branco entre bloco e próxima declaração
-# true = permite statement imediatamente após block
+# Descrição: Permite statement imediatamente após um bloco (sem linha em branco)
+# Valores possíveis:
+#   true  → permite statement logo após bloco sem linha em branco
+#   false → exige linha em branco entre bloco e próxima declaração
 dotnet_style_allow_statement_immediately_after_block_experimental = false:silent
 
-# IDE2004: Não permite linha em branco após : de constructor initializer
-# false = não permite linha em branco após base(...):\n[linha]\n{
+# Descrição: Permite linha em branco após : de constructor initializer
+# Valores possíveis:
+#   true  → permite linha em branco após base(...):
+#   false → não permite linha em branco após : do initializer
 csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = false:silent
 
-# IDE2005: Não permite linha em branco após token de expressão condicional
-# false = cond\n[linha]\n? a : b não é permitido
+# Descrição: Permite linha em branco após token de expressão condicional (? ou :)
+# Valores possíveis:
+#   true  → permite linha em branco após ?
+#   false → não permite linha em branco no meio de expressão condicional
 csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = false:silent
 
-# IDE2006: Não permite linha em branco após token de expressão lambda =>
-# false = () =>\n[linha]\n{ } não é permitido
+# Descrição: Permite linha em branco após token de expressão lambda (=>)
+# Valores possíveis:
+#   true  → permite linha em branco após =>
+#   false → não permite linha em branco após => em lambdas
 csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = false:silent
 
 # =============================================================================
