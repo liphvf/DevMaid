@@ -15,10 +15,11 @@ root = true
 # error       → erro de build, sempre aplicado pelo format
 #
 # Dica:
-# - use 'warning' para regras que quer aplicar automaticamente
-# - use 'suggestion' para estilo opcional (dotnet format --severity info) para aplica-los
-# - use 'silent' para deixar disponível manualmente (sem interferência)
-# - use 'none' para desativar completamente
+# - use 'error'   para erros de build (sempre aplicado pelo format)
+# - use 'warning' para regras aplicadas automaticamente pelo format padrão
+# - use 'suggestion' para estilo opcional (aplica com dotnet format --severity info)
+# - use 'silent' para regras manuais (invisível na IDE, não aplica no format)
+# - use 'none'   para desativar completamente
 
 # -----------------------------------------------------------------------------
 # Configurações universais (todos os arquivos)
