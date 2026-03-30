@@ -115,7 +115,7 @@ public partial class ConfigurationService(ILogger logger) : IConfigurationServic
         var configPath = GetConfigFilePath();
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var configFolder = Path.Combine(localAppData, "DevMaid");
-        Directory.CreateDirectory(configFolder);
+        _ = Directory.CreateDirectory(configFolder);
 
         var existingConfig = new Dictionary<string, string?>();
         if (File.Exists(configPath))
@@ -185,7 +185,7 @@ public partial class ConfigurationService(ILogger logger) : IConfigurationServic
         var configPath = GetConfigFilePath();
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var configFolder = Path.Combine(localAppData, "DevMaid");
-        Directory.CreateDirectory(configFolder);
+        _ = Directory.CreateDirectory(configFolder);
 
         var existingConfig = new Dictionary<string, string?>();
         if (File.Exists(configPath))
@@ -219,7 +219,7 @@ public partial class ConfigurationService(ILogger logger) : IConfigurationServic
     {
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var configFolder = Path.Combine(localAppData, "DevMaid");
-        Directory.CreateDirectory(configFolder);
+        _ = Directory.CreateDirectory(configFolder);
 
         var configPath = Path.Combine(configFolder, "appsettings.json");
 
