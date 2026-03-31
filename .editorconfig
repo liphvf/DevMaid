@@ -955,7 +955,7 @@ csharp_space_after_keywords_in_control_flow_statements = true
 #   true  → insere espaço após ;
 #            for (int i = 0; i < 10; i++)
 #   false → sem espaço após ;
-csharp_space_after_semicolon_in_for_statement = false
+csharp_space_after_semicolon_in_for_statement = true
 
 # csharp_space_around_binary_operators — Espaços ao redor de operadores binários.
 # Valores possíveis:
