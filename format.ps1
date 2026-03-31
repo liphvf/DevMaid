@@ -28,11 +28,15 @@ $results = $projects | ForEach-Object -Parallel {
     $project = $_
     $name = Split-Path $project -Leaf
 
-    $output = & dotnet format $project --severity info --exclude-diagnostics @($using:excludes) 2>$null
+    $errFile = [System.IO.Path]::GetTempFileName()
+    $output = & dotnet format $project --severity info --exclude-diagnostics @($using:excludes) 2>$errFile
+    $stderr = Get-Content $errFile -Raw
+    Remove-Item $errFile -Force
 
     [PSCustomObject]@{
         Project = $name
         Output  = ($output | Where-Object { $_ }) -join "`n"
+        Error   = $stderr
         Success = $LASTEXITCODE -eq 0
     }
 } -ThrottleLimit ([Environment]::ProcessorCount)
@@ -45,6 +49,9 @@ foreach ($result in $results) {
     Write-Host "Formatado: $($result.Project)" -ForegroundColor $color
     if ($result.Output) {
         Write-Host $result.Output -ForegroundColor DarkGray
+    }
+    if (-not $result.Success -and $result.Error) {
+        Write-Host $result.Error -ForegroundColor Red
     }
     Write-Host ""
 }
