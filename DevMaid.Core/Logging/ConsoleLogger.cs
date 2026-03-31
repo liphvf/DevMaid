@@ -57,6 +57,7 @@ public class ConsoleLogger(bool useColors = true) : ILogger
                 Console.WriteLine($"Exception: {exception.Message}");
                 Console.WriteLine($"Stack Trace: {exception.StackTrace}");
             }
+
             Console.ForegroundColor = originalColor;
         }
         else

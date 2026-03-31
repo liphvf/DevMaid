@@ -60,7 +60,7 @@ public static class LoggerExtensions
     public static IDisposable BeginCorrelationScope(this Microsoft.Extensions.Logging.ILogger logger, string commandName)
     {
         var correlation = CorrelationContext.Current;
-        correlation?.CommandName = commandName;
+        _ = (correlation?.CommandName = commandName);
 
         var correlationId = correlation?.CorrelationId ?? "no-correlation";
         return new CorrelationScopeWrapper(logger, correlationId, commandName);
@@ -73,7 +73,7 @@ public static class LoggerExtensions
         public CorrelationScopeWrapper(Microsoft.Extensions.Logging.ILogger logger, string correlationId, string commandName)
         {
             _logger = logger;
-            _logger.BeginScope(new Dictionary<string, object>
+            _ = _logger.BeginScope(new Dictionary<string, object>
             {
                 ["CorrelationId"] = correlationId,
                 ["CommandName"] = commandName
