@@ -1154,6 +1154,60 @@ csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimenta
 [*.{cs,vb}]
 
 # -----------------------------------------------------------------------------
+# Estrutura de naming styles
+# Cada estilo tem 4 propriedades (apenas capitalization é obrigatória):
+#
+#   dotnet_naming_style.<nome>.required_prefix = <prefixo>
+#     Define prefixo obrigatório no início do nome
+#     Valores: I, T, _, s_, (vazio para sem prefixo)
+#     Exemplos: ICustomer, TKey, _name, s_count
+#
+#   dotnet_naming_style.<nome>.required_suffix = <sufixo>
+#     Define sufixo obrigatório no final do nome
+#     Valores: Attribute, Exception, EventArgs, (vazio para sem sufixo)
+#     Exemplos: RequiredAttribute, ValidationException
+#
+#   dotnet_naming_style.<nome>.word_separator = <separador>
+#     Define separador entre palavras
+#     Valores: (vazio) para PascalCase/camelCase, _ para snake_case
+#     Exemplos: MyClassName, MAX_CONNECTIONS
+#
+#   dotnet_naming_style.<nome>.capitalization = <capitalização>  (obrigatório)
+#     Valores possíveis:
+#       pascal_case  → Primeira letra maiúscula: MyClassName, ProcessOrder
+#       camel_case   → Primeira letra minúscula: myVariable, orderCount
+#       all_upper    → Todas maiúsculas: MAX_CONNECTIONS, DEFAULT_TIMEOUT
+#       all_lower    → Todas minúsculas: filename, url
+# ----------------------------------------------------------------------
+#
+# Exemplos de estilos completos:
+#
+#   PascalCase (tipos, métodos, propriedades):
+#     dotnet_naming_style.pascalcase.capitalization = pascal_case
+#     Resultado: MyClass, ProcessOrder
+#
+#   IPascalCase (interfaces):
+#     dotnet_naming_style.ipascalcase.required_prefix = I
+#     dotnet_naming_style.ipascalcase.capitalization = pascal_case
+#     Resultado: ICustomer, IRepository
+#
+#   TPascalCase (parâmetros de tipo genérico):
+#     dotnet_naming_style.tpascalcase.required_prefix = T
+#     dotnet_naming_style.tpascalcase.capitalization = pascal_case
+#     Resultado: TKey, TValue, TResult
+#
+#   _camelCase (campos privados e estáticos):
+#     dotnet_naming_style._camelcase.required_prefix = _
+#     dotnet_naming_style._camelcase.capitalization = camel_case
+#     Resultado: _name, _customerRepository, _instanceCount (estáticos)
+#
+#   ALL_UPPER (constantes, se preferir diferenciar):
+#     dotnet_naming_style.all_upper.word_separator = _
+#     dotnet_naming_style.all_upper.capitalization = all_upper
+#     Resultado: MAX_CONNECTIONS, DEFAULT_TIMEOUT
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 # Regras de nomenclatura
 # Cada regra tem: severity, symbols (o que se aplica), style (como nomear)
 # -----------------------------------------------------------------------------
@@ -1226,9 +1280,9 @@ dotnet_naming_rule.private_fields_should_be__camelcase.style = _camelcase
 
 # Campos privados estáticos → _camelCase
 # true: private static int _instanceCount;
-dotnet_naming_rule.private_static_fields_should_be_s_camelcase.severity = warning
-dotnet_naming_rule.private_static_fields_should_be_s_camelcase.symbols = private_static_fields
-dotnet_naming_rule.private_static_fields_should_be_s_camelcase.style = _camelcase
+dotnet_naming_rule.private_static_fields_should_be__camelcase.severity = warning
+dotnet_naming_rule.private_static_fields_should_be__camelcase.symbols = private_static_fields
+dotnet_naming_rule.private_static_fields_should_be__camelcase.style = _camelcase
 
 # Constantes públicas/internas → PascalCase
 # true: public const int MaxRetries = 5;
@@ -1273,6 +1327,67 @@ dotnet_naming_rule.non_field_members_should_be_pascalcase.style = pascalcase
 
 # -----------------------------------------------------------------------------
 # Especificações de símbolos (o que cada grupo cobre)
+# Cada símbolo é definido por 3 propriedades:
+#
+#   dotnet_naming_symbols.<nome>.applicable_kinds = <tipos>
+#     Define QUE tipos de elementos a regra se aplica
+#     Valores possíveis (separados por vírgula):
+#       namespace     → namespaces
+#       class         → classes
+#       struct        → structs
+#       interface     → interfaces
+#       enum          → enums
+#       delegate      → delegates
+#       event         → eventos
+#       field         → campos
+#       method        → métodos
+#       property      → propriedades
+#       type_parameter → parâmetros de tipo genérico (<T>)
+#       local         → variáveis locais
+#       local_function → funções locais
+#       parameter     → parâmetros de método
+#
+#   dotnet_naming_symbols.<nome>.applicable_accessibilities = <acessibilidade>
+#     Define PARA QUAIS acessibilidades a regra se aplica
+#     Valores possíveis (separados por vírgula):
+#       public            → público (qualquer código pode acessar)
+#       internal          → interno (mesmo assembly)
+#       private           → privado (mesmo tipo)
+#       protected         → protegido (tipo derivado)
+#       protected_internal → protegido ou interno
+#       private_protected  → protegido E interno
+#       local             → escopo local (variáveis locais)
+#       *                 → todas as acessibilidades
+#
+#   dotnet_naming_symbols.<nome>.required_modifiers = <modificadores>
+#     Define QUAIS modificadores são obrigatórios (opcional)
+#     Valores possíveis (separados por vírgula):
+#       static   → membros estáticos
+#       const    → constantes
+#       readonly → campos readonly
+#       abstract → membros abstratos
+#       virtual  → membros virtuais
+#       override → membros sobrescritos
+#       sealed   → membros sealed
+#       async    → métodos async
+#       (vazio)  → sem requisito de modificador
+#
+# Exemplos completos:
+#
+#   Campos públicos (qualquer acessibilidade pública ou interna):
+#     dotnet_naming_symbols.public_fields.applicable_kinds = field
+#     dotnet_naming_symbols.public_fields.applicable_accessibilities = public, internal
+#     dotnet_naming_symbols.public_fields.required_modifiers =
+#
+#   Campos privados estáticos (deve ter static):
+#     dotnet_naming_symbols.private_static_fields.applicable_kinds = field
+#     dotnet_naming_symbols.private_static_fields.applicable_accessibilities = private, protected, protected_internal, private_protected
+#     dotnet_naming_symbols.private_static_fields.required_modifiers = static
+#
+#   Constantes privadas (deve ter const):
+#     dotnet_naming_symbols.private_constant_fields.applicable_kinds = field
+#     dotnet_naming_symbols.private_constant_fields.applicable_accessibilities = private, protected, protected_internal, private_protected
+#     dotnet_naming_symbols.private_constant_fields.required_modifiers = const
 # -----------------------------------------------------------------------------
 
 dotnet_naming_symbols.interfaces.applicable_kinds = interface
@@ -1391,12 +1506,6 @@ dotnet_naming_style.camelcase.required_prefix =
 dotnet_naming_style.camelcase.required_suffix =
 dotnet_naming_style.camelcase.word_separator =
 dotnet_naming_style.camelcase.capitalization = camel_case
-
-# s_camelCase: s_myStaticField
-dotnet_naming_style.s_camelcase.required_prefix = s_
-dotnet_naming_style.s_camelcase.required_suffix =
-dotnet_naming_style.s_camelcase.word_separator =
-dotnet_naming_style.s_camelcase.capitalization = camel_case
 
 # =============================================================================
 # Severidade explícita de diagnósticos de estilo (IDE)
