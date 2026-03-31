@@ -1509,9 +1509,34 @@ dotnet_naming_style.camelcase.capitalization = camel_case
 
 # =============================================================================
 # Severidade explícita de diagnósticos de estilo (IDE)
-# Valores possíveis: none | silent | suggestion | warning | error
 # =============================================================================
 [*.{cs,vb}]
+
+# -----------------------------------------------------------------------------
+# Explicação de diagnósticos IDE
+# Diagnósticos IDE são regras de estilo específicas do Visual Studio.
+# Diferente dos CAXXXX (Quality Rules), os IDEXXXX focam em:
+#   - Simplificações de código
+#   - Remoção de código redundante
+#   - Refactorings sugeridos
+#   - Estilo de programação
+#
+# Níveis de severidade:
+#   none       → Desativa completamente (não aparece, não aplica no format)
+#   silent     → Invisível na IDE (só refactoring), não aplica no format
+#   suggestion → Aparece como sugestão leve, aplica com dotnet format --severity info
+#   warning    → Aparece como aviso, aplica no dotnet format padrão
+#   error      → Erro de build, sempre aplicado
+#
+# Formato:
+#   dotnet_diagnostic.IDE<XXXX>.severity = <severidade>
+#
+# Dicas:
+#   - use 'suggestion' para refactorings opcionais
+#   - use 'none' para desativar regras conflitantes ou indesejadas
+#   - use 'warning' para impor estilo obrigatório (mas cuidado com refatorações automáticas)
+#   - use 'silent' para ter a regra disponível apenas via refactoring manual
+# -----------------------------------------------------------------------------
 
 # IDE0001: Simplifica nome (ex: System.String -> string) — já coberto por IDE0049
 dotnet_diagnostic.IDE0001.severity = suggestion
