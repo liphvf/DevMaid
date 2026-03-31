@@ -630,7 +630,7 @@ csharp_style_prefer_method_group_conversion = true:suggestion
 #   true  → usa construtor primário
 #            class Point(int x, int y);
 #   false → usa construtor tradicional com corpo
-csharp_style_prefer_primary_constructors = true:warning
+csharp_style_prefer_primary_constructors = true:suggestion
 
 # Descrição: Prefere top-level statements em vez de classe Program/Main explícita (C# 9+)
 # Valores possíveis:
