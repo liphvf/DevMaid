@@ -1110,43 +1110,43 @@ csharp_preserve_single_line_statements = true
 # Valores possíveis:
 #   true  → permite múltiplas linhas em branco seguidas
 #   false → remove linhas em branco consecutivas extras
-dotnet_style_allow_multiple_blank_lines_experimental = false:silent
+dotnet_style_allow_multiple_blank_lines_experimental = false:warning
 
 # Descrição: Permite embedded statements (if, for, etc.) na mesma linha
 # Valores possíveis:
 #   true  → permite if (x) return; na mesma linha
 #   false → exige que o statement fique em nova linha
-csharp_style_allow_embedded_statements_on_same_line_experimental = false:silent
+csharp_style_allow_embedded_statements_on_same_line_experimental = false:suggestion
 
 # Descrição: Permite linha em branco entre chaves consecutivas
 # Valores possíveis:
 #   true  → permite linha em branco entre { e }
 #   false → não permite linha em branco entre chaves consecutivas
-csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false:silent
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false:suggestion
 
 # Descrição: Permite statement imediatamente após um bloco (sem linha em branco)
 # Valores possíveis:
 #   true  → permite statement logo após bloco sem linha em branco
 #   false → exige linha em branco entre bloco e próxima declaração
-dotnet_style_allow_statement_immediately_after_block_experimental = false:silent
+dotnet_style_allow_statement_immediately_after_block_experimental = false:suggestion
 
 # Descrição: Permite linha em branco após : de constructor initializer
 # Valores possíveis:
 #   true  → permite linha em branco após base(...):
 #   false → não permite linha em branco após : do initializer
-csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = false:silent
+csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = false:suggestion
 
 # Descrição: Permite linha em branco após token de expressão condicional (? ou :)
 # Valores possíveis:
 #   true  → permite linha em branco após ?
 #   false → não permite linha em branco no meio de expressão condicional
-csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = false:silent
+csharp_style_allow_blank_line_after_token_in_conditional_expression_experimental = false:warning
 
 # Descrição: Permite linha em branco após token de expressão lambda (=>)
 # Valores possíveis:
 #   true  → permite linha em branco após =>
 #   false → não permite linha em branco após => em lambdas
-csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = false:silent
+csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimental = false:suggestion
 
 # =============================================================================
 # Naming styles (IDE1006)
@@ -1160,114 +1160,114 @@ csharp_style_allow_blank_line_after_token_in_arrow_expression_clause_experimenta
 
 # Tipos e namespaces → PascalCase
 # true: class MyService { }   namespace MyApp.Services { }
-dotnet_naming_rule.types_and_namespaces_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.types_and_namespaces_should_be_pascalcase.severity = warning
 dotnet_naming_rule.types_and_namespaces_should_be_pascalcase.symbols = types_and_namespaces
 dotnet_naming_rule.types_and_namespaces_should_be_pascalcase.style = pascalcase
 
 # Interfaces → IPascalCase (prefixo I)
 # true: interface IRepository { }
-dotnet_naming_rule.interfaces_should_be_ipascalcase.severity = suggestion
+dotnet_naming_rule.interfaces_should_be_ipascalcase.severity = warning
 dotnet_naming_rule.interfaces_should_be_ipascalcase.symbols = interfaces
 dotnet_naming_rule.interfaces_should_be_ipascalcase.style = ipascalcase
 
 # Parâmetros de tipo genérico → TPascalCase (prefixo T)
 # true: class Container<TItem> { }
-dotnet_naming_rule.type_parameters_should_be_tpascalcase.severity = suggestion
+dotnet_naming_rule.type_parameters_should_be_tpascalcase.severity = warning
 dotnet_naming_rule.type_parameters_should_be_tpascalcase.symbols = type_parameters
 dotnet_naming_rule.type_parameters_should_be_tpascalcase.style = tpascalcase
 
 # Métodos → PascalCase
 # true: public void ProcessOrder() { }
-dotnet_naming_rule.methods_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.methods_should_be_pascalcase.severity = warning
 dotnet_naming_rule.methods_should_be_pascalcase.symbols = methods
 dotnet_naming_rule.methods_should_be_pascalcase.style = pascalcase
 
 # Propriedades → PascalCase
 # true: public string FullName { get; set; }
-dotnet_naming_rule.properties_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.properties_should_be_pascalcase.severity = warning
 dotnet_naming_rule.properties_should_be_pascalcase.symbols = properties
 dotnet_naming_rule.properties_should_be_pascalcase.style = pascalcase
 
 # Eventos → PascalCase
 # true: public event EventHandler OrderPlaced;
-dotnet_naming_rule.events_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.events_should_be_pascalcase.severity = warning
 dotnet_naming_rule.events_should_be_pascalcase.symbols = events
 dotnet_naming_rule.events_should_be_pascalcase.style = pascalcase
 
 # Variáveis locais → camelCase
 # true: int orderCount = 0;
-dotnet_naming_rule.local_variables_should_be_camelcase.severity = suggestion
+dotnet_naming_rule.local_variables_should_be_camelcase.severity = warning
 dotnet_naming_rule.local_variables_should_be_camelcase.symbols = local_variables
 dotnet_naming_rule.local_variables_should_be_camelcase.style = camelcase
 
 # Constantes locais → camelCase
 # true: const int maxRetries = 3;
-dotnet_naming_rule.local_constants_should_be_camelcase.severity = suggestion
+dotnet_naming_rule.local_constants_should_be_camelcase.severity = warning
 dotnet_naming_rule.local_constants_should_be_camelcase.symbols = local_constants
 dotnet_naming_rule.local_constants_should_be_camelcase.style = camelcase
 
 # Parâmetros → camelCase
 # true: void Process(string orderName) { }
-dotnet_naming_rule.parameters_should_be_camelcase.severity = suggestion
+dotnet_naming_rule.parameters_should_be_camelcase.severity = warning
 dotnet_naming_rule.parameters_should_be_camelcase.symbols = parameters
 dotnet_naming_rule.parameters_should_be_camelcase.style = camelcase
 
 # Campos públicos/internos → PascalCase
 # true: public int MaxItems;
-dotnet_naming_rule.public_fields_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.public_fields_should_be_pascalcase.severity = warning
 dotnet_naming_rule.public_fields_should_be_pascalcase.symbols = public_fields
 dotnet_naming_rule.public_fields_should_be_pascalcase.style = pascalcase
 
 # Campos privados/protegidos → _camelCase
 # true: private string _customerName;
-dotnet_naming_rule.private_fields_should_be__camelcase.severity = suggestion
+dotnet_naming_rule.private_fields_should_be__camelcase.severity = warning
 dotnet_naming_rule.private_fields_should_be__camelcase.symbols = private_fields
 dotnet_naming_rule.private_fields_should_be__camelcase.style = _camelcase
 
-# Campos privados estáticos → s_camelCase
-# true: private static int s_instanceCount;
-dotnet_naming_rule.private_static_fields_should_be_s_camelcase.severity = suggestion
+# Campos privados estáticos → _camelCase
+# true: private static int _instanceCount;
+dotnet_naming_rule.private_static_fields_should_be_s_camelcase.severity = warning
 dotnet_naming_rule.private_static_fields_should_be_s_camelcase.symbols = private_static_fields
-dotnet_naming_rule.private_static_fields_should_be_s_camelcase.style = s_camelcase
+dotnet_naming_rule.private_static_fields_should_be_s_camelcase.style = _camelcase
 
 # Constantes públicas/internas → PascalCase
 # true: public const int MaxRetries = 5;
-dotnet_naming_rule.public_constant_fields_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.public_constant_fields_should_be_pascalcase.severity = warning
 dotnet_naming_rule.public_constant_fields_should_be_pascalcase.symbols = public_constant_fields
 dotnet_naming_rule.public_constant_fields_should_be_pascalcase.style = pascalcase
 
 # Constantes privadas/protegidas → PascalCase
 # true: private const int BufferSize = 1024;
-dotnet_naming_rule.private_constant_fields_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.private_constant_fields_should_be_pascalcase.severity = warning
 dotnet_naming_rule.private_constant_fields_should_be_pascalcase.symbols = private_constant_fields
 dotnet_naming_rule.private_constant_fields_should_be_pascalcase.style = pascalcase
 
 # Campos static readonly públicos/internos → PascalCase
 # true: public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
-dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.severity = warning
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.symbols = public_static_readonly_fields
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.style = pascalcase
 
 # Campos static readonly privados/protegidos → PascalCase
 # true: private static readonly Regex EmailRegex = new(...);
-dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.severity = warning
 dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.symbols = private_static_readonly_fields
 dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.style = pascalcase
 
 # Enums → PascalCase
 # true: enum OrderStatus { Pending, Shipped }
-dotnet_naming_rule.enums_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.enums_should_be_pascalcase.severity = warning
 dotnet_naming_rule.enums_should_be_pascalcase.symbols = enums
 dotnet_naming_rule.enums_should_be_pascalcase.style = pascalcase
 
 # Funções locais → PascalCase
 # true: void ProcessOrder() { void ValidateInput() { } }
-dotnet_naming_rule.local_functions_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.local_functions_should_be_pascalcase.severity = warning
 dotnet_naming_rule.local_functions_should_be_pascalcase.symbols = local_functions
 dotnet_naming_rule.local_functions_should_be_pascalcase.style = pascalcase
 
 # Membros não-campo (propriedades, eventos, métodos) → PascalCase
-dotnet_naming_rule.non_field_members_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.non_field_members_should_be_pascalcase.severity = warning
 dotnet_naming_rule.non_field_members_should_be_pascalcase.symbols = non_field_members
 dotnet_naming_rule.non_field_members_should_be_pascalcase.style = pascalcase
 
