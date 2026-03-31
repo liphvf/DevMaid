@@ -26,7 +26,7 @@ public class ConfigurationHealthCheck(IConfigurationService configurationService
 
             return HealthCheckResult.Healthy("Configuration loaded successfully.");
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             return HealthCheckResult.Unhealthy(
                 $"Configuration check failed: {ex.Message}",

@@ -17,12 +17,13 @@ var md = new List<string>
     "# Code Analysis Report\n"
 };
 
-int diagnosticCount = 0;
+var diagnosticCount = 0;
 
 foreach (var project in solution.Projects)
 {
     var compilation = await project.GetCompilationAsync();
-    if (compilation is null) continue;
+    if (compilation is null)
+        continue;
 
     var diagnostics = compilation.GetDiagnostics();
 

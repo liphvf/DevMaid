@@ -40,7 +40,7 @@ public class DatabaseConnectionHealthCheck(
 
             return HealthCheckResult.Unhealthy("Failed to connect to PostgreSQL server.");
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             return HealthCheckResult.Unhealthy(
                 $"Database connection failed: {ex.Message}",
