@@ -18,20 +18,20 @@ public static class ServiceCollectionExtensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddDevMaidServices(this IServiceCollection services)
     {
-        services.AddLogging(builder =>
+        _ = services.AddLogging(builder =>
         {
-            builder.AddConsole();
-            builder.SetMinimumLevel(LogLevel.Information);
+            _ = builder.AddConsole();
+            _ = builder.SetMinimumLevel(LogLevel.Information);
         });
 
-        services.AddHealthChecks()
+        _ = services.AddHealthChecks()
             .AddCheck<PostgresBinaryHealthCheck>("postgres_binaries", tags: ["infrastructure"])
             .AddCheck<ConfigurationHealthCheck>("configuration", tags: ["core"]);
 
-        services.AddSingleton<IConfigurationService, ConfigurationService>();
-        services.AddSingleton<IProcessExecutor, ProcessExecutor>();
-        services.AddSingleton<IDatabaseService, DatabaseService>();
-        services.AddSingleton<IFileService, FileService>();
+        _ = services.AddSingleton<IConfigurationService, ConfigurationService>();
+        _ = services.AddSingleton<IProcessExecutor, ProcessExecutor>();
+        _ = services.AddSingleton<IDatabaseService, DatabaseService>();
+        _ = services.AddSingleton<IFileService, FileService>();
 
         return services;
     }

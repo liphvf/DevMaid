@@ -1539,22 +1539,22 @@ dotnet_naming_style.camelcase.capitalization = camel_case
 # -----------------------------------------------------------------------------
 
 # IDE0001: Simplifica nome (ex: System.String -> string) — já coberto por IDE0049
-dotnet_diagnostic.IDE0001.severity = suggestion
+dotnet_diagnostic.IDE0001.severity = warning
 
 # IDE0002: Simplifica acesso a membro (ex: MyClass.MyClass.Method -> MyClass.Method)
-dotnet_diagnostic.IDE0002.severity = suggestion
+dotnet_diagnostic.IDE0002.severity = warning
 
 # IDE0004: Remove cast desnecessário (ex: (int)intVar -> intVar)
-dotnet_diagnostic.IDE0004.severity = suggestion
+dotnet_diagnostic.IDE0004.severity = warning
 
 # IDE0005: Remove using desnecessário
-dotnet_diagnostic.IDE0005.severity = suggestion
+dotnet_diagnostic.IDE0005.severity = warning
 
 # IDE0010: Adiciona cases faltando no switch statement
-dotnet_diagnostic.IDE0010.severity = suggestion
+dotnet_diagnostic.IDE0010.severity = warning
 
 # IDE0035: Remove código inacessível (unreachable code)
-dotnet_diagnostic.IDE0035.severity = suggestion
+dotnet_diagnostic.IDE0035.severity = warning
 
 # IDE0044: Adiciona readonly em campo que não é reatribuído após o construtor
 dotnet_diagnostic.IDE0044.severity = suggestion
@@ -1571,14 +1571,14 @@ dotnet_diagnostic.IDE0051.severity = suggestion
 # IDE0052: Remove membro privado não lido (apenas escrito, nunca lido)
 dotnet_diagnostic.IDE0052.severity = suggestion
 
-# IDE0064: Torna campos de struct graváveis (remove readonly em campos de struct mutável)
+# IDE0064: Torna campos de struct graváveis — structs que têm campo 'readonly' mas atribuem 'this = ...' fora do construtor
 dotnet_diagnostic.IDE0064.severity = suggestion
 
-# IDE0070: Usa System.HashCode.Combine em vez de XOR manual
+# IDE0070: Usa System.HashCode.Combine em vez de lógica customizada de hash (qualquer algoritmo manual, não apenas XOR)
 dotnet_diagnostic.IDE0070.severity = suggestion
 
 # IDE0072: Adiciona cases faltando em switch expression
-dotnet_diagnostic.IDE0072.severity = suggestion
+dotnet_diagnostic.IDE0072.severity = warning
 
 # IDE0076: Remove SuppressMessageAttribute global inválido
 dotnet_diagnostic.IDE0076.severity = suggestion
@@ -1587,20 +1587,20 @@ dotnet_diagnostic.IDE0076.severity = suggestion
 dotnet_diagnostic.IDE0077.severity = suggestion
 
 # IDE0079: Remove suppression desnecessária (#pragma warning disable sem violação real)
-dotnet_diagnostic.IDE0079.severity = suggestion
+dotnet_diagnostic.IDE0079.severity = warning
 
 # IDE0080: Remove suppression operator desnecessário (!)
-dotnet_diagnostic.IDE0080.severity = suggestion
+dotnet_diagnostic.IDE0080.severity = warning
 
-# IDE0082: Converte typeof para nameof quando possível
-# true: nameof(MyType)   false: typeof(MyType).Name
+# IDE0082: Converte typeof(T).Name para nameof(T) — somente quando os nomes são idênticos (sem opções de configuração)
+# Antes: typeof(MyType).Name   Depois: nameof(MyType)
 dotnet_diagnostic.IDE0082.severity = suggestion
 
-# IDE0100: Remove operador de igualdade desnecessário
-# true: if (b) { }   false: if (b == true) { }
+# IDE0100: Remove comparação booleana desnecessária com true/false (sem opções de configuração)
+# Antes: if (b == true) { }  /  if (M() != false) { }   Depois: if (b) { }  /  if (M()) { }
 dotnet_diagnostic.IDE0100.severity = suggestion
 
-# IDE0110: Remove discard desnecessário (_)
+# IDE0110: Remove discard pattern desnecessário em switch — 'case int _:' vira 'case int:' (não é o _ = Foo())
 dotnet_diagnostic.IDE0110.severity = suggestion
 
 # IDE0120: Simplifica expressão LINQ
@@ -1615,11 +1615,12 @@ dotnet_diagnostic.IDE0240.severity = suggestion
 # IDE0241: Diretiva nullable é desnecessária (#nullable disable quando já está desabilitada)
 dotnet_diagnostic.IDE0241.severity = suggestion
 
-# IDE0280: Usa nameof em vez de string literal para nomes de membro
-# true: nameof(MyProp)   false: "MyProp"
+# IDE0280: Usa nameof em atributos que recebem nome de parâmetro (NotNullIfNotNull, NotNullWhen, CallerArgumentExpression)
+# Antes: [NotNullIfNotNull("input")]   Depois: [NotNullIfNotNull(nameof(input))]
 dotnet_diagnostic.IDE0280.severity = suggestion
 
-# IDE0370: Remove suppression desnecessária (variante mais recente do IDE0079)
+# IDE0370: Remove null-forgiving operator (!) desnecessário — quando o compilador já sabe que o valor não é null
+# Antes: List<string> names = new()!;   Depois: List<string> names = new();
 dotnet_diagnostic.IDE0370.severity = suggestion
 
 # IDE0380: Remove modificador unsafe desnecessário
@@ -1879,7 +1880,7 @@ dotnet_diagnostic.CA1510.severity = suggestion
 # CA1511: Use ArgumentException.ThrowIfNullOrEmpty/ThrowIfNullOrWhiteSpace
 dotnet_diagnostic.CA1511.severity = suggestion
 
-# CA1512: Use ArgumentOutOfRangeException.ThrowIfOutOfRange
+# CA1512: Use ArgumentOutOfRangeException throw helpers (ThrowIfZero, ThrowIfNegative, ThrowIfGreaterThan, ThrowIfEqual, etc.)
 dotnet_diagnostic.CA1512.severity = suggestion
 
 # CA1513: Use ObjectDisposedException.ThrowIf
@@ -2081,10 +2082,10 @@ dotnet_diagnostic.CA1849.severity = suggestion
 # CA1850: Prefira método estático HashData a instância HashAlgorithm.ComputeHash
 dotnet_diagnostic.CA1850.severity = suggestion
 
-# CA1851: Possíveis múltiplas Enums de coleção IEnumerable
+# CA1851: Possíveis múltiplas enumerações de IEnumerable — lazy evaluation pode ser executada várias vezes (use List/Array para materializar)
 dotnet_diagnostic.CA1851.severity = suggestion
 
-# CA1852: Sele tipos internos que não têm subtipos
+# CA1852: Torne sealed tipos internos que não têm subtipos na assembly — permite JIT otimizar virtual dispatch
 dotnet_diagnostic.CA1852.severity = suggestion
 
 # CA1853: Chamada desnecessária a Dictionary.ContainsKey antes de Remove
@@ -2240,7 +2241,7 @@ dotnet_diagnostic.CA2101.severity = suggestion
 # CA2109: Revise handlers de eventos visíveis
 dotnet_diagnostic.CA2109.severity = suggestion
 
-# CA2119: Sele métodos que satisfazem interfaces privadas
+# CA2119: Torne sealed (ou internal/não-virtual) métodos que implementam interfaces internas em tipos públicos herdáveis — risco de segurança: permite override externo de contrato interno
 dotnet_diagnostic.CA2119.severity = suggestion
 
 # CA2153: Evite capturar Corrupted State Exceptions
