@@ -84,7 +84,7 @@ tab_width = 4
 #   false → sem separação entre grupos
 #            using System;
 #            using MyApp;
-dotnet_separate_import_directive_groups = true
+dotnet_separate_import_directive_groups = false
 
 # Descrição: Ordena diretivas System.* antes das demais
 # Valores possíveis:
@@ -734,7 +734,7 @@ csharp_style_unused_value_assignment_preference = discard_variable:warning
 #                         _ = list.Remove(item);
 #   unused_local_variable → atribui o resultado a variável local nunca lida
 #                           var unused = list.Remove(item);
-csharp_style_unused_value_expression_statement_preference = discard_variable:warning
+csharp_style_unused_value_expression_statement_preference = discard_variable:suggestion
 
 # Descrição: Prefere System.Threading.Lock em vez de object para locks (C# 13+)
 # Valores possíveis:
