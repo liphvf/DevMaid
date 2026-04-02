@@ -1,41 +1,41 @@
-# Feature Spec: OpenCode Integration
+# Spec de Feature: Integração com OpenCode
 
 **ID:** 005  
 **Slug:** opencode-integration  
-**Status:** Implemented  
-**Version:** 1.0  
+**Status:** Implementado  
+**Versão:** 1.0  
 
 ---
 
-## Purpose
+## Propósito
 
-Automate the installation and configuration of the OpenCode CLI tool, enabling developers to set up their OpenCode environment with a single DevMaid command instead of navigating external documentation.
-
----
-
-## User Stories
-
-**US-005.1** — As a developer, I want to install OpenCode through DevMaid, so that I don't have to find and follow external installation instructions.
-
-**US-005.2** — As a developer, I want to check whether OpenCode is installed and what version is active, so that I can verify my environment is ready.
-
-**US-005.3** — As a developer, I want to configure OpenCode through DevMaid, so that I can apply standard settings for my workflow without editing config files manually.
+Automatizar a instalação e configuração da ferramenta CLI OpenCode, permitindo que desenvolvedores configurem seu ambiente OpenCode com um único comando DevMaid, em vez de navegar por documentação externa.
 
 ---
 
-## Acceptance Criteria
+## Histórias de Usuário
 
-| ID | Criterion |
-|----|-----------|
-| AC-005.1 | `devmaid opencode install` installs OpenCode via the available package manager and exits `0` on success. |
-| AC-005.2 | If OpenCode is already installed, `install` skips installation, prints the installed version, and exits `0`. |
-| AC-005.3 | `devmaid opencode status` prints the installed version or `"OpenCode is not installed."` |
-| AC-005.4 | `devmaid opencode config` applies the default DevMaid-recommended OpenCode configuration. |
-| AC-005.5 | If OpenCode is not found in PATH after installation, the tool prints a PATH update suggestion. |
+**HU-005.1** — Como desenvolvedor, quero instalar o OpenCode pelo DevMaid, para não precisar procurar e seguir instruções externas de instalação.
+
+**HU-005.2** — Como desenvolvedor, quero verificar se o OpenCode está instalado e qual versão está ativa, para confirmar que meu ambiente está pronto.
+
+**HU-005.3** — Como desenvolvedor, quero configurar o OpenCode pelo DevMaid, para aplicar configurações padrão para meu fluxo de trabalho sem editar arquivos de configuração manualmente.
 
 ---
 
-## CLI Interface
+## Critérios de Aceitação
+
+| ID | Critério |
+|----|---------|
+| CA-005.1 | `devmaid opencode install` instala o OpenCode via gerenciador de pacotes disponível e sai `0` em caso de sucesso. |
+| CA-005.2 | Se o OpenCode já estiver instalado, `install` pula a instalação, imprime a versão instalada e sai `0`. |
+| CA-005.3 | `devmaid opencode status` imprime a versão instalada ou `"OpenCode não está instalado."` |
+| CA-005.4 | `devmaid opencode config` aplica a configuração padrão recomendada pelo DevMaid para o OpenCode. |
+| CA-005.5 | Se o OpenCode não for encontrado no PATH após a instalação, a ferramenta imprime uma sugestão de atualização do PATH. |
+
+---
+
+## Interface CLI
 
 ```bash
 devmaid opencode install
@@ -43,29 +43,29 @@ devmaid opencode status
 devmaid opencode config
 ```
 
-### Exit Codes
+### Códigos de Saída
 
-| Code | Scenario |
-|------|----------|
-| `0` | Operation completed successfully |
-| `1` | Installation or configuration failed |
-| `2` | Invalid subcommand |
-| `3` | Required package manager not found |
-
----
-
-## Error Scenarios
-
-| Scenario | Expected Behavior |
-|----------|------------------|
-| Installation fails | Exit `1`, print error from package manager |
-| Already installed | Exit `0`, print version info |
-| Not found in PATH after install | Exit `0` with warning: `"OpenCode installed but not found in PATH. You may need to restart your terminal or update your PATH."` |
-| Config file missing | Create config file with defaults |
+| Código | Cenário |
+|--------|---------|
+| `0` | Operação concluída com sucesso |
+| `1` | Falha na instalação ou configuração |
+| `2` | Subcomando inválido |
+| `3` | Gerenciador de pacotes necessário não encontrado |
 
 ---
 
-## Non-Functional Requirements
+## Cenários de Erro
 
-- Installation must be idempotent — running `install` multiple times must not create side effects.
-- `status` must complete in under **1 second**.
+| Cenário | Comportamento Esperado |
+|---------|----------------------|
+| Falha na instalação | Sair `1`, imprimir erro do gerenciador de pacotes |
+| Já instalado | Sair `0`, imprimir informações de versão |
+| Não encontrado no PATH após instalação | Sair `0` com aviso: `"OpenCode instalado mas não encontrado no PATH. Pode ser necessário reiniciar o terminal ou atualizar o PATH."` |
+| Arquivo de configuração ausente | Criar arquivo de configuração com valores padrão |
+
+---
+
+## Requisitos Não Funcionais
+
+- A instalação deve ser idempotente — executar `install` várias vezes não deve criar efeitos colaterais.
+- `status` deve ser concluído em menos de **1 segundo**.

@@ -1,300 +1,301 @@
-# DevMaid — Project Constitution
+# DevMaid — Constituição do Projeto
 
-> **Version:** 1.0  
-> **Date:** April 2026  
-> **Status:** Active  
-> **Author:** Filiphe Vilar Figueiredo
-
----
-
-## Preamble
-
-DevMaid is a .NET-based CLI tool whose purpose is to automate and simplify recurring development tasks. This constitution establishes the governing principles and development guidelines that every feature, architectural decision, and contribution must respect. It is the single source of truth for *how* the project is built — independently of which technology, framework version, or team member is involved.
-
-Specifications define the **what** and the **why**. This constitution governs the **how**.
+> **Versão:** 1.0  
+> **Data:** Abril de 2026  
+> **Status:** Ativa  
+> **Autor:** Filiphe Vilar Figueiredo
 
 ---
 
-## Article I — Purpose & Scope
+## Preâmbulo
 
-### I.1 Mission
+DevMaid é uma ferramenta CLI baseada em .NET com o propósito de automatizar e simplificar tarefas recorrentes de desenvolvimento. Esta constituição estabelece os princípios governantes e as diretrizes de desenvolvimento que toda feature, decisão arquitetural e contribuição devem respeitar. É a única fonte de verdade sobre *como* o projeto é construído — independentemente de qual tecnologia, versão de framework ou membro de equipe esteja envolvido.
 
-DevMaid exists to eliminate repetitive friction in developer workflows — particularly around databases, file operations, Windows package management, and AI tool configuration — through a unified, composable CLI interface.
-
-### I.2 Target User
-
-The primary user is a Windows developer who:
-- Works daily with PostgreSQL databases
-- Manages Windows environments and packages
-- Uses AI coding assistants (Claude Code, OpenCode)
-- Values productivity and automation over manual steps
-
-### I.3 Out of Scope
-
-The following are explicitly out of scope unless a formal spec is approved:
-- Web-only features with no CLI equivalent
-- Non-Windows-primary functionality in the near term
-- Business logic that belongs in a separate domain tool
+As especificações definem o **o quê** e o **por quê**. Esta constituição governa o **como**.
 
 ---
 
-## Article II — Architecture Principles
+## Artigo I — Propósito e Escopo
 
-### II.1 CLI-First
+### I.1 Missão
 
-DevMaid's primary interface is the CLI. Every feature **must** be fully operable via the command line. GUI surfaces (when they exist) are secondary projections of CLI-accessible functionality.
+DevMaid existe para eliminar o atrito repetitivo nos fluxos de trabalho de desenvolvedores — especialmente em torno de bancos de dados, operações de arquivos, gerenciamento de pacotes Windows e configuração de ferramentas de IA — por meio de uma interface CLI unificada e composável.
 
-### II.2 Modular Command Architecture
+### I.2 Usuário-Alvo
 
-Each capability **must** be implemented as an isolated command module:
+O usuário primário é um desenvolvedor Windows que:
+- Trabalha diariamente com bancos de dados PostgreSQL
+- Gerencia ambientes e pacotes Windows
+- Utiliza assistentes de codificação com IA (Claude Code, OpenCode)
+- Valoriza produtividade e automação em vez de passos manuais
+
+### I.3 Fora do Escopo
+
+Os itens a seguir estão explicitamente fora do escopo, a menos que uma spec formal seja aprovada:
+- Features exclusivamente web sem equivalente CLI
+- Funcionalidades com foco primário em não-Windows no curto prazo
+- Lógica de negócio que pertence a uma ferramenta de domínio separada
+
+---
+
+## Artigo II — Princípios de Arquitetura
+
+### II.1 CLI em Primeiro Lugar
+
+A interface primária do DevMaid é a CLI. Toda feature **deve** ser completamente operável pela linha de comando. Interfaces gráficas (quando existirem) são projeções secundárias da funcionalidade acessível via CLI.
+
+### II.2 Arquitetura Modular de Comandos
+
+Cada capacidade **deve** ser implementada como um módulo de comando isolado:
 
 ```
 Commands/
-├── <Feature>Command.cs     ← CLI binding
+├── <Feature>Command.cs     ← binding da CLI
 ├── CommandOptions/
-│   └── <Feature>Options.cs ← Strongly-typed DTOs
+│   └── <Feature>Options.cs ← DTOs fortemente tipados
 └── Services/
-    └── <Feature>Service.cs ← Business logic
+    └── <Feature>Service.cs ← lógica de negócio
 ```
 
-Business logic must never live inside the `Command` class. Commands are thin wrappers that parse input, delegate to services, and report output.
+A lógica de negócio nunca deve residir dentro da classe `Command`. Comandos são wrappers finos que analisam a entrada, delegam para serviços e reportam a saída.
 
-### II.3 Layered Project Structure
+### II.3 Estrutura de Projetos em Camadas
 
-Projects are organized as follows (in order of dependency):
+Os projetos são organizados da seguinte forma (em ordem de dependência):
 
-| Project | Responsibility |
-|---------|----------------|
-| `DevMaid.Core` | All business logic, services, interfaces, models |
-| `DevMaid.CLI` | CLI parsing, command definitions, output formatting |
-| `DevMaid.Api` | REST/SignalR API (future GUI bridge) |
-| `DevMaid.Gui` | Electron + Angular GUI (future) |
-| `DevMaid.Tests` | All test projects |
+| Projeto | Responsabilidade |
+|---------|-----------------|
+| `DevMaid.Core` | Toda lógica de negócio, serviços, interfaces, modelos |
+| `DevMaid.CLI` | Parsing CLI, definições de comandos, formatação de saída |
+| `DevMaid.Api` | API REST/SignalR (ponte futura para GUI) |
+| `DevMaid.Gui` | GUI Electron + Angular (futuro) |
+| `DevMaid.Tests` | Todos os projetos de teste |
 
-> **Rule:** Higher-level projects may depend on lower-level ones. The inverse is forbidden.
+> **Regra:** Projetos de nível superior podem depender de projetos de nível inferior. O inverso é proibido.
 
-### II.4 Interface-Driven Design
+### II.4 Design Orientado a Interfaces
 
-Every service **must** be defined by an interface in `DevMaid.Core/Interfaces/`. Concrete implementations are in `DevMaid.Core/Services/`. This enables testing without infrastructure and future substitution.
+Todo serviço **deve** ser definido por uma interface em `DevMaid.Core/Interfaces/`. Implementações concretas ficam em `DevMaid.Core/Services/`. Isso permite testes sem infraestrutura e substituição futura.
 
-### II.5 No Shell Execution
+### II.5 Sem Execução via Shell
 
-Processes spawned by DevMaid **must** use `UseShellExecute = false`. Output must be captured via `RedirectStandardOutput` and `RedirectStandardError`. No command shall invoke `cmd.exe` or `powershell.exe` as a shell wrapper.
+Processos invocados pelo DevMaid **devem** usar `UseShellExecute = false`. A saída deve ser capturada via `RedirectStandardOutput` e `RedirectStandardError`. Nenhum comando deve invocar `cmd.exe` ou `powershell.exe` como shell intermediário.
 
 ---
 
-## Article III — Command Design Standards
+## Artigo III — Padrões de Design de Comandos
 
-### III.1 Command Naming
+### III.1 Nomenclatura de Comandos
 
-Commands use `kebab-case` nouns and verbs following this pattern:
+Os comandos usam substantivos e verbos em `kebab-case` seguindo este padrão:
 
 ```
-devmaid <noun> <verb> [arguments] [options]
-devmaid <noun> [options]        ← for single-action commands
+devmaid <substantivo> <verbo> [argumentos] [opções]
+devmaid <substantivo> [opções]        ← para comandos de ação única
 ```
 
-Examples:
+Exemplos:
 - `devmaid database backup`
 - `devmaid query run`
 - `devmaid winget restore`
 - `devmaid clean`
 
-### III.2 Option Conventions
+### III.2 Convenções de Opções
 
-| Convention | Rule |
-|-----------|------|
-| Short flags | Single character, `-x` |
-| Long flags | Full word, `--option-name` |
-| Required options | Must be documented; use argument when positional is cleaner |
-| Password options | Never required; prompt interactively if not provided |
-| Output paths | Default to current directory or sensible convention when omitted |
+| Convenção | Regra |
+|-----------|-------|
+| Flags curtas | Caractere único, `-x` |
+| Flags longas | Palavra completa, `--nome-da-opcao` |
+| Opções obrigatórias | Devem ser documentadas; usar argumento posicional quando for mais claro |
+| Opções de senha | Nunca obrigatórias; solicitar interativamente se não fornecidas |
+| Caminhos de saída | Padrão para o diretório atual ou convenção sensata quando omitidos |
 
-### III.3 Exit Codes
+### III.3 Códigos de Saída
 
-| Code | Meaning |
-|------|---------|
-| `0` | Success |
-| `1` | General error |
-| `2` | Invalid arguments / missing required option |
-| `3` | External dependency not found (e.g., psql, pg_dump) |
+| Código | Significado |
+|--------|-------------|
+| `0` | Sucesso |
+| `1` | Erro geral |
+| `2` | Argumentos inválidos / opção obrigatória ausente |
+| `3` | Dependência externa não encontrada (ex.: psql, pg_dump) |
 
-### III.4 Output Standards
+### III.4 Padrões de Saída
 
-- Progress feedback is written to **stdout** during long operations
-- Errors are written to **stderr**
-- CSV/file outputs go to the path specified by `--output`
-- No ANSI color codes that are not guarded by a terminal-detection check
+- Feedback de progresso é escrito em **stdout** durante operações longas
+- Erros são escritos em **stderr**
+- Saídas CSV/arquivo vão para o caminho especificado por `--output`
+- Nenhum código de cor ANSI sem verificação de detecção de terminal
 
 ---
 
-## Article IV — Configuration Management
+## Artigo IV — Gerenciamento de Configuração
 
-### IV.1 Configuration Sources (Precedence, highest first)
+### IV.1 Fontes de Configuração (Precedência, da maior para a menor)
 
-1. Command-line options
-2. Environment variables
-3. `appsettings.<environment>.json`
+1. Opções da linha de comando
+2. Variáveis de ambiente
+3. `appsettings.<ambiente>.json`
 4. `appsettings.json`
-5. User secrets (development only)
+5. User secrets (apenas em desenvolvimento)
 
-### IV.2 Sensitive Data
+### IV.2 Dados Sensíveis
 
-- Passwords are **never** stored in `appsettings.json` committed to version control
-- Passwords must be prompted interactively when not provided via CLI flag
-- User secrets are acceptable for local development
-- For CI/CD and production environments, environment variables are required
+- Senhas **nunca** são armazenadas em `appsettings.json` commitado no controle de versão
+- Senhas devem ser solicitadas interativamente quando não fornecidas via flag CLI
+- User secrets são aceitáveis para desenvolvimento local
+- Para ambientes CI/CD e produção, variáveis de ambiente são obrigatórias
 
-### IV.3 appsettings.json Structure
+### IV.3 Estrutura do appsettings.json
 
-The configuration file must follow the established schema. New configuration sections require a documented `[NEEDS CLARIFICATION]` pass before implementation.
-
----
-
-## Article V — Error Handling
-
-### V.1 Errors Must Be Actionable
-
-Every error message shown to the user must:
-1. State **what** failed (specific resource, operation, or parameter)
-2. Suggest **what** the user should do to resolve it
-
-Bad: `"Error: connection failed"`  
-Good: `"Connection to postgres@localhost:5432 failed. Check that PostgreSQL is running and credentials are correct."`
-
-### V.2 No Silent Failures
-
-Operations that partially succeed must report both the successful and failed parts. Never return exit code `0` when any part of the requested work failed.
-
-### V.3 External Dependency Errors
-
-When an external binary (e.g., `psql`, `pg_dump`, `winget`) is not found, the error must:
-- Name the missing binary
-- Provide installation instructions or a link to them
-- Exit with code `3`
+O arquivo de configuração deve seguir o schema estabelecido. Novas seções de configuração requerem uma revisão documentada com `[NECESSITA ESCLARECIMENTO]` antes da implementação.
 
 ---
 
-## Article VI — Testing
+## Artigo V — Tratamento de Erros
 
-### VI.1 Test-First on Core Logic
+### V.1 Erros Devem Ser Acionáveis
 
-Business logic in `DevMaid.Core` must have unit tests written **before** or **alongside** implementation. No service method may be merged to main without at least one passing unit test covering the primary success path.
+Toda mensagem de erro exibida ao usuário deve:
+1. Indicar **o que** falhou (recurso, operação ou parâmetro específico)
+2. Sugerir **o que** o usuário deve fazer para resolver
 
-### VI.2 Integration Tests for External Dependencies
+Ruim: `"Erro: falha na conexão"`  
+Bom: `"Conexão com postgres@localhost:5432 falhou. Verifique se o PostgreSQL está em execução e se as credenciais estão corretas."`
 
-Operations that touch the filesystem, PostgreSQL, or external processes must have integration tests that run against real (or containerized) infrastructure. Mocks are acceptable in unit tests but must not replace integration tests.
+### V.2 Sem Falhas Silenciosas
 
-### VI.3 Test Project Structure
+Operações que têm sucesso parcial devem reportar tanto as partes bem-sucedidas quanto as que falharam. Nunca retornar código de saída `0` quando qualquer parte do trabalho solicitado falhou.
+
+### V.3 Erros de Dependência Externa
+
+Quando um binário externo (ex.: `psql`, `pg_dump`, `winget`) não for encontrado, o erro deve:
+- Nomear o binário ausente
+- Fornecer instruções de instalação ou um link para elas
+- Sair com código `3`
+
+---
+
+## Artigo VI — Testes
+
+### VI.1 Test-First na Lógica de Negócio
+
+A lógica de negócio em `DevMaid.Core` deve ter testes unitários escritos **antes** ou **junto com** a implementação. Nenhum método de serviço pode ser mesclado na main sem pelo menos um teste unitário passando que cubra o caminho de sucesso principal.
+
+### VI.2 Testes de Integração para Dependências Externas
+
+Operações que tocam o sistema de arquivos, PostgreSQL ou processos externos devem ter testes de integração que rodem contra infraestrutura real (ou containerizada). Mocks são aceitáveis em testes unitários, mas não devem substituir testes de integração.
+
+### VI.3 Estrutura do Projeto de Testes
 
 ```
 DevMaid.Tests/
-├── Core/           ← Unit tests for Core services
-├── CLI/            ← Unit tests for command parsing
-└── Integration/    ← Integration tests (database, file system, processes)
+├── Core/           ← Testes unitários dos serviços Core
+├── CLI/            ← Testes unitários do parsing de comandos
+└── Integration/    ← Testes de integração (banco, sistema de arquivos, processos)
 ```
 
-### VI.4 Test Naming Convention
+### VI.4 Convenção de Nomenclatura de Testes
 
 ```
-<MethodName>_<StateUnderTest>_<ExpectedBehavior>
-BackupAsync_WithValidOptions_ShouldCreateDumpFile
-BackupAsync_WithInvalidHost_ShouldThrowConnectionException
+<NomeDoMetodo>_<EstadoEmTeste>_<ComportamentoEsperado>
+BackupAsync_ComOpcoesValidas_DeveCriarArquivoDump
+BackupAsync_ComHostInvalido_DeveLancarExcecaoDeConexao
 ```
 
 ---
 
-## Article VII — Simplicity Gate
+## Artigo VII — Portão de Simplicidade
 
-### VII.1 No Speculative Architecture
+### VII.1 Sem Arquitetura Especulativa
 
-Features must not introduce abstractions, layers, or patterns for hypothetical future use cases. Every design decision must be justified by a current, documented requirement.
+Features não devem introduzir abstrações, camadas ou padrões para casos de uso hipotéticos futuros. Toda decisão de design deve ser justificada por um requisito atual e documentado.
 
-### VII.2 Maximum Complexity Budget
+### VII.2 Orçamento Máximo de Complexidade
 
-New features may introduce at most **one new project** to the solution. Introduction of additional projects requires explicit approval and a documented rationale in the feature spec.
+Novas features podem introduzir no máximo **um novo projeto** na solução. A introdução de projetos adicionais requer aprovação explícita e justificativa documentada na spec da feature.
 
-### VII.3 Dependency Discipline
+### VII.3 Disciplina de Dependências
 
-Before adding a new NuGet package:
-1. Verify no existing package already covers the need
-2. Verify it is actively maintained (last release < 18 months)
-3. Document the rationale in the feature spec's "Technical Decisions" section
+Antes de adicionar um novo pacote NuGet:
+1. Verificar se nenhum pacote existente já cobre a necessidade
+2. Verificar se está sendo mantido ativamente (último lançamento < 18 meses)
+3. Documentar a justificativa na seção "Decisões Técnicas" da spec da feature
 
 ---
 
-## Article VIII — Cross-Cutting Concerns
+## Artigo VIII — Preocupações Transversais
 
 ### VIII.1 Logging
 
-All operations **must** use the `ILogger` interface from `DevMaid.Core`. Console output for the user is distinct from structured logging for diagnostics.
+Todas as operações **devem** usar a interface `ILogger` do `DevMaid.Core`. A saída no console para o usuário é distinta do logging estruturado para diagnósticos.
 
-### VIII.2 Progress Reporting
+### VIII.2 Reporte de Progresso
 
-Long-running operations (> 2 seconds expected) **must** emit incremental progress via `IProgress<OperationProgress>`. Commands display this progress on the terminal. Future API/GUI layers consume it via SignalR.
+Operações de longa duração (> 2 segundos esperado) **devem** emitir progresso incremental via `IProgress<OperationProgress>`. Comandos exibem esse progresso no terminal. Camadas futuras de API/GUI consomem isso via SignalR.
 
-### VIII.3 Cancellation
+### VIII.3 Cancelamento
 
-All async operations **must** accept and respect `CancellationToken`. CLI commands should bind `CancellationToken` to `Ctrl+C`.
+Todas as operações assíncronas **devem** aceitar e respeitar `CancellationToken`. Comandos CLI devem vincular o `CancellationToken` ao `Ctrl+C`.
 
-### VIII.4 Security
+### VIII.4 Segurança
 
-- Input paths must be validated against path-traversal attacks using `SecurityUtils.IsValidPath()`
-- PostgreSQL identifiers must be validated before interpolation into any query
-- Passwords must never appear in logs, stack traces, or CLI help text
-
----
-
-## Article IX — Documentation
-
-### IX.1 Docs Location
-
-| Document | Location |
-|---------|----------|
-| Architecture | `docs/en/ARCHITECTURE.md` |
-| Feature Specifications | `docs/specs/<NNN>-<slug>/spec.md` |
-| Implementation Plans | `docs/specs/<NNN>-<slug>/plan.md` |
-| Command Reference | `docs/en/FEATURE_SPECIFICATION.md` |
-| This Constitution | `docs/CONSTITUTION.md` |
-
-### IX.2 Feature Spec Requirement
-
-Every new feature **must** have a spec file in `docs/specs/` before any implementation begins. The spec defines:
-- Purpose and user stories
-- Acceptance criteria
-- Error scenarios
-- CLI interface contract (options, exit codes)
-
-### IX.3 Documentation Language
-
-- Primary documentation: **English** (`docs/en/`)
-- Secondary documentation: **Portuguese (pt-BR)** (`docs/pt-BR/`)
-- Specs and constitution: **English only**
+- Caminhos de entrada devem ser validados contra ataques de path traversal usando `SecurityUtils.IsValidPath()`
+- Identificadores PostgreSQL devem ser validados antes da interpolação em qualquer query
+- Senhas nunca devem aparecer em logs, stack traces ou textos de ajuda da CLI
 
 ---
 
-## Article X — Amendment Process
+## Artigo IX — Documentação
 
-This constitution may be amended when:
-1. A recurring implementation problem reveals an underspecified principle
-2. A new architectural direction (e.g., GUI, cross-platform) requires new governing rules
-3. A majority of active contributors agree the change improves quality or clarity
+### IX.1 Localização dos Documentos
 
-Amendments must:
-- State the **rationale** for the change
-- Update the **version** and **date** of this document
-- Be reviewed in a pull request before merging
+| Documento | Localização Primária (pt-BR) | Localização Secundária (en) |
+|-----------|-----------------------------|-----------------------------|
+| Arquitetura | `docs/pt-BR/ARCHITECTURE.md` | `docs/en/ARCHITECTURE.md` |
+| Especificações de Features | `docs/specs/<NNN>-<slug>/spec.md` | — |
+| Planos de Implementação | `docs/specs/<NNN>-<slug>/plan.md` | — |
+| Referência de Comandos | `docs/pt-BR/FEATURE_SPECIFICATION.md` | `docs/en/FEATURE_SPECIFICATION.md` |
+| Esta Constituição | `docs/CONSTITUTION.md` | — |
+
+Em caso de divergência entre versões pt-BR e en, a versão **pt-BR é a fonte de verdade**.
+
+### IX.2 Requisito de Spec de Feature
+
+Toda nova feature **deve** ter um arquivo spec em `docs/specs/` antes que qualquer implementação comece. A spec define:
+- Propósito e histórias de usuário
+- Critérios de aceitação
+- Cenários de erro
+- Contrato da interface CLI (opções, códigos de saída)
+
+### IX.3 Idioma da Documentação
+
+- Documentação principal: **Português (pt-BR)**
+- Specs e constituição: **Português (pt-BR)**
 
 ---
 
-## Glossary
+## Artigo X — Processo de Emenda
 
-| Term | Definition |
-|------|-----------|
-| CLI | Command-Line Interface |
-| DTO | Data Transfer Object |
-| MCP | Model Context Protocol |
-| SDD | Specification-Driven Development |
-| Winget | Windows Package Manager |
-| Feature Spec | A `spec.md` file in `docs/specs/` describing a single feature |
-| Constitution | This document — the governing principles of DevMaid |
+Esta constituição pode ser emendada quando:
+1. Um problema recorrente de implementação revela um princípio mal especificado
+2. Uma nova direção arquitetural (ex.: GUI, multiplataforma) requer novas regras
+3. A maioria dos contribuidores ativos concorda que a mudança melhora qualidade ou clareza
+
+As emendas devem:
+- Declarar a **justificativa** para a mudança
+- Atualizar a **versão** e a **data** deste documento
+- Ser revisadas em um pull request antes de mesclar
+
+---
+
+## Glossário
+
+| Termo | Definição |
+|-------|-----------|
+| CLI | Interface de Linha de Comando (Command-Line Interface) |
+| DTO | Objeto de Transferência de Dados (Data Transfer Object) |
+| MCP | Protocolo de Contexto de Modelo (Model Context Protocol) |
+| SDD | Desenvolvimento Orientado a Especificações (Spec-Driven Development) |
+| Winget | Gerenciador de Pacotes do Windows |
+| Spec de Feature | Um arquivo `spec.md` em `docs/specs/` descrevendo uma única feature |
+| Constituição | Este documento — os princípios governantes do DevMaid |

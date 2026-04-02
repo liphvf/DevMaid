@@ -1,82 +1,82 @@
-# Feature Spec: Windows Features Manager
+# Spec de Feature: Gerenciador de Recursos do Windows
 
 **ID:** 009  
 **Slug:** windows-features-manager  
-**Status:** Implemented  
-**Version:** 1.0  
+**Status:** Implementado  
+**Versão:** 1.0  
 
 ---
 
-## Purpose
+## Propósito
 
-Allow developers to export their currently activated Windows Optional Features to a JSON backup file, and later import/enable those features on a fresh Windows installation or new machine — eliminating the need to manually re-enable features through the Windows UI.
-
----
-
-## User Stories
-
-**US-009.1** — As a developer setting up a new machine, I want to restore all my previously activated Windows Optional Features from a backup file, so that my environment is consistent with my previous setup.
-
-**US-009.2** — As a developer preparing to reinstall Windows, I want to export all enabled optional features to a file, so that I can restore them later without having to remember which features were active.
-
-**US-009.3** — As a developer, I want to list all currently activated optional features, so that I can audit my environment before or after making changes.
+Permitir que desenvolvedores exportem seus Recursos Opcionais do Windows atualmente ativados para um arquivo JSON de backup, e posteriormente importem/habilitem esses recursos em uma instalação nova do Windows ou em uma nova máquina — eliminando a necessidade de reativar recursos manualmente pela interface do Windows.
 
 ---
 
-## Acceptance Criteria
+## Histórias de Usuário
 
-| ID | Criterion |
-|----|-----------|
-| AC-009.1 | `devmaid windowsfeatures list --enabled-only` prints all currently enabled Windows Optional Features, one per line. |
-| AC-009.2 | `devmaid windowsfeatures list` (without `--enabled-only`) prints all features with their state (Enabled/Disabled). |
-| AC-009.3 | `devmaid windowsfeatures export <path>` writes all enabled features to `<path>` as a JSON file. |
-| AC-009.4 | `devmaid windowsfeatures import <path>` reads the JSON file and enables all listed features using `dism.exe`. |
-| AC-009.5 | If `dism.exe` is not found, both `export` and `import` exit `3` with an error message. |
-| AC-009.6 | During import, each feature is enabled independently; failure on one feature does not abort the remaining features. |
-| AC-009.7 | The import command prints a per-feature result (success/failure) and a final summary. |
+**HU-009.1** — Como desenvolvedor configurando uma nova máquina, quero restaurar todos os meus Recursos Opcionais do Windows previamente ativados a partir de um arquivo de backup, para que meu ambiente seja consistente com minha configuração anterior.
+
+**HU-009.2** — Como desenvolvedor se preparando para reinstalar o Windows, quero exportar todos os recursos opcionais habilitados para um arquivo, para poder restaurá-los depois sem precisar lembrar quais estavam ativos.
+
+**HU-009.3** — Como desenvolvedor, quero listar todos os recursos opcionais atualmente ativados, para auditar meu ambiente antes ou depois de fazer alterações.
 
 ---
 
-## CLI Interface
+## Critérios de Aceitação
+
+| ID | Critério |
+|----|---------|
+| CA-009.1 | `devmaid windowsfeatures list --enabled-only` imprime todos os Recursos Opcionais do Windows atualmente habilitados, um por linha. |
+| CA-009.2 | `devmaid windowsfeatures list` (sem `--enabled-only`) imprime todos os recursos com seu estado (Habilitado/Desabilitado). |
+| CA-009.3 | `devmaid windowsfeatures export <caminho>` grava todos os recursos habilitados em `<caminho>` como arquivo JSON. |
+| CA-009.4 | `devmaid windowsfeatures import <caminho>` lê o arquivo JSON e habilita todos os recursos listados usando `dism.exe`. |
+| CA-009.5 | Se o `dism.exe` não for encontrado, tanto `export` quanto `import` saem `3` com uma mensagem de erro. |
+| CA-009.6 | Durante a importação, cada recurso é habilitado de forma independente; a falha em um recurso não aborta os recursos restantes. |
+| CA-009.7 | O comando `import` imprime um resultado por recurso (sucesso/falha) e um resumo final. |
+
+---
+
+## Interface CLI
 
 ```bash
 devmaid windowsfeatures list [--enabled-only]
-devmaid windowsfeatures export <path>
-devmaid windowsfeatures import <path>
+devmaid windowsfeatures export <caminho>
+devmaid windowsfeatures import <caminho>
 ```
 
-### Arguments & Options
+### Argumentos e Opções
 
 #### list
 
-| Option | Required | Default | Description |
-|--------|----------|---------|-------------|
-| `--enabled-only` | No | `false` | Show only enabled features |
+| Opção | Obrigatória | Padrão | Descrição |
+|-------|-------------|--------|-----------|
+| `--enabled-only` | Não | `false` | Mostrar apenas recursos habilitados |
 
 #### export
 
-| Argument | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `<path>` | Yes | — | Output JSON file path |
+| Argumento | Obrigatório | Padrão | Descrição |
+|-----------|-------------|--------|-----------|
+| `<caminho>` | Sim | — | Caminho do arquivo JSON de saída |
 
 #### import
 
-| Argument | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `<path>` | Yes | — | JSON file to import |
+| Argumento | Obrigatório | Padrão | Descrição |
+|-----------|-------------|--------|-----------|
+| `<caminho>` | Sim | — | Arquivo JSON a importar |
 
-### Exit Codes
+### Códigos de Saída
 
-| Code | Scenario |
-|------|----------|
-| `0` | Operation completed successfully |
-| `1` | File I/O error or partial import failure |
-| `2` | Missing required argument |
-| `3` | `dism.exe` not found |
+| Código | Cenário |
+|--------|---------|
+| `0` | Operação concluída com sucesso |
+| `1` | Erro de E/S de arquivo ou falha parcial na importação |
+| `2` | Argumento obrigatório ausente |
+| `3` | `dism.exe` não encontrado |
 
 ---
 
-## Export File Format
+## Formato do Arquivo de Exportação
 
 ```json
 {
@@ -91,21 +91,21 @@ devmaid windowsfeatures import <path>
 
 ---
 
-## Error Scenarios
+## Cenários de Erro
 
-| Scenario | Expected Behavior |
-|----------|------------------|
-| `dism.exe` not found | Exit `3`, message: `"dism.exe not found. This command requires Windows with DISM installed."` |
-| Export path not writable | Exit `1`, message: `"Cannot write to '<path>'. Check permissions."` |
-| Import file not found | Exit `1`, message: `"Import file '<path>' not found."` |
-| Feature not available on this Windows edition | Log warning per feature, continue with next |
-| Feature requires restart | Log info: `"Some features require a system restart to take effect."` |
-| No features enabled | Export writes JSON with empty `Features` array |
+| Cenário | Comportamento Esperado |
+|---------|----------------------|
+| `dism.exe` não encontrado | Sair `3`, mensagem: `"dism.exe não encontrado. Este comando requer Windows com DISM instalado."` |
+| Caminho de exportação sem permissão de escrita | Sair `1`, mensagem: `"Não é possível gravar em '<caminho>'. Verifique as permissões."` |
+| Arquivo de importação não encontrado | Sair `1`, mensagem: `"Arquivo de importação '<caminho>' não encontrado."` |
+| Recurso não disponível nesta edição do Windows | Registrar aviso por recurso, continuar com o próximo |
+| Recurso requer reinicialização | Registrar informação: `"Alguns recursos requerem reinicialização do sistema para entrar em vigor."` |
+| Nenhum recurso habilitado | Exportação grava JSON com array `Features` vazio |
 
 ---
 
-## Non-Functional Requirements
+## Requisitos Não Funcionais
 
-- Must run only on Windows. If invoked on another OS, exit `1` with message: `"This command requires Windows."`.
-- Import must be idempotent — enabling an already-enabled feature must not produce an error.
-- Export and list operations must complete in under **5 seconds**.
+- Deve executar apenas no Windows. Se invocado em outro sistema operacional, sair `1` com mensagem: `"Este comando requer Windows."`.
+- A importação deve ser idempotente — habilitar um recurso já habilitado não deve produzir erro.
+- As operações de exportação e listagem devem ser concluídas em menos de **5 segundos**.

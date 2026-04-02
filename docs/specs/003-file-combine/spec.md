@@ -1,77 +1,77 @@
-# Feature Spec: File Utilities — Combine
+# Spec de Feature: Utilitários de Arquivo — Combinar
 
 **ID:** 003  
 **Slug:** file-combine  
-**Status:** Implemented  
-**Version:** 1.0  
+**Status:** Implementado  
+**Versão:** 1.0  
 
 ---
 
-## Purpose
+## Propósito
 
-Allow developers to merge multiple text-based files matching a glob pattern into a single output file, preserving content order and encoding. Primarily used for consolidating SQL scripts, log files, and other plain-text artifacts.
-
----
-
-## User Stories
-
-**US-003.1** — As a developer, I want to combine all `.sql` files in a directory into one file, so that I can run a migration bundle as a single script.
-
-**US-003.2** — As a developer, I want the combined file to respect alphabetical order, so that file sequence is predictable and deterministic.
-
-**US-003.3** — As a developer, I want a default output file name to be created when I don't specify `--output`, so that I don't have to think about naming for quick operations.
+Permitir que desenvolvedores mesclem múltiplos arquivos de texto correspondentes a um padrão glob em um único arquivo de saída, preservando a ordem do conteúdo e a codificação. Usado principalmente para consolidar scripts SQL, arquivos de log e outros artefatos em texto simples.
 
 ---
 
-## Acceptance Criteria
+## Histórias de Usuário
 
-| ID | Criterion |
-|----|-----------|
-| AC-003.1 | Given a valid glob pattern matching at least one file, the tool creates an output file containing the concatenated content of all matched files. |
-| AC-003.2 | Files are combined in **case-insensitive alphabetical order** by filename. |
-| AC-003.3 | When `--output` is not specified, the output file is named `CombineFiles.<ext>` (using the extension of the matched files) in the same directory as the matched files. |
-| AC-003.4 | The output is written in **UTF-8** encoding, regardless of input file encoding. |
-| AC-003.5 | If the output file already exists, it is **overwritten** without confirmation. |
-| AC-003.6 | When no files match the pattern, the tool exits with code `1` and prints `"No files matching '<pattern>' were found."` |
-| AC-003.7 | When the pattern is empty or missing, the tool exits with code `2` and prints a usage hint. |
+**HU-003.1** — Como desenvolvedor, quero combinar todos os arquivos `.sql` de um diretório em um único arquivo, para executar um pacote de migração como um único script.
+
+**HU-003.2** — Como desenvolvedor, quero que o arquivo combinado respeite a ordem alfabética, para que a sequência de arquivos seja previsível e determinística.
+
+**HU-003.3** — Como desenvolvedor, quero que um nome de arquivo de saída padrão seja criado quando não especifico `--output`, para não precisar pensar em nomenclatura em operações rápidas.
 
 ---
 
-## CLI Interface
+## Critérios de Aceitação
+
+| ID | Critério |
+|----|---------|
+| CA-003.1 | Dado um padrão glob válido correspondendo a pelo menos um arquivo, a ferramenta cria um arquivo de saída com o conteúdo concatenado de todos os arquivos encontrados. |
+| CA-003.2 | Os arquivos são combinados em **ordem alfabética sem distinção de maiúsculas/minúsculas** pelo nome do arquivo. |
+| CA-003.3 | Quando `--output` não é especificado, o arquivo de saída é nomeado `CombineFiles.<ext>` (usando a extensão dos arquivos encontrados) no mesmo diretório dos arquivos. |
+| CA-003.4 | A saída é gravada em codificação **UTF-8**, independentemente da codificação dos arquivos de entrada. |
+| CA-003.5 | Se o arquivo de saída já existir, ele é **sobrescrito** sem confirmação. |
+| CA-003.6 | Quando nenhum arquivo corresponde ao padrão, a ferramenta sai com código `1` e imprime `"Nenhum arquivo correspondendo a '<padrão>' foi encontrado."` |
+| CA-003.7 | Quando o padrão está vazio ou ausente, a ferramenta sai com código `2` e imprime uma dica de uso. |
+
+---
+
+## Interface CLI
 
 ```bash
-devmaid file combine --input <pattern> [--output <file>]
+devmaid file combine --input <padrão> [--output <arquivo>]
 ```
 
-### Options
+### Opções
 
-| Option | Short | Required | Default | Description |
-|--------|-------|----------|---------|-------------|
-| `--input` | `-i` | Yes | — | Glob pattern for input files (e.g., `C:\temp\*.sql`) |
-| `--output` | `-o` | No | `CombineFiles.<ext>` | Output file path |
+| Opção | Curta | Obrigatória | Padrão | Descrição |
+|-------|-------|-------------|--------|-----------|
+| `--input` | `-i` | Sim | — | Padrão glob para arquivos de entrada (ex.: `C:\temp\*.sql`) |
+| `--output` | `-o` | Não | `CombineFiles.<ext>` | Caminho do arquivo de saída |
 
-### Exit Codes
+### Códigos de Saída
 
-| Code | Scenario |
-|------|----------|
-| `0` | Files combined successfully |
-| `1` | No files matched the pattern |
-| `2` | Invalid or empty pattern |
-
----
-
-## Error Scenarios
-
-| Scenario | Expected Behavior |
-|----------|------------------|
-| Empty `--input` | Exit `2`, message: `"Input pattern is required."` |
-| Invalid pattern syntax | Exit `2`, message: `"Input pattern '<pattern>' is invalid."` |
-| No files match | Exit `1`, message: `"No files matching '<pattern>' were found."` |
-| Output path inaccessible | Exit `1`, message: `"Cannot write to '<path>'. Check permissions."` |
+| Código | Cenário |
+|--------|---------|
+| `0` | Arquivos combinados com sucesso |
+| `1` | Nenhum arquivo correspondeu ao padrão |
+| `2` | Padrão inválido ou vazio |
 
 ---
 
-## Non-Functional Requirements
+## Cenários de Erro
 
-- Must handle files of any size without loading all content into memory at once (streaming write).
-- Must complete in under **5 seconds** for up to 500 files of average 100 KB each.
+| Cenário | Comportamento Esperado |
+|---------|----------------------|
+| `--input` vazio | Sair `2`, mensagem: `"O padrão de entrada é obrigatório."` |
+| Sintaxe de padrão inválida | Sair `2`, mensagem: `"O padrão de entrada '<padrão>' é inválido."` |
+| Nenhum arquivo corresponde | Sair `1`, mensagem: `"Nenhum arquivo correspondendo a '<padrão>' foi encontrado."` |
+| Caminho de saída inacessível | Sair `1`, mensagem: `"Não é possível gravar em '<caminho>'. Verifique as permissões."` |
+
+---
+
+## Requisitos Não Funcionais
+
+- Deve processar arquivos de qualquer tamanho sem carregar todo o conteúdo na memória de uma vez (gravação em streaming).
+- Deve ser concluído em menos de **5 segundos** para até 500 arquivos com média de 100 KB cada.

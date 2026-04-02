@@ -1,74 +1,74 @@
-# Feature Spec: Table Parser
+# Spec de Feature: Gerador de Classes a partir de Tabelas
 
 **ID:** 001  
 **Slug:** table-parser  
-**Status:** Implemented  
-**Version:** 1.0  
+**Status:** Implementado  
+**Versão:** 1.0  
 
 ---
 
-## Purpose
+## Propósito
 
-Enable developers to instantly generate a typed C# class from an existing PostgreSQL table schema, eliminating manual translation of column definitions into property declarations.
-
----
-
-## User Stories
-
-**US-001.1** — As a developer, I want to connect to a PostgreSQL database and generate a C# class from a table schema, so that I don't have to manually write boilerplate model code.
-
-**US-001.2** — As a developer, I want nullable columns to produce nullable C# types (`int?`, `string?`), so that the generated class accurately reflects the database schema.
-
-**US-001.3** — As a developer, I want to choose where the output file is saved, so that I can drop it directly into my project directory.
+Permitir que desenvolvedores gerem instantaneamente uma classe C# tipada a partir de um schema de tabela PostgreSQL existente, eliminando a tradução manual de definições de colunas em declarações de propriedades.
 
 ---
 
-## Acceptance Criteria
+## Histórias de Usuário
 
-| ID | Criterion |
-|----|-----------|
-| AC-001.1 | Given valid connection parameters and an existing table, the tool generates a `.cs` file with a class whose name matches the table name (PascalCase). |
-| AC-001.2 | Each column becomes a public property with the correct C# type mapping (see Business Rules). |
-| AC-001.3 | Nullable columns (`IS NULLABLE = YES`) generate nullable property types (`int?`, `bool?`, etc.). |
-| AC-001.4 | When `--output` is omitted, the file is written as `./table.class` in the current working directory. |
-| AC-001.5 | When the table does not exist, the tool exits with code `1` and prints a specific error message. |
-| AC-001.6 | When the password is not provided via `--password`, the tool prompts interactively and does not echo input. |
-| AC-001.7 | Unsupported PostgreSQL types generate an `object` property with a `// [UNSUPPORTED TYPE: <pg_type>]` comment. |
+**HU-001.1** — Como desenvolvedor, quero me conectar a um banco PostgreSQL e gerar uma classe C# a partir de um schema de tabela, para não precisar escrever manualmente o código boilerplate de modelos.
+
+**HU-001.2** — Como desenvolvedor, quero que colunas anuláveis gerem tipos C# anuláveis (`int?`, `string?`), para que a classe gerada reflita com precisão o schema do banco.
+
+**HU-001.3** — Como desenvolvedor, quero escolher onde o arquivo de saída é salvo, para que eu possa colocá-lo diretamente no diretório do meu projeto.
 
 ---
 
-## CLI Interface
+## Critérios de Aceitação
+
+| ID | Critério |
+|----|---------|
+| CA-001.1 | Dados parâmetros de conexão válidos e uma tabela existente, a ferramenta gera um arquivo `.cs` com uma classe cujo nome corresponde ao nome da tabela (PascalCase). |
+| CA-001.2 | Cada coluna se torna uma propriedade pública com o mapeamento correto de tipo C# (ver Regras de Negócio). |
+| CA-001.3 | Colunas anuláveis (`IS NULLABLE = YES`) geram tipos de propriedade anuláveis (`int?`, `bool?`, etc.). |
+| CA-001.4 | Quando `--output` é omitido, o arquivo é gravado como `./table.class` no diretório de trabalho atual. |
+| CA-001.5 | Quando a tabela não existe, a ferramenta sai com código `1` e imprime uma mensagem de erro específica. |
+| CA-001.6 | Quando a senha não é fornecida via `--password`, a ferramenta solicita interativamente sem exibir a entrada. |
+| CA-001.7 | Tipos PostgreSQL sem suporte geram uma propriedade `object` com um comentário `// [TIPO SEM SUPORTE: <pg_type>]`. |
+
+---
+
+## Interface CLI
 
 ```bash
-devmaid table-parser [options]
+devmaid table-parser [opções]
 ```
 
-### Options
+### Opções
 
-| Option | Short | Required | Default | Description |
-|--------|-------|----------|---------|-------------|
-| `--database` | `-d` | Yes | — | Database name |
-| `--table` | `-t` | No | — | Table name to parse |
-| `--user` | `-u` | No | `postgres` | Database username |
-| `--password` | `-p` | No | prompt | Database password |
-| `--host` | `-H` | No | `localhost` | Database host |
-| `--port` | — | No | `5432` | Database port |
-| `--output` | `-o` | No | `./table.class` | Output file path |
+| Opção | Curta | Obrigatória | Padrão | Descrição |
+|-------|-------|-------------|--------|-----------|
+| `--database` | `-d` | Sim | — | Nome do banco de dados |
+| `--table` | `-t` | Não | — | Nome da tabela a analisar |
+| `--user` | `-u` | Não | `postgres` | Usuário do banco |
+| `--password` | `-p` | Não | solicitar | Senha do banco |
+| `--host` | `-H` | Não | `localhost` | Host do banco |
+| `--port` | — | Não | `5432` | Porta do banco |
+| `--output` | `-o` | Não | `./table.class` | Caminho do arquivo de saída |
 
-### Exit Codes
+### Códigos de Saída
 
-| Code | Scenario |
-|------|----------|
-| `0` | Class file generated successfully |
-| `1` | Connection error, table not found, or write error |
-| `2` | Missing required option (`--database`) |
-| `3` | psql/Npgsql driver error |
+| Código | Cenário |
+|--------|---------|
+| `0` | Arquivo de classe gerado com sucesso |
+| `1` | Erro de conexão, tabela não encontrada ou erro de gravação |
+| `2` | Opção obrigatória ausente (`--database`) |
+| `3` | Erro no driver psql/Npgsql |
 
 ---
 
-## Type Mapping
+## Mapeamento de Tipos
 
-| PostgreSQL Type | C# Type |
+| Tipo PostgreSQL | Tipo C# |
 |----------------|---------|
 | `int`, `integer`, `int4` | `int` |
 | `bigint`, `int8` | `long` |
@@ -85,24 +85,24 @@ devmaid table-parser [options]
 | `uuid` | `Guid` |
 | `bytea` | `byte[]` |
 | `json`, `jsonb` | `string` |
-| Any other | `object` + warning comment |
+| Qualquer outro | `object` + comentário de aviso |
 
 ---
 
-## Error Scenarios
+## Cenários de Erro
 
-| Scenario | Expected Behavior |
-|----------|------------------|
-| Invalid credentials | Exit `1`, message: `"Authentication failed for user '<user>'@'<host>'. Check your credentials."` |
-| Table not found | Exit `1`, message: `"Table '<table>' not found in database '<database>'."` |
-| Database not found | Exit `1`, message: `"Database '<database>' does not exist on host '<host>'."` |
-| Connection timeout | Exit `1`, message: `"Connection to '<host>:<port>' timed out. Is PostgreSQL running?"` |
-| Output path invalid | Exit `1`, message: `"Cannot write to path '<path>'. Check permissions."` |
-| Empty table (no columns) | Generate empty class with comment `// Table has no columns.` |
+| Cenário | Comportamento Esperado |
+|---------|----------------------|
+| Credenciais inválidas | Sair `1`, mensagem: `"Autenticação falhou para o usuário '<usuario>'@'<host>'. Verifique suas credenciais."` |
+| Tabela não encontrada | Sair `1`, mensagem: `"Tabela '<tabela>' não encontrada no banco '<banco>'."` |
+| Banco não encontrado | Sair `1`, mensagem: `"Banco de dados '<banco>' não existe no host '<host>'."` |
+| Timeout de conexão | Sair `1`, mensagem: `"Conexão com '<host>:<porta>' expirou. O PostgreSQL está em execução?"` |
+| Caminho de saída inválido | Sair `1`, mensagem: `"Não é possível gravar no caminho '<caminho>'. Verifique as permissões."` |
+| Tabela vazia (sem colunas) | Gerar classe vazia com comentário `// Tabela sem colunas.` |
 
 ---
 
-## Non-Functional Requirements
+## Requisitos Não Funcionais
 
-- Generation must complete in under **2 seconds** for tables with up to 100 columns on a local connection.
-- The generated file must be valid, compilable C# (barring any `object` fallback types).
+- A geração deve ser concluída em menos de **2 segundos** para tabelas com até 100 colunas em uma conexão local.
+- O arquivo gerado deve ser C# válido e compilável (exceto pelos tipos de fallback `object`).

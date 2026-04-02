@@ -1,94 +1,94 @@
-# Feature Spec: Project Cleaner (.NET Clean)
+# Spec de Feature: Limpador de Projetos (.NET Clean)
 
 **ID:** 008  
 **Slug:** project-cleaner  
-**Status:** Implemented  
-**Version:** 1.0  
+**Status:** Implementado  
+**Versão:** 1.0  
 
 ---
 
-## Purpose
+## Propósito
 
-Free disk space and resolve .NET build cache corruption by recursively deleting all `bin` and `obj` output directories from a project tree — a common developer task that is tedious to perform manually across large solutions.
-
----
-
-## User Stories
-
-**US-008.1** — As a .NET developer, I want to clean all `bin` and `obj` folders from my solution with a single command, so that I can resolve build cache issues without navigating each project directory.
-
-**US-008.2** — As a developer, I want to target a specific directory for cleaning, so that I can clean a project without changing my current working directory.
-
-**US-008.3** — As a developer, I want to see how much disk space was freed, so that I know the clean operation was effective.
+Liberar espaço em disco e resolver corrupção de cache de build do .NET excluindo recursivamente todos os diretórios de saída `bin` e `obj` de uma árvore de projetos — uma tarefa comum de desenvolvimento que é tediosa de realizar manualmente em soluções grandes.
 
 ---
 
-## Acceptance Criteria
+## Histórias de Usuário
 
-| ID | Criterion |
-|----|-----------|
-| AC-008.1 | `devmaid clean` recursively deletes all `bin` and `obj` directories found under the current working directory. |
-| AC-008.2 | `devmaid clean <path>` recursively deletes `bin` and `obj` directories under `<path>`. |
-| AC-008.3 | After cleaning, the tool prints the number of directories deleted and the total disk space freed (in MB). |
-| AC-008.4 | If no `bin` or `obj` directories are found, the tool exits `0` with message: `"Nothing to clean."` |
-| AC-008.5 | If a directory cannot be deleted (e.g., files are locked), the tool logs a warning for that path and continues with the rest. |
-| AC-008.6 | The provided path must exist; if it does not, exit `1` with a descriptive error. |
+**HU-008.1** — Como desenvolvedor .NET, quero limpar todas as pastas `bin` e `obj` da minha solução com um único comando, para resolver problemas de cache de build sem navegar por cada diretório de projeto.
+
+**HU-008.2** — Como desenvolvedor, quero direcionar um diretório específico para limpeza, para limpar um projeto sem alterar meu diretório de trabalho atual.
+
+**HU-008.3** — Como desenvolvedor, quero ver quanto espaço em disco foi liberado, para saber que a operação de limpeza foi eficaz.
 
 ---
 
-## CLI Interface
+## Critérios de Aceitação
+
+| ID | Critério |
+|----|---------|
+| CA-008.1 | `devmaid clean` exclui recursivamente todos os diretórios `bin` e `obj` encontrados no diretório de trabalho atual. |
+| CA-008.2 | `devmaid clean <caminho>` exclui recursivamente os diretórios `bin` e `obj` em `<caminho>`. |
+| CA-008.3 | Após a limpeza, a ferramenta imprime o número de diretórios excluídos e o espaço total em disco liberado (em MB). |
+| CA-008.4 | Se nenhum diretório `bin` ou `obj` for encontrado, a ferramenta sai `0` com mensagem: `"Nada para limpar."` |
+| CA-008.5 | Se um diretório não puder ser excluído (ex.: arquivos bloqueados), a ferramenta registra um aviso para aquele caminho e continua com os demais. |
+| CA-008.6 | O caminho fornecido deve existir; se não existir, sair `1` com uma mensagem de erro descritiva. |
+
+---
+
+## Interface CLI
 
 ```bash
-devmaid clean [<path>]
+devmaid clean [<caminho>]
 ```
 
-### Arguments
+### Argumentos
 
-| Argument | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `<path>` | No | `./` (current directory) | Root directory to clean |
+| Argumento | Obrigatório | Padrão | Descrição |
+|-----------|-------------|--------|-----------|
+| `<caminho>` | Não | `./` (diretório atual) | Diretório raiz para limpar |
 
-### Exit Codes
+### Códigos de Saída
 
-| Code | Scenario |
-|------|----------|
-| `0` | Clean completed (even if nothing was found) |
-| `1` | Specified path does not exist |
-| `1` | Partial failure (some directories could not be deleted) |
+| Código | Cenário |
+|--------|---------|
+| `0` | Limpeza concluída (mesmo que nada tenha sido encontrado) |
+| `1` | Caminho especificado não existe |
+| `1` | Falha parcial (alguns diretórios não puderam ser excluídos) |
 
 ---
 
-## Output Example
+## Exemplo de Saída
 
 ```
-Scanning: C:\Projects\MySolution
-Found 12 directories to clean (bin: 8, obj: 4)
+Verificando: C:\Projects\MySolution
+Encontrados 12 diretórios para limpar (bin: 8, obj: 4)
 
-  Deleted: C:\Projects\MySolution\ProjectA\bin
-  Deleted: C:\Projects\MySolution\ProjectA\obj
-  Deleted: C:\Projects\MySolution\ProjectB\bin
+  Excluído: C:\Projects\MySolution\ProjectA\bin
+  Excluído: C:\Projects\MySolution\ProjectA\obj
+  Excluído: C:\Projects\MySolution\ProjectB\bin
   ...
-  WARNING: Could not delete C:\Projects\MySolution\ProjectC\bin (files are in use)
+  AVISO: Não foi possível excluir C:\Projects\MySolution\ProjectC\bin (arquivos em uso)
 
-Clean complete.
-  Directories deleted: 11 / 12
-  Disk space freed: 340.2 MB
+Limpeza concluída.
+  Diretórios excluídos: 11 / 12
+  Espaço em disco liberado: 340,2 MB
 ```
 
 ---
 
-## Error Scenarios
+## Cenários de Erro
 
-| Scenario | Expected Behavior |
-|----------|------------------|
-| Path does not exist | Exit `1`, message: `"Path '<path>' does not exist."` |
-| Insufficient permissions | Log per-directory warning, continue with others |
-| Files locked (e.g., running process) | Log per-directory warning, continue with others |
-| Nothing to clean | Exit `0`, message: `"Nothing to clean in '<path>'."` |
+| Cenário | Comportamento Esperado |
+|---------|----------------------|
+| Caminho não existe | Sair `1`, mensagem: `"Caminho '<caminho>' não existe."` |
+| Permissões insuficientes | Registrar aviso por diretório, continuar com os demais |
+| Arquivos bloqueados (ex.: processo em execução) | Registrar aviso por diretório, continuar com os demais |
+| Nada para limpar | Sair `0`, mensagem: `"Nada para limpar em '<caminho>'."` |
 
 ---
 
-## Non-Functional Requirements
+## Requisitos Não Funcionais
 
-- Must complete in under **10 seconds** for solutions with up to 50 projects.
-- Must not follow symbolic links to avoid unintended deletions outside the target tree.
+- Deve ser concluído em menos de **10 segundos** para soluções com até 50 projetos.
+- Não deve seguir links simbólicos para evitar exclusões não intencionais fora da árvore alvo.

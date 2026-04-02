@@ -1,96 +1,96 @@
-# Feature Spec: SQL Query & CSV Export
+# Spec de Feature: Consulta SQL e Exportação CSV
 
 **ID:** 007  
 **Slug:** sql-query-csv-export  
-**Status:** Implemented  
-**Version:** 1.0  
+**Status:** Implementado  
+**Versão:** 1.0  
 
 ---
 
-## Purpose
+## Propósito
 
-Enable developers and data engineers to execute SQL queries against PostgreSQL databases and export results to CSV — supporting single databases, all databases on a server, and multiple servers configured in `appsettings.json` — for reporting, auditing, and data extraction workflows.
-
----
-
-## User Stories
-
-**US-007.1** — As a developer, I want to run a SQL script against a specific database and save the results as a CSV file, so that I can share query results with non-technical stakeholders.
-
-**US-007.2** — As a DBA, I want to run the same query across all databases on a server, so that I can collect metrics or audit data across the entire server in one operation.
-
-**US-007.3** — As a DBA, I want to run a query across multiple configured servers simultaneously, so that I can produce cross-environment reports without manual repetition.
-
-**US-007.4** — As a developer, I want to filter which servers are included using a wildcard pattern, so that I can target only production or only staging servers.
+Permitir que desenvolvedores e engenheiros de dados executem consultas SQL contra bancos de dados PostgreSQL e exportem os resultados para CSV — suportando banco único, todos os bancos de um servidor e múltiplos servidores configurados no `appsettings.json` — para fluxos de trabalho de relatórios, auditoria e extração de dados.
 
 ---
 
-## Acceptance Criteria
+## Histórias de Usuário
 
-| ID | Criterion |
-|----|-----------|
-| AC-007.1 | `devmaid query run --input <sql> --output <csv>` executes the SQL and writes results to the specified CSV file with a header row. |
-| AC-007.2 | `devmaid query run --all --input <sql> --output <dir>` creates `all_databases.csv` in `<dir>` with a `_database_name` prefix column. |
-| AC-007.3 | `devmaid query run --all --separate-files --input <sql> --output <dir>` creates one `<database>.csv` file per database in `<dir>`. |
-| AC-007.4 | `devmaid query run --servers --input <sql> --output <dir>` executes against all servers in `appsettings.json` with `Servers.Enabled = true`, creating `<dir>/<server>/<database>.csv` for each result. |
-| AC-007.5 | `--server-filter <pattern>` limits server execution to servers whose `Name` matches the wildcard pattern (case-insensitive, `*` supported). |
-| AC-007.6 | `--exclude <list>` skips listed database names (comma-separated) when using `--all`. |
-| AC-007.7 | Connection parameters from CLI override those in `appsettings.json`. |
-| AC-007.8 | NULL values in query results appear as empty fields in the CSV. |
-| AC-007.9 | Fields containing commas or quotes are properly escaped per RFC 4180. |
-| AC-007.10 | Progress is printed per database and per server during multi-target operations. |
-| AC-007.11 | A summary is printed at the end of multi-target operations: total databases, successful, failed, total rows. |
+**HU-007.1** — Como desenvolvedor, quero executar um script SQL contra um banco específico e salvar os resultados como arquivo CSV, para poder compartilhar resultados de consultas com partes interessadas não técnicas.
+
+**HU-007.2** — Como DBA, quero executar a mesma consulta em todos os bancos de dados de um servidor, para coletar métricas ou auditar dados em todo o servidor em uma única operação.
+
+**HU-007.3** — Como DBA, quero executar uma consulta em múltiplos servidores configurados simultaneamente, para produzir relatórios entre ambientes sem repetição manual.
+
+**HU-007.4** — Como desenvolvedor, quero filtrar quais servidores são incluídos usando um padrão curinga, para direcionar apenas servidores de produção ou apenas de staging.
 
 ---
 
-## CLI Interface
+## Critérios de Aceitação
+
+| ID | Critério |
+|----|---------|
+| CA-007.1 | `devmaid query run --input <sql> --output <csv>` executa o SQL e grava os resultados no arquivo CSV especificado com uma linha de cabeçalho. |
+| CA-007.2 | `devmaid query run --all --input <sql> --output <dir>` cria `all_databases.csv` em `<dir>` com uma coluna prefixo `_database_name`. |
+| CA-007.3 | `devmaid query run --all --separate-files --input <sql> --output <dir>` cria um arquivo `<banco>.csv` por banco em `<dir>`. |
+| CA-007.4 | `devmaid query run --servers --input <sql> --output <dir>` executa em todos os servidores do `appsettings.json` com `Servers.Enabled = true`, criando `<dir>/<servidor>/<banco>.csv` para cada resultado. |
+| CA-007.5 | `--server-filter <padrão>` limita a execução aos servidores cujo `Name` corresponde ao padrão curinga (sem distinção de maiúsculas/minúsculas, `*` suportado). |
+| CA-007.6 | `--exclude <lista>` pula os nomes de bancos listados (separados por vírgula) ao usar `--all`. |
+| CA-007.7 | Parâmetros de conexão da CLI sobrescrevem os do `appsettings.json`. |
+| CA-007.8 | Valores NULL nos resultados da consulta aparecem como campos vazios no CSV. |
+| CA-007.9 | Campos contendo vírgulas ou aspas são devidamente escapados conforme RFC 4180. |
+| CA-007.10 | O progresso é impresso por banco e por servidor durante operações com múltiplos alvos. |
+| CA-007.11 | Um resumo é impresso ao final de operações com múltiplos alvos: total de bancos, com sucesso, com falha, total de linhas. |
+
+---
+
+## Interface CLI
 
 ```bash
-# Single database
-devmaid query run --input <sql> --output <file> [connection options]
+# Banco único
+devmaid query run --input <sql> --output <arquivo> [opções de conexão]
 
-# All databases on a server
-devmaid query run --all --input <sql> --output <directory> [options]
+# Todos os bancos de um servidor
+devmaid query run --all --input <sql> --output <diretório> [opções]
 
-# All configured servers
-devmaid query run --servers --input <sql> --output <directory> [options]
+# Todos os servidores configurados
+devmaid query run --servers --input <sql> --output <diretório> [opções]
 ```
 
-### Options
+### Opções
 
-| Option | Short | Required | Default | Description |
-|--------|-------|----------|---------|-------------|
-| `--input` | `-i` | Yes | — | Path to SQL file |
-| `--output` | `-o` | Yes | — | Output CSV file (single) or directory (multi) |
-| `--all` | `-a` | No | `false` | Execute across all databases on server |
-| `--separate-files` | — | No | `false` | One CSV per database (requires `--all`) |
-| `--exclude` | — | No | — | Comma-separated database names to skip |
-| `--servers` | `-s` | No | `false` | Execute across all configured servers |
-| `--server-filter` | — | No | — | Wildcard filter for server names |
-| `--host` | `-h` | No | from config | Database host |
-| `--port` | `-p` | No | `5432` | Database port |
-| `--database` | `-d` | No (with `--all`) | from config | Target database |
-| `--username` | `-U` | No | from config | Username |
-| `--password` | `-W` | No | prompt | Password |
-| `--ssl-mode` | — | No | `Prefer` | SSL mode |
-| `--timeout` | — | No | `30` | Connection timeout (seconds) |
-| `--command-timeout` | — | No | `300` | Query execution timeout (seconds) |
-| `--npgsql-connection-string` | — | No | — | Full Npgsql connection string (overrides individual params) |
+| Opção | Curta | Obrigatória | Padrão | Descrição |
+|-------|-------|-------------|--------|-----------|
+| `--input` | `-i` | Sim | — | Caminho para o arquivo SQL |
+| `--output` | `-o` | Sim | — | Arquivo CSV de saída (único) ou diretório (múltiplo) |
+| `--all` | `-a` | Não | `false` | Executar em todos os bancos do servidor |
+| `--separate-files` | — | Não | `false` | Um CSV por banco (requer `--all`) |
+| `--exclude` | — | Não | — | Nomes de bancos a pular, separados por vírgula |
+| `--servers` | `-s` | Não | `false` | Executar em todos os servidores configurados |
+| `--server-filter` | — | Não | — | Filtro curinga para nomes de servidores |
+| `--host` | `-h` | Não | da config | Host do banco |
+| `--port` | `-p` | Não | `5432` | Porta do banco |
+| `--database` | `-d` | Não (com `--all`) | da config | Banco de destino |
+| `--username` | `-U` | Não | da config | Nome de usuário |
+| `--password` | `-W` | Não | solicitar | Senha |
+| `--ssl-mode` | — | Não | `Prefer` | Modo SSL |
+| `--timeout` | — | Não | `30` | Timeout de conexão (segundos) |
+| `--command-timeout` | — | Não | `300` | Timeout de execução da query (segundos) |
+| `--npgsql-connection-string` | — | Não | — | String de conexão Npgsql completa (sobrescreve parâmetros individuais) |
 
-### Exit Codes
+### Códigos de Saída
 
-| Code | Scenario |
-|------|----------|
-| `0` | All queries completed successfully |
-| `1` | One or more queries failed (partial success is still exit `1`) |
-| `2` | Missing required option |
-| `3` | psql not found (required for `--all`) |
+| Código | Cenário |
+|--------|---------|
+| `0` | Todas as consultas concluídas com sucesso |
+| `1` | Uma ou mais consultas falharam (sucesso parcial ainda é saída `1`) |
+| `2` | Opção obrigatória ausente |
+| `3` | psql não encontrado (necessário para `--all`) |
 
 ---
 
-## Multi-Server Configuration
+## Configuração Multi-Servidor
 
-Servers are defined in `appsettings.json`:
+Os servidores são definidos no `appsettings.json`:
 
 ```json
 {
@@ -115,37 +115,37 @@ Servers are defined in `appsettings.json`:
 }
 ```
 
-### Database Resolution Order (per server)
+### Ordem de Resolução de Bancos (por servidor)
 
-1. Server's `Databases` list (if non-empty)
-2. `--all` flag → list all databases via psql (applying `--exclude`)
-3. Server's `Database` default field
+1. Lista `Databases` do servidor (se não vazia)
+2. Flag `--all` → listar todos os bancos via psql (aplicando `--exclude`)
+3. Campo `Database` padrão do servidor
 
-### Connection Parameter Precedence (highest first)
+### Precedência de Parâmetros de Conexão (da maior para a menor)
 
-1. CLI flags (`--host`, `--port`, etc.)
-2. Server-specific configuration in `ServersList`
-3. `PrimaryServer` configuration
-4. Defaults
+1. Flags da CLI (`--host`, `--port`, etc.)
+2. Configuração específica do servidor em `ServersList`
+3. Configuração do `PrimaryServer`
+4. Padrões
 
 ---
 
-## Output Structure
+## Estrutura de Saída
 
-### Single Database
+### Banco Único
 
 ```
-result.csv                    ← header + rows
+result.csv                    ← cabeçalho + linhas
 ```
 
-### Multi-Database (Consolidated)
+### Multi-Banco (Consolidado)
 
 ```
 results/
-└── all_databases.csv         ← _database_name + all columns
+└── all_databases.csv         ← _database_name + todas as colunas
 ```
 
-### Multi-Database (Separate Files)
+### Multi-Banco (Arquivos Separados)
 
 ```
 results/
@@ -154,7 +154,7 @@ results/
 └── app_test.csv
 ```
 
-### Multi-Server
+### Multi-Servidor
 
 ```
 results/
@@ -167,22 +167,22 @@ results/
 
 ---
 
-## Error Scenarios
+## Cenários de Erro
 
-| Scenario | Expected Behavior |
-|----------|------------------|
-| SQL file not found | Exit `1`, message: `"Input file '<path>' not found."` |
-| SQL syntax error | Exit `1`, print PostgreSQL error message |
-| Connection failed | Log failure for that database, continue with others in multi-mode |
-| psql not found (for `--all`) | Exit `3`, message with PostgreSQL installation instructions |
-| No servers match `--server-filter` | Exit `1`, message: `"No servers found matching pattern '<pattern>'."` |
-| `Servers.Enabled = false` with `--servers` | Exit `1`, message: `"Multi-server configuration is not enabled in appsettings.json."` |
-| `PrimaryServer` not configured | Exit `1`, message with correction instructions |
+| Cenário | Comportamento Esperado |
+|---------|----------------------|
+| Arquivo SQL não encontrado | Sair `1`, mensagem: `"Arquivo de entrada '<caminho>' não encontrado."` |
+| Erro de sintaxe SQL | Sair `1`, imprimir mensagem de erro do PostgreSQL |
+| Falha de conexão | Registrar falha para aquele banco, continuar com os demais no modo múltiplo |
+| psql não encontrado (para `--all`) | Sair `3`, mensagem com instruções de instalação do PostgreSQL |
+| Nenhum servidor corresponde ao `--server-filter` | Sair `1`, mensagem: `"Nenhum servidor encontrado correspondendo ao padrão '<padrão>'."` |
+| `Servers.Enabled = false` com `--servers` | Sair `1`, mensagem: `"Configuração multi-servidor não está habilitada no appsettings.json."` |
+| `PrimaryServer` não configurado | Sair `1`, mensagem com instruções de correção |
 
 ---
 
-## Non-Functional Requirements
+## Requisitos Não Funcionais
 
-- Must handle result sets of up to **1 million rows** without holding all rows in memory (streaming write).
-- Multi-server execution must process servers **sequentially** (not in parallel) to avoid overwhelming the network or credentials management.
-- Progress output must not interfere with the CSV output file.
+- Deve processar conjuntos de resultados de até **1 milhão de linhas** sem manter todas as linhas na memória (gravação em streaming).
+- A execução multi-servidor deve processar servidores **sequencialmente** (não em paralelo) para evitar sobrecarga na rede ou no gerenciamento de credenciais.
+- A saída de progresso não deve interferir no arquivo CSV de saída.

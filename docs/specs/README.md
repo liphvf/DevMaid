@@ -1,70 +1,70 @@
-# DevMaid — Spec Index
+# DevMaid — Índice de Specs
 
-This document is the master index of all feature specifications for DevMaid. Each spec follows the [Spec-Driven Development](https://github.com/github/spec-kit) methodology and is governed by the [Project Constitution](../CONSTITUTION.md).
+Este documento é o índice mestre de todas as especificações de features do DevMaid. Cada spec segue a metodologia de [Desenvolvimento Orientado a Especificações](https://github.com/github/spec-kit) e é governada pela [Constituição do Projeto](../CONSTITUTION.md).
 
 ---
 
-## Active Features
+## Features Ativas
 
-| ID | Slug | Name | Status | Spec |
+| ID | Slug | Nome | Status | Spec |
 |----|------|------|--------|------|
-| 001 | `table-parser` | Table Parser | Implemented | [spec.md](./001-table-parser/spec.md) |
-| 002 | `database-utilities` | Database Utilities (Backup & Restore) | Implemented | [spec.md](./002-database-utilities/spec.md) |
-| 003 | `file-combine` | File Utilities — Combine | Implemented | [spec.md](./003-file-combine/spec.md) |
-| 004 | `claude-code-integration` | Claude Code Integration | Implemented | [spec.md](./004-claude-code-integration/spec.md) |
-| 005 | `opencode-integration` | OpenCode Integration | Implemented | [spec.md](./005-opencode-integration/spec.md) |
-| 006 | `winget-package-manager` | Winget Package Manager | Implemented | [spec.md](./006-winget-package-manager/spec.md) |
-| 007 | `sql-query-csv-export` | SQL Query & CSV Export | Implemented | [spec.md](./007-sql-query-csv-export/spec.md) |
-| 008 | `project-cleaner` | Project Cleaner (.NET Clean) | Implemented | [spec.md](./008-project-cleaner/spec.md) |
-| 009 | `windows-features-manager` | Windows Features Manager | Implemented | [spec.md](./009-windows-features-manager/spec.md) |
+| 001 | `table-parser` | Gerador de Classes a partir de Tabelas | Implementado | [spec.md](./001-table-parser/spec.md) |
+| 002 | `database-utilities` | Utilitários de Banco de Dados (Backup e Restauração) | Implementado | [spec.md](./002-database-utilities/spec.md) |
+| 003 | `file-combine` | Utilitários de Arquivo — Combinar | Implementado | [spec.md](./003-file-combine/spec.md) |
+| 004 | `claude-code-integration` | Integração com Claude Code | Implementado | [spec.md](./004-claude-code-integration/spec.md) |
+| 005 | `opencode-integration` | Integração com OpenCode | Implementado | [spec.md](./005-opencode-integration/spec.md) |
+| 006 | `winget-package-manager` | Gerenciador de Pacotes Winget | Implementado | [spec.md](./006-winget-package-manager/spec.md) |
+| 007 | `sql-query-csv-export` | Consulta SQL e Exportação CSV | Implementado | [spec.md](./007-sql-query-csv-export/spec.md) |
+| 008 | `project-cleaner` | Limpador de Projetos (.NET Clean) | Implementado | [spec.md](./008-project-cleaner/spec.md) |
+| 009 | `windows-features-manager` | Gerenciador de Recursos do Windows | Implementado | [spec.md](./009-windows-features-manager/spec.md) |
 
 ---
 
-## Planned Features
+## Features Planejadas
 
-| ID | Slug | Name | Status | Spec |
+| ID | Slug | Nome | Status | Spec |
 |----|------|------|--------|------|
-| 010 | `gui-electron-angular` | GUI — Electron + Angular Interface | Planned (Draft) | [spec.md](./010-gui-electron-angular/spec.md) |
+| 010 | `gui-electron-angular` | Interface Gráfica — Electron + Angular | Planejado (Rascunho) | [spec.md](./010-gui-electron-angular/spec.md) |
 
 ---
 
-## Spec Lifecycle
+## Ciclo de Vida de uma Spec
 
 ```
-Draft → Review → Approved → Implemented → Deprecated
+Rascunho → Revisão → Aprovado → Implementado → Depreciado
 ```
 
-| State | Meaning |
-|-------|---------|
-| **Draft** | Work in progress; open questions remain (`[NEEDS CLARIFICATION]`) |
-| **Review** | Ready for review; all questions resolved |
-| **Approved** | Accepted; implementation may begin |
-| **Implemented** | Feature is shipped and matches the spec |
-| **Deprecated** | Feature removed or superseded |
+| Estado | Significado |
+|--------|------------|
+| **Rascunho** | Em progresso; questões em aberto permanecem (`[NECESSITA ESCLARECIMENTO]`) |
+| **Revisão** | Pronto para revisão; todas as questões resolvidas |
+| **Aprovado** | Aceito; implementação pode começar |
+| **Implementado** | Feature entregue e corresponde à spec |
+| **Depreciado** | Feature removida ou substituída |
 
 ---
 
-## Adding a New Spec
+## Adicionando uma Nova Spec
 
-1. Assign the next sequential ID (e.g., `011`)
-2. Create `docs/specs/<ID>-<slug>/spec.md` using the template structure below
-3. Add an entry to this index
-4. Mark status as **Draft** until all `[NEEDS CLARIFICATION]` markers are resolved
+1. Atribuir o próximo ID sequencial (ex.: `011`)
+2. Criar `docs/specs/<ID>-<slug>/spec.md` usando a estrutura de template abaixo
+3. Adicionar uma entrada a este índice
+4. Marcar o status como **Rascunho** até que todos os marcadores `[NECESSITA ESCLARECIMENTO]` sejam resolvidos
 
-### Spec Template Structure
+### Estrutura do Template de Spec
 
 ```markdown
-# Feature Spec: <Name>
+# Spec de Feature: <Nome>
 
 **ID:** <NNN>
 **Slug:** <slug>
-**Status:** Draft | Review | Approved | Implemented | Deprecated
-**Version:** <semver>
+**Status:** Rascunho | Revisão | Aprovado | Implementado | Depreciado
+**Versão:** <semver>
 
-## Purpose
-## User Stories
-## Acceptance Criteria
-## CLI Interface
-## Error Scenarios
-## Non-Functional Requirements
+## Propósito
+## Histórias de Usuário
+## Critérios de Aceitação
+## Interface CLI
+## Cenários de Erro
+## Requisitos Não Funcionais
 ```
