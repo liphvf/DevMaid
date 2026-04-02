@@ -4,10 +4,17 @@ using System.Text;
 
 namespace DevMaid.CLI.Commands;
 
+/// <summary>
+/// Provides commands for backing up and restoring winget package lists.
+/// </summary>
 public static class WingetCommand
 {
     private const string BackupFileName = "backup-winget.json";
 
+    /// <summary>
+    /// Builds the winget command structure.
+    /// </summary>
+    /// <returns>The configured <see cref="Command"/>.</returns>
     public static Command Build()
     {
         var command = new Command("winget", "Manage winget packages.");

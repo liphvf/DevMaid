@@ -4,7 +4,7 @@
 
 DevMaid é uma ferramenta de interface de linha de comando (CLI) baseada em .NET projetada usando uma arquitetura modular baseada em comandos. O aplicativo segue os princípios de separação de preocupações, com limites claros entre parsing de CLI, lógica de negócio e camadas de acesso a dados.
 
-A arquitetura é construída sobre System.CommandLine para parsing de argumentos da CLI, Terminal.Gui para o modo TUI interativo, e Microsoft.Extensions.Configuration para gerenciamento flexível de configuração.
+A arquitetura é construída sobre System.CommandLine para parsing de argumentos da CLI e Microsoft.Extensions.Configuration para gerenciamento flexível de configuração.
 
 ## Design de Alto Nível
 
@@ -25,12 +25,7 @@ A arquitetura é construída sobre System.CommandLine para parsing de argumentos
 │  ├── WingetCommand                                             │
 │  ├── QueryCommand                                              │
 │  ├── CleanCommand                                              │
-│  ├── WindowsFeaturesCommand                                    │
-│  └── TuiCommand                                                │
-├─────────────────────────────────────────────────────────────────┤
-│  Camada TUI (Tui/)                                             │
-│  ├── TuiApp (Aplicação Principal)                              │
-│  └── MenuItem (Modelo de Dados)                                │
+│  └── WindowsFeaturesCommand                                    │
 ├─────────────────────────────────────────────────────────────────┤
 │  Camadas de Suporte                                            │
 │  ├── CommandOptions (DTOs)                                     │
@@ -97,23 +92,7 @@ Cada comando segue o padrão builder com um método estático `Build()` que reto
 - Importa features de um arquivo JSON (via dism.exe)
 - Permite listar funcionalidades ativadas
 
-#### TuiCommand
-- Inicia a interface de terminal interativa
-- Ponto de entrada para TuiApp
-
-### 3. Camada TUI (Tui/)
-
-#### TuiApp
-- Controlador principal da aplicação TUI
-- Gerencia navegação e renderização de menus
-- Gerencia execução de comandos em tempo real com exibição de progresso
-- Detecta tema do terminal (claro/escuro)
-
-#### MenuItem
-- Modelo de dados para entradas de menu
-- Contém propriedades Nome, Descrição e Ação
-
-### 4. Camada CommandOptions
+### 3. Camada CommandOptions
 
 Objetos de Transferência de Dados (DTOs) que representam opções da linha de comando:
 - Classes de opções fortemente tipadas
@@ -122,63 +101,7 @@ Objetos de Transferência de Dados (DTOs) que representam opções da linha de c
 
 ## Fluxo de Dados
 
-### Fluxo de Execução CLI
-
-```
-Entrada do Usuário
-    ↓
-System.CommandLine Parser
-    ↓
-Manipulador de Comando (ex: WingetCommand.RunBackup)
-    ↓
-Lógica de Negócio
-    ↓
-Serviço Externo (Winget, PostgreSQL, Sistema de Arquivos)
-    ↓
-Saída/Resultado
-```
-
-### Fluxo de Execução TUI
-
-```
-Usuário Lança TUI
-    ↓
-TuiApp.Run()
-    ↓
-Detectar Tema do Terminal
-    ↓
-Renderizar Menu Principal
-    ↓
-Navegação do Usuário (Teclas de Seta)
-    ↓
-Seleção → Executar Ação
-    ↓
-Mostrar Diálogo de Progresso/Saída
-    ↓
-Retornar ao Menu / Sair
-```
-
-### Fluxo de Execução de Comando em Tempo Real
-
-```
-Usuário Seleciona Comando
-    ↓
-Mostrar Diálogo de Progresso
-    ↓
-Iniciar Processo (assíncrono)
-    ↓
-Capturar Saída (OutputDataReceived)
-    ↓
-Atualizar UI (Application.MainLoop.Invoke)
-    ↓
-Esperar Conclusão
-    ↓
-Mostrar Código de Saída
-    ↓
-Permitir Usuário Fechar
-```
-
-## Padrões de Projeto Utilizados
+### CLI Execution Flow
 
 ### 1. Padrão Builder
 
@@ -197,19 +120,7 @@ public static Command Build()
 
 A propriedade `Program.AppSettings` fornece acesso centralizado à configuração do aplicativo.
 
-### 3. Padrão Estratégia (Tema TUI)
-
-O método `DetectTerminalTheme()` determina o esquema de cores apropriado com base na detecção do terminal, com estratégias separadas para temas claros e escuros.
-
-### 4. Padrão Comando (MenuItems)
-
-Cada item de menu encapsula uma ação que pode ser executada:
-
-```csharp
-new MenuItem("Nome", "Descrição", () => ExecutarComando("..."))
-```
-
-### 5. Padrão Observador (Eventos de Processo)
+### 3. Padrão Observador (Eventos de Processo)
 
 Captura de saída em tempo real usa manipuladores de eventos:
 - `OutputDataReceived`
@@ -227,17 +138,7 @@ Captura de saída em tempo real usa manipuladores de eventos:
 - Geração de help integrada
 - Suporte a subcomandos
 
-### 2. Terminal.Gui para TUI
-
-**Decisão:** Usar Terminal.Gui para a interface de terminal interativa.
-
-**Justificativa:**
-- Madura e bem mantida
-- Suporte multiplataforma
-- API declarativa
-- Boa documentação
-
-### 3. Npgsql para Acesso a Banco de Dados
+### 2. Npgsql para Acesso a Banco de Dados
 
 **Decisão:** Usar Npgsql como provedor PostgreSQL.
 
@@ -247,7 +148,7 @@ Captura de saída em tempo real usa manipuladores de eventos:
 - Suporte completo a recursos PostgreSQL
 - Manutenção ativa
 
-### 4. Microsoft.Extensions.Configuration
+### 3. Microsoft.Extensions.Configuration
 
 **Decisão:** Usar as extensões de configuração para configurações flexíveis.
 
@@ -255,15 +156,6 @@ Captura de saída em tempo real usa manipuladores de eventos:
 - Múltiplas fontes de configuração (JSON, variáveis de ambiente, user secrets)
 - Tipagem forte com binding de configuração
 - Padrão reconhecido pela indústria
-
-### 5. Execução de Processo Assíncrono no TUI
-
-**Decisão:** Executar comandos externos de forma assíncrona com atualizações de UI em tempo real.
-
-**Justificativa:**
-- UI não-bloqueante
-- Exibição de saída em tempo real
-- Melhor experiência do usuário para comandos de longa duração
 
 ## Considerações de Escalabilidade
 
@@ -273,12 +165,6 @@ A arquitetura suporta fácil adição de novos comandos:
 1. Criar nova classe de comando em `Commands/`
 2. Implementar o método `Build()`
 3. Registrar em `Program.cs`
-
-### Extensibilidade do Menu TUI
-
-Adicionar novos itens de menu é simples:
-1. Criar MenuItem com nome, descrição e ação
-2. Adicionar à lista de menu apropriada
 
 ### Escalabilidade de Configuração
 
@@ -342,7 +228,6 @@ Adicionar logging estruturado:
 Melhorar cobertura de testes:
 - Testes unitários de comandos
 - Testes de integração para operações de banco de dados
-- Testes de interação com TUI
 
 ### 6. Suporte multiplataforma
 
@@ -378,7 +263,6 @@ A arquitetura do DevMaid fornece uma base sólida para uma ferramenta CLI com:
 - Separação clara de preocupações
 - Extensibilidade fácil
 - Código manutenível
-- Boa experiência do usuário através do modo TUI
 - Gerenciamento de configuração flexível
 
 O design modular permite fácil adição de novos recursos enquanto mantém qualidade de código e testabilidade.

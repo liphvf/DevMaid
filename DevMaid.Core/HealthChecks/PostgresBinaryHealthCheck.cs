@@ -6,10 +6,16 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace DevMaid.Core.HealthChecks;
 
+/// <summary>
+/// Health check that verifies PostgreSQL binaries are available in the system.
+/// </summary>
 public class PostgresBinaryHealthCheck(IConfigurationService configurationService) : IHealthCheck
 {
     private readonly IConfigurationService _configurationService = configurationService;
 
+    /// <summary>
+    /// Checks the health of PostgreSQL binary availability.
+    /// </summary>
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)

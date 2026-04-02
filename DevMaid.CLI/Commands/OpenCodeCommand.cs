@@ -4,12 +4,19 @@ using System.Text.Json.Nodes;
 
 namespace DevMaid.CLI.Commands;
 
+/// <summary>
+/// Provides commands for managing OpenCode configuration.
+/// </summary>
 public static class OpenCodeCommand
 {
     private static readonly string ConfigPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".config", "opencode", "config.json");
 
+    /// <summary>
+    /// Builds the opencode command structure.
+    /// </summary>
+    /// <returns>The configured <see cref="Command"/>.</returns>
     public static Command Build()
     {
         var command = new Command("opencode", "Comandos para OpenCode");
@@ -34,6 +41,9 @@ public static class OpenCodeCommand
         return command;
     }
 
+    /// <summary>
+    /// Configures the MCP database integration in the OpenCode config.json file.
+    /// </summary>
     public static void ConfigureMcpDatabase()
     {
         var configDir = Path.GetDirectoryName(ConfigPath)

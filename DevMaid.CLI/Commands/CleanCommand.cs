@@ -2,8 +2,15 @@ using System.CommandLine;
 
 namespace DevMaid.CLI.Commands;
 
+/// <summary>
+/// Provides a command to remove bin and obj build output folders.
+/// </summary>
 public static class CleanCommand
 {
+    /// <summary>
+    /// Builds the clean command structure.
+    /// </summary>
+    /// <returns>The configured <see cref="Command"/>.</returns>
     public static Command Build()
     {
         var command = new Command("clean", "Remove bin and obj folders from solution.");
@@ -24,6 +31,10 @@ public static class CleanCommand
         return command;
     }
 
+    /// <summary>
+    /// Removes all bin and obj directories under the specified path.
+    /// </summary>
+    /// <param name="directoryPath">The root directory to clean. Uses current directory if null.</param>
     public static void Clean(string? directoryPath)
     {
         var path = directoryPath ?? Directory.GetCurrentDirectory();

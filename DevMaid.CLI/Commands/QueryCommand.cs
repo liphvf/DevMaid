@@ -11,8 +11,15 @@ using Npgsql;
 
 namespace DevMaid.CLI.Commands;
 
+/// <summary>
+/// Provides commands for executing SQL queries and exporting results to CSV.
+/// </summary>
 public static class QueryCommand
 {
+    /// <summary>
+    /// Builds the query command structure.
+    /// </summary>
+    /// <returns>The configured <see cref="Command"/>.</returns>
     public static Command Build()
     {
         var command = new Command("query", "Execute SQL queries and export results to CSV.");
@@ -188,6 +195,12 @@ public static class QueryCommand
         return command;
     }
 
+    /// <summary>
+    /// Executes a SQL query and exports the results to CSV.
+    /// </summary>
+    /// <param name="options">The query execution options.</param>
+    /// <exception cref="ArgumentException">Thrown when required options are missing or invalid.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the SQL input file does not exist.</exception>
     public static void Run(QueryCommandOptions options)
     {
         // Validate input file
@@ -1277,7 +1290,11 @@ public static class QueryCommand
 }
 
 // Helper class for deserializing servers configuration
+/// <summary>
+/// Represents the top-level servers configuration for deserialization.
+/// </summary>
 public class ServersConfig
 {
+    /// <summary>Gets or sets the list of server configurations.</summary>
     public List<ServerConfig> Servers { get; set; } = new();
 }

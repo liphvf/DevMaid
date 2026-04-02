@@ -5,8 +5,15 @@ using System.Text.Json.Serialization;
 
 namespace DevMaid.CLI.Commands;
 
+/// <summary>
+/// Provides commands to export, import, and list Windows optional features using DISM.
+/// </summary>
 public static class WindowsFeaturesCommand
 {
+    /// <summary>
+    /// Builds the windowsfeatures command structure.
+    /// </summary>
+    /// <returns>The configured <see cref="Command"/>.</returns>
     public static Command Build()
     {
         var command = new Command("windowsfeatures", "Export and import Windows optional features.");
@@ -57,6 +64,10 @@ public static class WindowsFeaturesCommand
         return command;
     }
 
+    /// <summary>
+    /// Exports the currently enabled Windows features to a JSON file.
+    /// </summary>
+    /// <param name="outputPath">The path to write the exported features JSON file.</param>
     public static void ExportFeatures(string outputPath)
     {
         Console.WriteLine("Getting enabled Windows features...");
@@ -78,6 +89,10 @@ public static class WindowsFeaturesCommand
         Console.WriteLine($"Exported {features.Count} enabled features to: {outputPath}");
     }
 
+    /// <summary>
+    /// Imports and enables Windows features from a previously exported JSON file.
+    /// </summary>
+    /// <param name="inputPath">The path to the JSON file containing the exported features.</param>
     public static void ImportFeatures(string inputPath)
     {
         if (!File.Exists(inputPath))
@@ -122,6 +137,10 @@ public static class WindowsFeaturesCommand
         }
     }
 
+    /// <summary>
+    /// Lists all available Windows features, optionally filtering to only enabled ones.
+    /// </summary>
+    /// <param name="enabledOnly">When <c>true</c>, shows only enabled features.</param>
     public static void ListFeatures(bool enabledOnly = false)
     {
         Console.WriteLine("Retrieving Windows features...");
@@ -224,11 +243,16 @@ public static class WindowsFeaturesCommand
     }
 }
 
+/// <summary>
+/// Represents the data exported from a Windows features snapshot.
+/// </summary>
 public class WindowsFeaturesExport
 {
+    /// <summary>Gets or sets the UTC timestamp when the export was created.</summary>
     [JsonPropertyName("exportedAt")]
     public DateTime ExportedAt { get; set; }
 
+    /// <summary>Gets or sets the list of enabled Windows feature names.</summary>
     [JsonPropertyName("features")]
     public List<string> Features { get; set; } = new();
 }

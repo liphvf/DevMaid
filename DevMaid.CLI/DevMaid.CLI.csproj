@@ -9,6 +9,7 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>devmaid</ToolCommandName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- NuGet package settings -->
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -39,7 +40,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.CommandLine" Version="2.0.5" />
-    <PackageReference Include="Terminal.Gui" Version="1.19.0" />
     <PackageReference Include="Npgsql" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />

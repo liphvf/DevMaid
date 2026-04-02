@@ -4,8 +4,16 @@ using Polly.Retry;
 
 namespace DevMaid.Core.Resilience;
 
+/// <summary>
+/// Provides resilience pipeline policies for handling transient failures.
+/// </summary>
 public static class ResiliencePolicies
 {
+    /// <summary>
+    /// Creates a resilience pipeline with retry logic for database operations.
+    /// </summary>
+    /// <param name="onRetry">Optional callback invoked on each retry attempt.</param>
+    /// <returns>A resilience pipeline configured for database retry scenarios.</returns>
     public static ResiliencePipeline CreateDatabaseRetryPipeline(
         Action<string> onRetry = null!)
     {
@@ -29,6 +37,11 @@ public static class ResiliencePolicies
             .Build();
     }
 
+    /// <summary>
+    /// Creates a resilience pipeline with retry logic for file operations.
+    /// </summary>
+    /// <param name="onRetry">Optional callback invoked on each retry attempt.</param>
+    /// <returns>A resilience pipeline configured for file operation retry scenarios.</returns>
     public static ResiliencePipeline CreateFileOperationPipeline(
         Action<string> onRetry = null!)
     {

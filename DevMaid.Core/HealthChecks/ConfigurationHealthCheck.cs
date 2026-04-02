@@ -5,10 +5,16 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace DevMaid.Core.HealthChecks;
 
+/// <summary>
+/// Health check that verifies the application configuration is properly loaded.
+/// </summary>
 public class ConfigurationHealthCheck(IConfigurationService configurationService) : IHealthCheck
 {
     private readonly IConfigurationService _configurationService = configurationService;
 
+    /// <summary>
+    /// Checks the health of the configuration.
+    /// </summary>
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)

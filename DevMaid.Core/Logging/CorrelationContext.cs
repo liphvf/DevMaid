@@ -3,13 +3,31 @@ using Microsoft.Extensions.Logging;
 
 namespace DevMaid.Core.Logging;
 
+/// <summary>
+/// Provides correlation context for tracking operations across the application.
+/// </summary>
 public class CorrelationContext
 {
     private static readonly AsyncLocal<CorrelationContext?> CurrentContext = new();
 
+    /// <summary>
+    /// Gets the unique correlation identifier for this context.
+    /// </summary>
     public string CorrelationId { get; }
+
+    /// <summary>
+    /// Gets the UTC timestamp when this context was created.
+    /// </summary>
     public DateTime StartTimeUtc { get; }
+
+    /// <summary>
+    /// Gets or sets the name of the command being executed.
+    /// </summary>
     public string CommandName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the dictionary of additional properties associated with this context.
+    /// </summary>
     public Dictionary<string, object> Properties { get; } = [];
 
     private CorrelationContext(string correlationId)
@@ -18,6 +36,11 @@ public class CorrelationContext
         StartTimeUtc = DateTime.UtcNow;
     }
 
+    /// <summary>
+    /// Creates a new correlation context with an optional correlation ID.
+    /// </summary>
+    /// <param name="correlationId">Optional correlation ID. If null, a new GUID is generated.</param>
+    /// <returns>A new CorrelationContext instance.</returns>
     public static CorrelationContext Create(string? correlationId = null)
     {
         var context = new CorrelationContext(correlationId ?? Guid.NewGuid().ToString("N")[..8]);
@@ -25,18 +48,39 @@ public class CorrelationContext
         return context;
     }
 
+    /// <summary>
+    /// Gets the current correlation context for the async flow.
+    /// </summary>
     public static CorrelationContext? Current => CurrentContext.Value;
 
+    /// <summary>
+    /// Sets a property in the context properties dictionary.
+    /// </summary>
+    /// <param name="key">The property key.</param>
+    /// <param name="value">The property value.</param>
     public void SetProperty(string key, object value)
     {
         Properties[key] = value;
     }
 
+    /// <summary>
+    /// Gets the elapsed time since this context was created.
+    /// </summary>
     public TimeSpan Elapsed => DateTime.UtcNow - StartTimeUtc;
 }
 
+/// <summary>
+/// Extension methods for logging with correlation context.
+/// </summary>
 public static class LoggerExtensions
 {
+    /// <summary>
+    /// Logs a message with correlation context information.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="logLevel">The log level.</param>
+    /// <param name="message">The log message.</param>
+    /// <param name="args">Optional format arguments for the message.</param>
     public static void LogWithCorrelation(this Microsoft.Extensions.Logging.ILogger logger, LogLevel logLevel, string message, params object[] args)
     {
         var correlation = CorrelationContext.Current;
@@ -57,6 +101,12 @@ public static class LoggerExtensions
         }
     }
 
+    /// <summary>
+    /// Begins a scope with correlation context information for the specified command.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
+    /// <param name="commandName">The name of the command being executed.</param>
+    /// <returns>A disposable scope wrapper.</returns>
     public static IDisposable BeginCorrelationScope(this Microsoft.Extensions.Logging.ILogger logger, string commandName)
     {
         var correlation = CorrelationContext.Current;

@@ -6,6 +6,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace DevMaid.Core.HealthChecks;
 
+/// <summary>
+/// Health check that verifies database connectivity.
+/// </summary>
 public class DatabaseConnectionHealthCheck(
     IConfigurationService configurationService,
     IDatabaseService databaseService) : IHealthCheck
@@ -13,6 +16,9 @@ public class DatabaseConnectionHealthCheck(
     private readonly IConfigurationService _configurationService = configurationService;
     private readonly IDatabaseService _databaseService = databaseService;
 
+    /// <summary>
+    /// Checks the health of the database connection.
+    /// </summary>
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)

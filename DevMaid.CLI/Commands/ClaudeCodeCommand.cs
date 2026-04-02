@@ -6,11 +6,18 @@ using System.Text.Json.Nodes;
 
 namespace DevMaid.CLI.Commands;
 
+/// <summary>
+/// Provides commands for managing Claude Code installation and configuration.
+/// </summary>
 public static class ClaudeCodeCommand
 {
     private const string McpDatabaseArguments = "mcp add --transport sse toolbox http://127.0.0.1:5000/mcp/sse --scope user";
     private const string WingetInstallArguments = "install --id Anthropic.ClaudeCode -e --accept-package-agreements --accept-source-agreements";
 
+    /// <summary>
+    /// Builds the claude command structure.
+    /// </summary>
+    /// <returns>The configured <see cref="Command"/>.</returns>
     public static Command Build()
     {
         var command = new Command("claude", "Comandos para Claude Code");
@@ -50,6 +57,11 @@ public static class ClaudeCodeCommand
         return command;
     }
 
+    /// <summary>
+    /// Installs Claude Code using winget.
+    /// </summary>
+    /// <exception cref="PlatformNotSupportedException">Thrown when not running on Windows.</exception>
+    /// <exception cref="Exception">Thrown when the winget installation fails.</exception>
     public static void Install()
     {
         if (!OperatingSystem.IsWindows())
@@ -64,11 +76,19 @@ public static class ClaudeCodeCommand
         }
     }
 
+    /// <summary>
+    /// Configures the MCP database integration for Claude Code.
+    /// </summary>
     public static void ConfigureMcpDatabase()
     {
         _ = RunProcess("claude", McpDatabaseArguments);
     }
 
+    /// <summary>
+    /// Configures the Windows environment for Claude Code by updating ~/.claude.json permissions
+    /// and creating a CLAUDE.md file with global shell rules.
+    /// </summary>
+    /// <exception cref="PlatformNotSupportedException">Thrown when not running on Windows.</exception>
     public static void ConfigureWindowsEnvironment()
     {
         if (!OperatingSystem.IsWindows())

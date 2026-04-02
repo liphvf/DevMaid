@@ -4,8 +4,20 @@ using System.Text;
 
 namespace DevMaid.CLI;
 
+/// <summary>
+/// General utility methods for the DevMaid CLI.
+/// </summary>
 public static class Utils
 {
+    /// <summary>
+    /// Builds a PostgreSQL connection string from individual parameters.
+    /// </summary>
+    /// <param name="host">The database host.</param>
+    /// <param name="db">The database name.</param>
+    /// <param name="user">The database username.</param>
+    /// <param name="password">The database password.</param>
+    /// <returns>A formatted PostgreSQL connection string.</returns>
+    /// <exception cref="ArgumentException">Thrown when any required parameter is null or whitespace.</exception>
     public static string GetConnectionString(string? host, string? db, string? user, string? password)
     {
         if (string.IsNullOrWhiteSpace(db))
@@ -31,6 +43,11 @@ public static class Utils
         return $"Host={host};Username={user};Password={password};Database={db}";
     }
 
+    /// <summary>
+    /// Detects and returns the encoding of a file.
+    /// </summary>
+    /// <param name="filePath">The path to the file.</param>
+    /// <returns>The detected <see cref="Encoding"/> of the file.</returns>
     public static Encoding GetCurrentFileEncoding(string filePath)
     {
         using var sr = new StreamReader(filePath, true);
@@ -42,6 +59,12 @@ public static class Utils
         return sr.CurrentEncoding;
     }
 
+    /// <summary>
+    /// Converts a <see cref="SecureString"/> to a plain <see cref="string"/>.
+    /// </summary>
+    /// <param name="value">The <see cref="SecureString"/> to convert.</param>
+    /// <returns>The plain string representation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static string SecureStringToString(SecureString value)
     {
         if (value is null)
@@ -61,6 +84,10 @@ public static class Utils
         }
     }
 
+    /// <summary>
+    /// Prompts the user to enter a password securely via the console, masking input.
+    /// </summary>
+    /// <returns>A <see cref="SecureString"/> containing the entered password.</returns>
     public static SecureString GetConsoleSecurePassword()
     {
         Console.Write("Password: ");

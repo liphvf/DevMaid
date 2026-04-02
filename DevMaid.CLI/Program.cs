@@ -56,7 +56,6 @@ internal static class Program
             ClaudeCodeCommand.Build(),
             OpenCodeCommand.Build(),
             WingetCommand.Build(),
-            TuiCommand.Build(),
             DatabaseCommand.Build(),
             QueryCommand.Build(),
             CleanCommand.Build(),

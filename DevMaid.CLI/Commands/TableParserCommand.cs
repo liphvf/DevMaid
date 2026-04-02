@@ -6,6 +6,9 @@ using DevMaid.CLI.CommandOptions;
 
 namespace DevMaid.CLI.Commands;
 
+/// <summary>
+/// Provides a command that converts a PostgreSQL table schema into C# property declarations.
+/// </summary>
 public static class TableParserCommand
 {
     private static readonly Dictionary<string, string> DatabaseTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -43,6 +46,10 @@ public static class TableParserCommand
         { "boolean", "bool" }
     };
 
+    /// <summary>
+    /// Builds the table-parser command structure.
+    /// </summary>
+    /// <returns>The configured <see cref="Command"/>.</returns>
     public static Command Build()
     {
         var command = new Command("table-parser", "Convert a database table in C# propreties class");
@@ -99,6 +106,12 @@ public static class TableParserCommand
         return command;
     }
 
+    /// <summary>
+    /// Generates C# property declarations from a database table schema.
+    /// </summary>
+    /// <param name="options">The table parser options specifying connection and output settings.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when required options are missing or invalid.</exception>
     public static void Parse(TableParserOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);

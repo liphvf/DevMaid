@@ -1,6 +1,6 @@
-namespace DevMaid.CLI.Services.Logging;
-
 using Microsoft.Extensions.DependencyInjection;
+
+namespace DevMaid.CLI.Services.Logging;
 
 /// <summary>
 /// Static logger class for backward compatibility.

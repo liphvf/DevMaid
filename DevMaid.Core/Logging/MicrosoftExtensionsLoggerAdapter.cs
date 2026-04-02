@@ -9,16 +9,19 @@ public sealed class MicrosoftExtensionsLoggerAdapter(Microsoft.Extensions.Loggin
 {
     private readonly Microsoft.Extensions.Logging.ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+    /// <inheritdoc/>
     public void LogInformation(string message, params object[] args)
     {
         _logger.LogInformation(message, args);
     }
 
+    /// <inheritdoc/>
     public void LogWarning(string message, params object[] args)
     {
         _logger.LogWarning(message, args);
     }
 
+    /// <inheritdoc/>
     public void LogError(string message, Exception? exception = null, params object[] args)
     {
         if (exception != null)
@@ -31,6 +34,7 @@ public sealed class MicrosoftExtensionsLoggerAdapter(Microsoft.Extensions.Loggin
         }
     }
 
+    /// <inheritdoc/>
     public void LogDebug(string message, params object[] args)
     {
         _logger.LogDebug(message, args);

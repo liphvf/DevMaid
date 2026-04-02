@@ -5,8 +5,15 @@ using DevMaid.CLI.CommandOptions;
 
 namespace DevMaid.CLI.Commands;
 
+/// <summary>
+/// Provides file utility commands such as combining multiple files.
+/// </summary>
 public static class FileCommand
 {
+    /// <summary>
+    /// Builds the file command structure.
+    /// </summary>
+    /// <returns>The configured <see cref="Command"/>.</returns>
     public static Command Build()
     {
         var command = new Command("file", "File utilities.");
@@ -42,6 +49,11 @@ public static class FileCommand
         return command;
     }
 
+    /// <summary>
+    /// Combines all files matching the input pattern into a single output file.
+    /// </summary>
+    /// <param name="options">The file command options specifying input pattern and output path.</param>
+    /// <exception cref="ArgumentException">Thrown when the input pattern is missing or invalid.</exception>
     public static void Combine(FileCommandOptions options)
     {
         if (string.IsNullOrWhiteSpace(options.Input))

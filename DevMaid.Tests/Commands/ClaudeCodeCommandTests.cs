@@ -160,7 +160,7 @@ public class ClaudeCodeCommandTests
 
     private static JsonObject InvokePrivateLoadSettingsFile(string settingsPath)
     {
-        var method = typeof(DevMaid.CLI.Commands.ClaudeCodeCommand).GetMethod("LoadSettingsFile",
+        var method = typeof(CLI.Commands.ClaudeCodeCommand).GetMethod("LoadSettingsFile",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         return (JsonObject)method!.Invoke(null, [settingsPath])!;

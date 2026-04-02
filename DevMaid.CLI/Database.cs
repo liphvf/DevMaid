@@ -3,10 +3,26 @@ using Npgsql;
 
 namespace DevMaid.CLI;
 
+/// <summary>
+/// Represents column information for a database table.
+/// </summary>
+/// <param name="ColumnName">The name of the column.</param>
+/// <param name="DataType">The data type of the column.</param>
+/// <param name="IsNullable">Whether the column allows null values.</param>
 public sealed record TableColumnInfo(string ColumnName, string DataType, bool IsNullable);
 
+/// <summary>
+/// Provides database utility methods.
+/// </summary>
 public static class Database
 {
+    /// <summary>
+    /// Retrieves column information for a given table from a PostgreSQL database.
+    /// </summary>
+    /// <param name="connectionString">The connection string to the database.</param>
+    /// <param name="tableName">The name of the table to inspect.</param>
+    /// <returns>A list of <see cref="TableColumnInfo"/> describing the table's columns.</returns>
+    /// <exception cref="ArgumentException">Thrown when the connection string or table name is null or whitespace.</exception>
     public static List<TableColumnInfo> GetColumnsInfo(string connectionString, string? tableName)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
