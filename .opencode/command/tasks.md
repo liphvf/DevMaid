@@ -2,11 +2,11 @@
 description: Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.
 handoffs: 
   - label: Analyze For Consistency
-    agent: speckit.analyze
+    agent: analyze
     prompt: Run a project analysis for consistency
     send: true
   - label: Implement Project
-    agent: speckit.implement
+    agent: implement
     prompt: Start the implementation in phases
     send: true
 ---
@@ -18,6 +18,7 @@ $ARGUMENTS
 ```
 
 You **MUST** consider the user input before proceeding (if not empty).
+> **IDIOMA OBRIGATÓRIO — NÃO-NEGOCIÁVEL**: A constituição do projeto determina **pt-BR (Português do Brasil)** como idioma canônico para toda documentação gerada. Todo artefato produzido por este comando (arquivos .md, relatórios, checklists, seções adicionadas a specs, planos ou tarefas) **DEVE ser escrito em pt-BR**, independentemente do idioma usado pelo usuário na descrição da feature ou nos argumentos do comando.
 
 ## Pre-Execution Checks
 

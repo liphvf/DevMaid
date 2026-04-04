@@ -10,6 +10,7 @@ $ARGUMENTS
 ```
 
 You **MUST** consider the user input before proceeding (if not empty).
+> **IDIOMA OBRIGATÓRIO — NÃO-NEGOCIÁVEL**: A constituição do projeto determina **pt-BR (Português do Brasil)** como idioma canônico para toda documentação gerada. Todo artefato produzido por este comando (arquivos .md, relatórios, checklists, seções adicionadas a specs, planos ou tarefas) **DEVE ser escrito em pt-BR**, independentemente do idioma usado pelo usuário na descrição da feature ou nos argumentos do comando.
 
 ## Outline
 

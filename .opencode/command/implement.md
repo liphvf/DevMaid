@@ -9,6 +9,7 @@ $ARGUMENTS
 ```
 
 You **MUST** consider the user input before proceeding (if not empty).
+> **IDIOMA OBRIGATÓRIO — NÃO-NEGOCIÁVEL**: A constituição do projeto determina **pt-BR (Português do Brasil)** como idioma canônico para toda documentação gerada. Todo artefato produzido por este comando (arquivos .md, relatórios, checklists, seções adicionadas a specs, planos ou tarefas) **DEVE ser escrito em pt-BR**, independentemente do idioma usado pelo usuário na descrição da feature ou nos argumentos do comando.
 
 ## Pre-Execution Checks
 
@@ -166,7 +167,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Confirm the implementation follows the technical plan
    - Report final status with summary of completed work
 
-Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/speckit.tasks` first to regenerate the task list.
+Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/tasks` first to regenerate the task list.
 
 10. **Check for extension hooks**: After completion validation, check if `.specify/extensions.yml` exists in the project root.
     - If it exists, read it and look for entries under the `hooks.after_implement` key
