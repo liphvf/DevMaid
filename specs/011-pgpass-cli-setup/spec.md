@@ -5,11 +5,23 @@
 **Status**: Rascunho  
 **Entrada**: Descrição do usuário: "Comando CLI para configurar pgpass.conf no Windows para autenticação PostgreSQL sem senha"
 
+## Clarifications
+
+### Session 2026-04-04
+
+- Q: Quais são os parâmetros obrigatórios vs opcionais para o comando de adicionar entrada pgpass? → A: Obrigatórios: banco de dados e senha. Opcionais (com padrão): hostname (padrão: localhost), porta (padrão: 5432), usuário (padrão: postgres)
+- Q: Como tratar host inválido ou senha vazia? → A: Validar antes de escrever; exibir mensagem de erro descritiva e encerrar sem modificar o arquivo
+- Q: Como tratar entrada duplicata? → A: Informar que a entrada já existe no arquivo; não adicionar linha redundante
+- Q: Como tratar AppData sem permissão de escrita? → A: Informar o usuário para executar o comando em um terminal com privilégios de administrador
+- Q: Como tratar caracteres especiais na senha? → A: Fazer escape automático (`:` → `\:`, `\` → `\\`) antes de gravar
+- Q: Como tratar pgpass.conf somente-leitura ou travado? → A: Capturar erro de I/O e exibir mensagem informativa sem corromper o arquivo
+- Q: Onde o comando pgpass deve ser posicionado na hierarquia CLI? → A: Aninhado dentro de `database` → `devmaid database pgpass <ação>`
+
 ## Cenários de Usuário e Testes *(obrigatório)*
 
 ### História de Usuário 1 — Configurar Arquivo de Senhas PostgreSQL via CLI (Prioridade: P1)
 
-Um desenvolvedor ou administrador de banco de dados quer configurar autenticação PostgreSQL sem senha no Windows sem precisar localizar manualmente o diretório correto, criar a estrutura de pastas e editar o arquivo de configuração à mão. Ele executa um único comando CLI fornecendo os dados de conexão (host, porta, banco de dados, usuário, senha) e a ferramenta cuida de toda a configuração automaticamente.
+Um desenvolvedor ou administrador de banco de dados quer configurar autenticação PostgreSQL sem senha no Windows sem precisar localizar manualmente o diretório correto, criar a estrutura de pastas e editar o arquivo de configuração à mão. Ele executa `devmaid database pgpass add` fornecendo os dados de conexão e a ferramenta cuida de toda a configuração automaticamente.
 
 **Por que esta prioridade**: Esta é a funcionalidade central — o motivo principal de existência do comando. Sem ela funcionando, nada mais tem valor.
 
@@ -19,7 +31,7 @@ Um desenvolvedor ou administrador de banco de dados quer configurar autenticaç�
 
 1. **Dado que** o diretório `postgresql` não existe em `AppData\Roaming`, **Quando** o usuário executa o comando CLI com parâmetros de conexão válidos, **Então** o diretório é criado automaticamente e o `pgpass.conf` é escrito com a entrada correta
 2. **Dado que** o `pgpass.conf` já existe com outras entradas, **Quando** o usuário adiciona uma nova entrada via CLI, **Então** as entradas existentes são preservadas e a nova é adicionada ao final
-3. **Dado que** o usuário fornece todos os parâmetros obrigatórios (host, porta, banco, usuário, senha), **Quando** o comando é executado, **Então** a entrada é escrita no formato correto `hostname:porta:banco:usuario:senha`
+3. **Dado que** o usuário fornece apenas banco de dados e senha (parâmetros obrigatórios), **Quando** o comando é executado, **Então** a entrada é escrita no formato correto `localhost:5432:banco:postgres:senha` com os valores padrão aplicados
 4. **Dado que** o usuário quer usar curinga para o campo de banco de dados, **Quando** ele omite o parâmetro de banco ou passa `*`, **Então** `*` é escrito como valor do banco na entrada
 
 ---
@@ -54,28 +66,31 @@ Um usuário quer remover uma entrada de conexão PostgreSQL específica do `pgpa
 
 ---
 
-### Casos de Borda
+### Casos de Borda e Tratamento de Erros
 
-- O que acontece quando o usuário fornece um formato de host inválido ou uma senha vazia?
-- Como o sistema lida com uma entrada que é duplicata exata de uma já existente?
-- O que acontece quando `AppData\Roaming` não é acessível por falta de permissão?
-- Como o sistema lida com caracteres especiais (`:`, `\`, espaços) no campo de senha?
-- O que acontece quando o `pgpass.conf` está somente-leitura ou travado por outro processo?
+- **Host inválido / senha vazia**: A CLI valida os parâmetros antes de escrever; exibe mensagem de erro descritiva ao usuário e encerra sem modificar o arquivo
+- **Entrada duplicata**: Se uma entrada com o mesmo host, porta, banco e usuário já existe, a CLI informa que a entrada já está presente e não adiciona linha redundante
+- **AppData sem permissão de escrita**: A CLI captura o erro de acesso negado e orienta o usuário a executar o comando em um terminal com privilégios de administrador
+- **Caracteres especiais na senha** (`:`, `\`, espaços): A CLI realiza escape automático antes de gravar — dois-pontos viram `\:` e barras invertidas viram `\\`, conforme a especificação pgpass
+- **`pgpass.conf` somente-leitura ou travado**: A CLI captura o erro de I/O e exibe mensagem informativa ao usuário, sem corromper o arquivo existente
 
 ## Requisitos *(obrigatório)*
 
 ### Requisitos Funcionais
 
-- **RF-001**: A CLI DEVE fornecer um comando para adicionar uma nova entrada ao `pgpass.conf` aceitando host, porta, banco de dados, usuário e senha como parâmetros
+- **RF-001**: A CLI DEVE fornecer o subcomando `devmaid database pgpass add` para adicionar uma nova entrada ao `pgpass.conf`, aceitando banco de dados e senha como parâmetros obrigatórios, com host (padrão: `localhost`), porta (padrão: `5432`) e usuário (padrão: `postgres`) opcionais
 - **RF-002**: A CLI DEVE criar automaticamente o diretório `AppData\Roaming\postgresql\` se ele não existir
 - **RF-003**: A CLI DEVE escrever entradas no formato correto: `hostname:porta:banco:usuario:senha`
 - **RF-004**: A CLI DEVE suportar `*` como valor curinga para o campo de banco de dados, aceitando explicitamente ou como padrão quando o banco for omitido
 - **RF-005**: Ao adicionar uma entrada, a CLI DEVE preservar todas as entradas existentes no arquivo e adicionar a nova ao final
-- **RF-006**: A CLI DEVE detectar e ignorar entradas duplicadas (mesmo host, porta, banco e usuário) para evitar linhas redundantes
-- **RF-007**: A CLI DEVE fornecer um subcomando de listagem que exibe as entradas existentes com senhas mascaradas
-- **RF-008**: A CLI DEVE fornecer um subcomando de remoção para excluir entradas que correspondam a um dado host, banco e usuário
+- **RF-006**: A CLI DEVE detectar entradas duplicadas (mesmo host, porta, banco e usuário); neste caso, DEVE informar ao usuário que a entrada já existe e não adicionar linha redundante
+- **RF-007**: A CLI DEVE fornecer o subcomando `devmaid database pgpass list` que exibe as entradas existentes com senhas mascaradas
+- **RF-008**: A CLI DEVE fornecer o subcomando `devmaid database pgpass remove` para excluir entradas que correspondam a um dado host, banco e usuário
 - **RF-009**: A CLI DEVE exibir uma mensagem clara de sucesso ou erro para cada operação
-- **RF-010**: A CLI DEVE tratar caracteres especiais na senha escapando dois-pontos (`:`) e barras invertidas (`\`) conforme exigido pela especificação do formato pgpass
+- **RF-010**: A CLI DEVE tratar caracteres especiais na senha realizando escape automático antes de gravar: dois-pontos (`:`) → `\:` e barras invertidas (`\`) → `\\`, conforme exigido pela especificação do formato pgpass
+- **RF-011**: A CLI DEVE validar os parâmetros de entrada antes de escrever — senha vazia DEVE resultar em mensagem de erro descritiva e encerramento sem modificação do arquivo
+- **RF-012**: A CLI DEVE detectar erro de permissão ao acessar `AppData\Roaming` e orientar o usuário a reexecutar o comando com privilégios de administrador
+- **RF-013**: A CLI DEVE detectar falha de I/O ao tentar gravar no `pgpass.conf` (arquivo somente-leitura ou travado) e exibir mensagem informativa sem corromper o conteúdo existente
 
 ### Entidades Principais
 
@@ -96,6 +111,8 @@ Um usuário quer remover uma entrada de conexão PostgreSQL específica do `pgpa
 - A ferramenta tem como alvo específico usuários Windows; suporte a pgpass em Linux/macOS está fora do escopo desta feature
 - O usuário possui as permissões necessárias no nível do SO para escrever no seu próprio diretório `AppData\Roaming`
 - A porta padrão é `5432` quando não fornecida pelo usuário
-- O curinga `*` é válido para os campos de host e banco de dados conforme a especificação pgpass, mas a CLI exige um host específico por padrão
-- A ferramenta está integrada à CLI existente do DevMaid e segue a estrutura de comandos e convenções de saída do projeto
+- O hostname padrão é `localhost` quando não fornecido pelo usuário
+- O usuário padrão é `postgres` quando não fornecido pelo usuário
+- O curinga `*` é válido para os campos de host e banco de dados conforme a especificação pgpass
+- A ferramenta está integrada à CLI existente do DevMaid; o comando `pgpass` é subcomando de `database` → `devmaid database pgpass <ação>`
 - Não é necessário fluxo de prompt interativo ou GUI; todos os parâmetros são passados como argumentos de linha de comando (com padrões sensatos quando aplicável)

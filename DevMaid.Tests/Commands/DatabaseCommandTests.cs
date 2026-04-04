@@ -72,13 +72,15 @@ public class DatabaseCommandTests
     {
         var command = CLI.Commands.DatabaseCommand.Build();
 
-        Assert.AreEqual(2, command.Children.Count());
+        Assert.AreEqual(3, command.Children.Count());
 
         var backupCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "backup");
         var restoreCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "restore");
+        var pgpassCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "pgpass");
 
         Assert.IsNotNull(backupCommand);
         Assert.IsNotNull(restoreCommand);
+        Assert.IsNotNull(pgpassCommand);
     }
 
     [TestMethod]

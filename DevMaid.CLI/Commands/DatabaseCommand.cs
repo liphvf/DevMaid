@@ -22,7 +22,8 @@ public static class DatabaseCommand
         var command = new Command("database", "Database utilities.")
         {
             BuildBackupCommand(),
-            BuildRestoreCommand()
+            BuildRestoreCommand(),
+            PgPassCommand.Build()
         };
 
         return command;
