@@ -1,6 +1,6 @@
 # DevMaid — Índice de Specs
 
-Este documento é o índice mestre de todas as especificações de features do DevMaid. Cada spec segue a metodologia de [Desenvolvimento Orientado a Especificações](https://github.com/github/spec-kit) e é governada pela [Constituição do Projeto](../CONSTITUTION.md).
+Este documento é o índice mestre de todas as especificações de features do DevMaid. Cada spec segue a metodologia de [Desenvolvimento Orientado a Especificações](https://github.com/github/spec-kit) e é governada pela [Constituição do Projeto](../.specify/memory/constitution.md).
 
 ---
 
@@ -47,7 +47,7 @@ Rascunho → Revisão → Aprovado → Implementado → Depreciado
 ## Adicionando uma Nova Spec
 
 1. Atribuir o próximo ID sequencial (ex.: `011`)
-2. Criar `docs/specs/<ID>-<slug>/spec.md` usando a estrutura de template abaixo
+2. Criar `specs/<ID>-<slug>/spec.md` usando a estrutura de template abaixo
 3. Adicionar uma entrada a este índice
 4. Marcar o status como **Rascunho** até que todos os marcadores `[NECESSITA ESCLARECIMENTO]` sejam resolvidos
 
