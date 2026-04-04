@@ -2,10 +2,10 @@
 description: Create or update the feature specification from a natural language feature description.
 handoffs: 
   - label: Build Technical Plan
-    agent: speckit.plan
+    agent: plan
     prompt: Create a plan for the spec. I am building with...
   - label: Clarify Spec Requirements
-    agent: speckit.clarify
+    agent: clarify
     prompt: Clarify specification requirements
     send: true
 ---
@@ -54,7 +54,9 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
-The text the user typed after `/speckit.specify` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `$ARGUMENTS` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
+The text the user typed after `/specify` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `$ARGUMENTS` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
+
+**LANGUAGE REQUIREMENT — MANDATORY**: The project constitution mandates **pt-BR (Brazilian Portuguese)** as the canonical language for all documentation, specs, and checklists. You MUST write the entire specification (all section headings, body text, acceptance scenarios, requirements, success criteria, assumptions, and the checklist file) in **pt-BR**, regardless of the language the user used to describe the feature. This is non-negotiable.
 
 Given that feature description, do this:
 
@@ -157,7 +159,7 @@ Given that feature description, do this:
       
       ## Notes
       
-      - Items marked incomplete require spec updates before `/speckit.clarify` or `/speckit.plan`
+      - Items marked incomplete require spec updates before `/clarify` or `/plan`
       ```
 
    b. **Run Validation Check**: Review the spec against each checklist item:
@@ -211,7 +213,7 @@ Given that feature description, do this:
 
    d. **Update Checklist**: After each validation iteration, update the checklist file with current pass/fail status
 
-7. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/speckit.clarify` or `/speckit.plan`).
+7. Report completion with branch name, spec file path, checklist results, and readiness for the next phase (`/clarify` or `/plan`).
 
 8. **Check for extension hooks**: After reporting completion, check if `.specify/extensions.yml` exists in the project root.
    - If it exists, read it and look for entries under the `hooks.after_specify` key
@@ -246,6 +248,7 @@ Given that feature description, do this:
 
 ## Quick Guidelines
 
+- **IDIOMA OBRIGATÓRIO**: Toda a spec e o checklist DEVEM ser escritos em **pt-BR (Português do Brasil)**. Independente do idioma da descrição do usuário, o output é sempre em pt-BR.
 - Focus on **WHAT** users need and **WHY**.
 - Avoid HOW to implement (no tech stack, APIs, code structure).
 - Written for business stakeholders, not developers.
