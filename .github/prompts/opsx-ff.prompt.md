@@ -1,19 +1,10 @@
 ---
-description: Propose a new change - create it and generate all artifacts in one step
+description: Create a change and generate all artifacts needed for implementation in one go
 ---
 
-Propose a new change - create the change and generate all artifacts in one step.
+Fast-forward through artifact creation - generate everything needed to start implementation.
 
-I'll create a change with artifacts:
-- proposal.md (what & why)
-- design.md (how)
-- tasks.md (implementation steps)
-
-When ready to implement, run /opsx-apply
-
----
-
-**Input**: The argument after `/opsx-propose` is the change name (kebab-case), OR a description of what the user wants to build.
+**Input**: The argument after `/opsx:ff` is the change name (kebab-case), OR a description of what the user wants to build.
 
 **Steps**
 
@@ -30,7 +21,7 @@ When ready to implement, run /opsx-apply
    ```bash
    openspec new change "<name>"
    ```
-   This creates a scaffolded change at `openspec/changes/<name>/` with `.openspec.yaml`.
+   This creates a scaffolded change at `openspec/changes/<name>/`.
 
 3. **Get the artifact build order**
    ```bash
@@ -61,7 +52,7 @@ When ready to implement, run /opsx-apply
       - Read any completed dependency files for context
       - Create the artifact file using `template` as the structure
       - Apply `context` and `rules` as constraints - but do NOT copy them into the file
-      - Show brief progress: "Created <artifact-id>"
+      - Show brief progress: "✓ Created <artifact-id>"
 
    b. **Continue until all `applyRequires` artifacts are complete**
       - After creating each artifact, re-run `openspec status --change "<name>" --json`
@@ -83,7 +74,7 @@ After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions
 - What's ready: "All artifacts created! Ready for implementation."
-- Prompt: "Run `/opsx-apply` to start implementing."
+- Prompt: "Run `/opsx:apply` to start implementing."
 
 **Artifact Creation Guidelines**
 

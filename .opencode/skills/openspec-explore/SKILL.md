@@ -9,8 +9,6 @@ metadata:
   generatedBy: "1.2.0"
 ---
 
-> **IDIOMA OBRIGATÓRIO — NÃO-NEGOCIÁVEL**: A constituição do projeto determina **pt-BR (Português do Brasil)** como idioma canônico para toda documentação gerada. Todo artefato produzido por este comando (arquivos .md, relatórios, checklists, seções adicionadas a specs, planos ou tarefas) **DEVE ser escrito em pt-BR**, independentemente do idioma usado pelo usuário na descrição da feature ou nos argumentos do comando.
-
 Enter explore mode. Think deeply. Visualize freely. Follow the conversation wherever it goes.
 
 **IMPORTANT: Explore mode is for thinking, not implementing.** You may read files, search code, and investigate the codebase, but you must NEVER write code or implement features. If the user asks you to implement something, remind them to exit explore mode first and create a change proposal. You MAY create OpenSpec artifacts (proposals, designs, specs) if the user asks—that's capturing thinking, not implementing.
