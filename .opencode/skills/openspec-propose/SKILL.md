@@ -9,6 +9,8 @@ metadata:
   generatedBy: "1.2.0"
 ---
 
+> **AVISO:** Todo output para o usuário deve ser em **português do Brasil (pt-BR)**. Isso inclui explicações, resumos, perguntas, mensagens de erro e qualquer comunicação direta. Exceção: não traduza nomes de skills, comandos (ex: `openspec-propose`, `opsx-apply`), identificadores de código, nomes de arquivos ou comandos de terminal.
+
 Propose a new change - create the change and generate all artifacts in one step.
 
 I'll create a change with artifacts:

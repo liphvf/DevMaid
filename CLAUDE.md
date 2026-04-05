@@ -2,6 +2,12 @@
 
 Auto-generated from codebase. Last updated: 2026-04-04
 
+## Idioma
+
+Todo output para o usuário deve ser em **português do Brasil (pt-BR)**.
+Isso inclui explicações, resumos, mensagens de erro, perguntas de esclarecimento e qualquer comunicação direta com o usuário.
+Exceção: não traduza nomes de skills, comandos do openspec (ex: `openspec-propose`, `opsx-apply`), identificadores de código, nomes de arquivos ou comandos de terminal.
+
 ## Active Technologies
 
 - C# 13 / .NET 10 (`net10.0`)
