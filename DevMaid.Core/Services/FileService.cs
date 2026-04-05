@@ -59,7 +59,7 @@ public class FileService(ILogger logger) : IFileService
 
             using (var outputStream = new StreamWriter(outputPath))
             {
-                for (int i = 0; i < inputFiles.Count; i++)
+                for (var i = 0; i < inputFiles.Count; i++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 

@@ -48,7 +48,7 @@ public static class PostgresDatabaseLister
     {
         try
         {
-            var options = new DevMaid.Core.Models.DatabaseConnectionOptions
+            var options = new Core.Models.DatabaseConnectionOptions
             {
                 Host = host,
                 Port = port,

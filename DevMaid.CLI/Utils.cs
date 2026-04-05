@@ -91,10 +91,10 @@ public static class Utils
     public static SecureString GetConsoleSecurePassword()
     {
         Console.Write("Password: ");
-        SecureString pwd = new SecureString();
+        var pwd = new SecureString();
         while (true)
         {
-            ConsoleKeyInfo i = Console.ReadKey(true);
+            var i = Console.ReadKey(true);
             if (i.Key == ConsoleKey.Enter)
             {
                 break;

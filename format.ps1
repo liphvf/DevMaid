@@ -1,5 +1,10 @@
 #Requires -Version 7
 
+param(
+    [ValidateSet('info', 'warn', 'error')]
+    [string] $Severity
+)
+
 # Regras sem autofix — o dotnet format não consegue corrigir automaticamente
 $noAutofix = @(
     'IDE0052', 'IDE0060', 'IDE1006'
@@ -24,12 +29,14 @@ Write-Host "Formatando $($projects.Count) projeto(s) em paralelo...`n" -Foregrou
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
+$severityArgs = if ($Severity) { @('--severity', $Severity) } else { @() }
+
 $results = $projects | ForEach-Object -Parallel {
     $project = $_
     $name = Split-Path $project -Leaf
 
     $errFile = [System.IO.Path]::GetTempFileName()
-    $output = & dotnet format $project --severity info --exclude-diagnostics @($using:excludes) 2>$errFile
+    $output = & dotnet format $project --exclude-diagnostics @($using:excludes) @($using:severityArgs) 2>$errFile
     $stderr = Get-Content $errFile -Raw
     Remove-Item $errFile -Force
 
@@ -43,14 +50,21 @@ $results = $projects | ForEach-Object -Parallel {
 
 $stopwatch.Stop()
 
-foreach ($result in $results) {
+foreach ($result in $results)
+{
     Write-Host "==========================" -ForegroundColor DarkGray
-    $color = if ($result.Success) { 'Green' } else { 'Red' }
+    $color = if ($result.Success)
+    { 'Green'
+    } else
+    { 'Red'
+    }
     Write-Host "Formatado: $($result.Project)" -ForegroundColor $color
-    if ($result.Output) {
+    if ($result.Output)
+    {
         Write-Host $result.Output -ForegroundColor DarkGray
     }
-    if (-not $result.Success -and $result.Error) {
+    if (-not $result.Success -and $result.Error)
+    {
         Write-Host $result.Error -ForegroundColor Red
     }
     Write-Host ""

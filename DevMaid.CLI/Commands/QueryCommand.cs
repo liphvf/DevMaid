@@ -474,7 +474,7 @@ public static class QueryCommand
         using var reader = command.ExecuteReader();
 
         var columnNames = new List<string>();
-        for (int i = 0; i < reader.FieldCount; i++)
+        for (var i = 0; i < reader.FieldCount; i++)
         {
             columnNames.Add(reader.GetName(i));
         }
@@ -484,7 +484,7 @@ public static class QueryCommand
         while (reader.Read())
         {
             var row = new Dictionary<string, string>();
-            for (int i = 0; i < reader.FieldCount; i++)
+            for (var i = 0; i < reader.FieldCount; i++)
             {
                 var value = reader.IsDBNull(i) ? string.Empty : reader.GetValue(i)?.ToString() ?? string.Empty;
                 row[columnNames[i]] = value;
@@ -937,7 +937,7 @@ public static class QueryCommand
 
         // Get column names
         var columnNames = new List<string>();
-        for (int i = 0; i < reader.FieldCount; i++)
+        for (var i = 0; i < reader.FieldCount; i++)
         {
             columnNames.Add(reader.GetName(i));
         }
@@ -954,10 +954,10 @@ public static class QueryCommand
         csv.NextRecord();
 
         // Write data
-        int rowCount = 0;
+        var rowCount = 0;
         while (reader.Read())
         {
-            for (int i = 0; i < reader.FieldCount; i++)
+            for (var i = 0; i < reader.FieldCount; i++)
             {
                 var value = reader.IsDBNull(i) ? string.Empty : reader.GetValue(i)?.ToString() ?? string.Empty;
                 csv.WriteField(value);

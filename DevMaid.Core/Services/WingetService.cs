@@ -168,7 +168,7 @@ public class WingetService(IProcessExecutor processExecutor, ILogger logger) : I
             var failureCount = 0;
             var failedPackageIds = new List<string>();
 
-            for (int i = 0; i < packages.Count; i++)
+            for (var i = 0; i < packages.Count; i++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 

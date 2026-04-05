@@ -51,9 +51,9 @@ devmaid database pgpass add <banco> [opções]
 | Opção | Alias | Tipo | Obrigatório | Padrão | Descrição |
 |-------|-------|------|-------------|--------|-----------|
 | `--password` | `-W` | `string` | Não* | — | Senha PostgreSQL. Se omitida, solicitada interativamente. |
-| `--host` | `-h` | `string` | Não | `localhost` | Hostname ou endereço IP do servidor PostgreSQL |
-| `--port` | `-p` | `string` | Não | `5432` | Porta TCP do servidor PostgreSQL |
-| `--username` | `-U` | `string` | Não | `postgres` | Nome de usuário PostgreSQL |
+| `--host` | `-h` | `string` | Não | `localhost` | Hostname, endereço IP ou `*` para qualquer host |
+| `--port` | `-p` | `string` | Não | `5432` | Porta TCP ou `*` para qualquer porta |
+| `--username` | `-U` | `string` | Não | `postgres` | Nome de usuário PostgreSQL ou `*` para qualquer usuário |
 
 > \* A senha é sempre necessária, mas pode ser fornecida via prompt interativo em vez de flag.
 
@@ -83,6 +83,10 @@ devmaid database pgpass add producao --host db.empresa.com --port 5433 --usernam
 
 # Curinga no banco (qualquer banco no localhost com postgres)
 devmaid database pgpass add "*" --password senhapadrao
+
+# Curinga total: qualquer host, porta, banco e usuário
+devmaid database pgpass add "*" --host "*" --port "*" --username "*" --password senhapadrao
+# Resultado: *:*:*:*:senhapadrao
 ```
 
 ### Saídas

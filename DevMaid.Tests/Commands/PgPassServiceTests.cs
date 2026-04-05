@@ -399,4 +399,92 @@ public class PgPassServiceTests
         Assert.AreEqual(conteudoOriginal, conteudoAtual,
             "Conteúdo do arquivo não deve ser alterado quando entrada não encontrada.");
     }
+
+    // =========================================================================
+    // Curingas pgpass — suporte a * em host, porta, banco e usuário
+    // =========================================================================
+
+    [TestMethod]
+    [TestCategory("pgpass-wildcard")]
+    public void AddEntry_CuringaNoHost_GravaEntradaCorreta()
+    {
+        var entry = new PgPassEntry
+        {
+            Hostname = "*",
+            Port = "5432",
+            Database = "meu_banco",
+            Username = "postgres",
+            Password = "senha123"
+        };
+
+        var result = _service.AddEntry(entry, _tempFile);
+
+        Assert.IsTrue(result.Success, result.Message);
+        var conteudo = File.ReadAllText(_tempFile);
+        Assert.IsTrue(conteudo.Contains("*:5432:meu_banco:postgres:senha123"),
+            "Entrada com curinga no host deve ser gravada corretamente.");
+    }
+
+    [TestMethod]
+    [TestCategory("pgpass-wildcard")]
+    public void AddEntry_CuringaNaPorta_GravaEntradaCorreta()
+    {
+        var entry = new PgPassEntry
+        {
+            Hostname = "localhost",
+            Port = "*",
+            Database = "meu_banco",
+            Username = "postgres",
+            Password = "senha123"
+        };
+
+        var result = _service.AddEntry(entry, _tempFile);
+
+        Assert.IsTrue(result.Success, result.Message);
+        var conteudo = File.ReadAllText(_tempFile);
+        Assert.IsTrue(conteudo.Contains("localhost:*:meu_banco:postgres:senha123"),
+            "Entrada com curinga na porta deve ser gravada corretamente.");
+    }
+
+    [TestMethod]
+    [TestCategory("pgpass-wildcard")]
+    public void AddEntry_CuringaNoUsuario_GravaEntradaCorreta()
+    {
+        var entry = new PgPassEntry
+        {
+            Hostname = "localhost",
+            Port = "5432",
+            Database = "meu_banco",
+            Username = "*",
+            Password = "senha123"
+        };
+
+        var result = _service.AddEntry(entry, _tempFile);
+
+        Assert.IsTrue(result.Success, result.Message);
+        var conteudo = File.ReadAllText(_tempFile);
+        Assert.IsTrue(conteudo.Contains("localhost:5432:meu_banco:*:senha123"),
+            "Entrada com curinga no usuário deve ser gravada corretamente.");
+    }
+
+    [TestMethod]
+    [TestCategory("pgpass-wildcard")]
+    public void AddEntry_TodosCuringas_GravaEntradaCorreta()
+    {
+        var entry = new PgPassEntry
+        {
+            Hostname = "*",
+            Port = "*",
+            Database = "*",
+            Username = "*",
+            Password = "senha123"
+        };
+
+        var result = _service.AddEntry(entry, _tempFile);
+
+        Assert.IsTrue(result.Success, result.Message);
+        var conteudo = File.ReadAllText(_tempFile);
+        Assert.IsTrue(conteudo.Contains("*:*:*:*:senha123"),
+            "Entrada com todos os curingas deve ser gravada corretamente.");
+    }
 }

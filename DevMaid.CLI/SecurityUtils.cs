@@ -5,7 +5,7 @@ namespace DevMaid.CLI;
 /// <summary>
 /// Security utilities for input validation and sanitization.
 /// </summary>
-public static class SecurityUtils
+public static partial class SecurityUtils
 {
     // Path traversal patterns to detect
     private static readonly string[] PathTraversalPatterns =
@@ -157,7 +157,13 @@ public static class SecurityUtils
             return false;
         }
 
-        return int.TryParse(port, out int portNum) && portNum > 0 && portNum <= 65535;
+        // Curinga pgpass: aceito como porta válida (compatível com pgpass.conf nativo)
+        if (port == "*")
+        {
+            return true;
+        }
+
+        return int.TryParse(port, out var portNum) && portNum > 0 && portNum <= 65535;
     }
 
     /// <summary>
@@ -172,8 +178,14 @@ public static class SecurityUtils
             return false;
         }
 
+        // Curinga pgpass: aceito como hostname válido (compatível com pgpass.conf nativo)
+        if (host == "*")
+        {
+            return true;
+        }
+
         // Check for null bytes
-        if (host.Contains('\0'))
+        if (host.Contains('\0', StringComparison.Ordinal))
         {
             return false;
         }
@@ -202,6 +214,12 @@ public static class SecurityUtils
             return false;
         }
 
+        // Curinga pgpass: aceito como usuário válido (compatível com pgpass.conf nativo)
+        if (username == "*")
+        {
+            return true;
+        }
+
         // Check maximum length
         if (username.Length > 63)
         {
@@ -209,7 +227,7 @@ public static class SecurityUtils
         }
 
         // Allow alphanumeric, underscore, hyphen, and dot
-        return Regex.IsMatch(username, @"^[a-zA-Z0-9_.\-]+$");
+        return UsernameRegexGenerated().IsMatch(username);
     }
 
     /// <summary>
@@ -287,4 +305,8 @@ public static class SecurityUtils
     {
         return IsValidPostgreSQLIdentifier(tableName);
     }
+
+    [GeneratedRegex(@"^[a-zA-Z0-9_.\-]+$")]
+    private static partial Regex UsernameRegexGenerated();
+
 }

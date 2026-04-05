@@ -2,6 +2,8 @@
 description: Generate a custom checklist for the current feature based on user requirements.
 ---
 
+> **AVISO:** Todo output para o usuário deve ser em **português do Brasil (pt-BR)**. Isso inclui explicações, resumos, perguntas, mensagens de erro e qualquer comunicação direta. Exceção: não traduza nomes de skills, comandos (ex: `openspec-propose`, `opsx-apply`), identificadores de código, nomes de arquivos ou comandos de terminal.
+
 ## Checklist Purpose: "Unit Tests for English"
 
 **CRITICAL CONCEPT**: Checklists are **UNIT TESTS FOR REQUIREMENTS WRITING** - they validate the quality, clarity, and completeness of requirements in a given domain.
