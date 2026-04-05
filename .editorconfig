@@ -393,7 +393,7 @@ dotnet_remove_unnecessary_suppression_exclusions = none
 #            var x = 0;
 #   false → usa tipo explícito
 #            int x = 0;
-csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_for_built_in_types = true:warning
 
 # Descrição: Prefere tipo explícito quando o tipo já é aparente pela expressão
 # Valores possíveis:
@@ -401,7 +401,7 @@ csharp_style_var_for_built_in_types = true:suggestion
 #            var c = new Customer();
 #   false → usa tipo explícito mesmo quando aparente
 #            Customer c = new Customer();
-csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_when_type_is_apparent = true:warning
 
 # Descrição: Prefere tipo explícito em demais casos onde o tipo não é aparente
 # Valores possíveis:
@@ -409,7 +409,7 @@ csharp_style_var_when_type_is_apparent = true:suggestion
 #            var e = GetItems();
 #   false → usa tipo explícito
 #            IEnumerable<int> e = GetItems();
-csharp_style_var_elsewhere = true:suggestion
+csharp_style_var_elsewhere = true:warning
 
 # -----------------------------------------------------------------------------
 # IDE0021-IDE0027 / IDE0053 / IDE0061 — Membros com expression body
@@ -726,7 +726,7 @@ csharp_style_throw_expression = true:suggestion
 #                         _ = GetValue();
 #   unused_local_variable → atribui a variável local nunca lida
 #                           var unused = GetValue();
-csharp_style_unused_value_assignment_preference = discard_variable:warning
+csharp_style_unused_value_assignment_preference = discard_variable:silent
 
 # IDE0058 — Unused expression value.
 # Valores possíveis:
@@ -734,7 +734,7 @@ csharp_style_unused_value_assignment_preference = discard_variable:warning
 #                         _ = list.Remove(item);
 #   unused_local_variable → atribui o resultado a variável local nunca lida
 #                           var unused = list.Remove(item);
-csharp_style_unused_value_expression_statement_preference = discard_variable:suggestion
+csharp_style_unused_value_expression_statement_preference = discard_variable:silent
 
 # Descrição: Prefere System.Threading.Lock em vez de object para locks (C# 13+)
 # Valores possíveis:

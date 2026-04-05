@@ -27,7 +27,7 @@ public class TableParserCommandTests
     public static void ClassInitialize(TestContext context)
     {
         // Initialize logger
-        var logger = new DevMaid.CLI.Services.Logging.ConsoleLogger(useColors: false);
+        var logger = new ConsoleLogger(useColors: false);
         _logger = logger;
 
         // Initialize core services
@@ -39,12 +39,12 @@ public class TableParserCommandTests
 
         // Create service collection and register services
         var services = new ServiceCollection();
-        services.AddSingleton<IConfigurationService>(_configurationService);
-        services.AddSingleton<IDatabaseService>(_databaseService);
-        services.AddSingleton<IFileService>(_fileService);
-        services.AddSingleton<IWingetService>(_wingetService);
-        services.AddSingleton<IProcessExecutor>(_processExecutor);
-        services.AddSingleton<Core.Logging.ILogger>(_logger);
+        services.AddSingleton(_configurationService);
+        services.AddSingleton(_databaseService);
+        services.AddSingleton(_fileService);
+        services.AddSingleton(_wingetService);
+        services.AddSingleton(_processExecutor);
+        services.AddSingleton(_logger);
 
         var serviceProvider = services.BuildServiceProvider();
 

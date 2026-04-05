@@ -43,10 +43,10 @@ public static class ConfigurationService
     /// <summary>
     /// Gets the database connection configuration.
     /// </summary>
-    public static DevMaid.CLI.CommandOptions.DatabaseConnectionConfig GetDatabaseConfig()
+    public static CommandOptions.DatabaseConnectionConfig GetDatabaseConfig()
     {
         var coreConfig = GetConfigurationService().GetDatabaseConfig();
-        return new DevMaid.CLI.CommandOptions.DatabaseConnectionConfig
+        return new CommandOptions.DatabaseConnectionConfig
         {
             Host = coreConfig.Host ?? "localhost",
             Port = coreConfig.Port ?? "5432",
