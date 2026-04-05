@@ -1109,11 +1109,12 @@ public static class QueryCommand
             throw new ArgumentException("Output directory path is required when using --servers.");
         }
 
-        var outputDirectory = Path.GetFullPath(options.OutputFile);
-        if (!SecurityUtils.IsValidPath(outputDirectory))
+        if (!SecurityUtils.IsValidPath(options.OutputFile))
         {
             throw new ArgumentException($"Invalid output path: '{options.OutputFile}'. Path traversal not allowed.");
         }
+
+        var outputDirectory = Path.GetFullPath(options.OutputFile);
 
         // Create output directory if it doesn't exist
         if (!Directory.Exists(outputDirectory))
