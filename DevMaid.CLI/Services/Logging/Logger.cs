@@ -90,7 +90,7 @@ public static class Logger
     /// <param name="args">The arguments to format.</param>
     public static void LogInformation(string message, params object[] args)
     {
-        GetLogger()?.LogInformation(string.Format(message, args));
+        GetLogger()?.LogInformation(message, args);
     }
 
     /// <summary>
@@ -100,7 +100,7 @@ public static class Logger
     /// <param name="args">The arguments to format.</param>
     public static void LogDebug(string message, params object[] args)
     {
-        GetLogger()?.LogDebug(string.Format(message, args));
+        GetLogger()?.LogDebug(message, args);
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public static class Logger
     /// <param name="args">The arguments to format.</param>
     public static void LogWarning(string message, params object[] args)
     {
-        GetLogger()?.LogWarning(string.Format(message, args));
+        GetLogger()?.LogWarning(message, args);
     }
 
     /// <summary>
@@ -120,6 +120,6 @@ public static class Logger
     /// <param name="args">The arguments to format.</param>
     public static void LogError(string message, params object[] args)
     {
-        GetLogger()?.LogError(string.Format(message, args));
+        GetLogger()?.LogError(message, null, args);
     }
 }

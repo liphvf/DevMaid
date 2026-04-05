@@ -768,7 +768,50 @@ public static class QueryCommand
             return cleanedConnectionString;
         }
 
-        // Load primary server configuration from configuration
+        if (HasExplicitConnectionParameters(options))
+        {
+            var directConnection = ResolveExplicitConnection(options);
+            LogConnectionContext(directConnection);
+            return BuildConnectionStringForResolvedConnection(directConnection, options);
+        }
+
+        var serverConnection = ResolvePrimaryServerConnection(options);
+        LogConnectionContext(serverConnection);
+        return BuildConnectionStringForResolvedConnection(serverConnection, options);
+    }
+
+    private static bool HasExplicitConnectionParameters(QueryCommandOptions options)
+    {
+        return !string.IsNullOrWhiteSpace(options.Host)
+            || !string.IsNullOrWhiteSpace(options.Port)
+            || !string.IsNullOrWhiteSpace(options.Database)
+            || !string.IsNullOrWhiteSpace(options.Username)
+            || !string.IsNullOrWhiteSpace(options.Password);
+    }
+
+    private static ResolvedQueryConnection ResolveExplicitConnection(QueryCommandOptions options)
+    {
+        var dbConfig = ConfigurationService.GetDatabaseConfig();
+
+        return CreateResolvedConnection(
+            host: options.Host ?? dbConfig.Host ?? "localhost",
+            port: options.Port ?? dbConfig.Port ?? "5432",
+            database: options.Database,
+            username: options.Username ?? dbConfig.Username,
+            password: options.Password ?? dbConfig.Password,
+            sslMode: options.SslMode,
+            timeout: options.Timeout,
+            commandTimeout: options.CommandTimeout,
+            pooling: options.Pooling,
+            minPoolSize: options.MinPoolSize,
+            maxPoolSize: options.MaxPoolSize,
+            keepalive: options.Keepalive,
+            connectionLifetime: options.ConnectionLifetime,
+            missingDatabaseMessage: "Database name is required when using direct connection parameters. Specify --database or use the Servers configuration.");
+    }
+
+    private static ResolvedQueryConnection ResolvePrimaryServerConnection(QueryCommandOptions options)
+    {
         var primaryServerName = ConfigurationService.Configuration["Servers:PrimaryServer"];
         if (string.IsNullOrWhiteSpace(primaryServerName))
         {
@@ -787,14 +830,63 @@ public static class QueryCommand
             throw new ArgumentException($"Primary server '{primaryServerName}' not found in ServersList. Available servers: {string.Join(", ", servers.Select(s => s.Name))}");
         }
 
-        // Use provided values or fall back to primary server configuration
-        var host = options.Host ?? primaryServer.Host;
-        var port = options.Port ?? primaryServer.Port;
-        var database = options.Database ?? primaryServer.Database;
-        var username = options.Username ?? primaryServer.Username;
-        var password = options.Password ?? primaryServer.Password;
+        return CreateResolvedConnection(
+            host: primaryServer.Host,
+            port: primaryServer.Port,
+            database: primaryServer.Database,
+            username: primaryServer.Username,
+            password: primaryServer.Password,
+            sslMode: options.SslMode ?? primaryServer.SslMode,
+            timeout: options.Timeout ?? primaryServer.Timeout,
+            commandTimeout: options.CommandTimeout ?? primaryServer.CommandTimeout,
+            pooling: options.Pooling ?? primaryServer.Pooling,
+            minPoolSize: options.MinPoolSize ?? primaryServer.MinPoolSize,
+            maxPoolSize: options.MaxPoolSize ?? primaryServer.MaxPoolSize,
+            keepalive: options.Keepalive ?? primaryServer.Keepalive,
+            connectionLifetime: options.ConnectionLifetime ?? primaryServer.ConnectionLifetime,
+            primaryServerName: primaryServerName,
+            missingDatabaseMessage: "Database name is required. Either specify --database, configure Database in the server config, or use --all.");
+    }
 
-        // Validate required parameters
+    private static ResolvedQueryConnection CreateResolvedConnection(
+        string? host,
+        string? port,
+        string? database,
+        string? username,
+        string? password,
+        string? sslMode,
+        int? timeout,
+        int? commandTimeout,
+        bool? pooling,
+        int? minPoolSize,
+        int? maxPoolSize,
+        int? keepalive,
+        int? connectionLifetime,
+        string missingDatabaseMessage,
+        string? primaryServerName = null)
+    {
+        ValidateConnectionParameters(host, port, username, database, missingDatabaseMessage);
+        var resolvedPassword = PromptForPasswordIfMissing(password);
+
+        return new ResolvedQueryConnection(
+            host ?? string.Empty,
+            port ?? string.Empty,
+            database ?? string.Empty,
+            username ?? string.Empty,
+            resolvedPassword,
+            sslMode,
+            timeout,
+            commandTimeout,
+            pooling,
+            minPoolSize,
+            maxPoolSize,
+            keepalive,
+            connectionLifetime,
+            primaryServerName);
+    }
+
+    private static void ValidateConnectionParameters(string? host, string? port, string? username, string? database, string missingDatabaseMessage)
+    {
         if (string.IsNullOrWhiteSpace(host))
         {
             throw new ArgumentException("Host is required when not using --npgsql-connection-string.");
@@ -805,7 +897,7 @@ public static class QueryCommand
             throw new ArgumentException($"Invalid host: '{host}'");
         }
 
-        if (!SecurityUtils.IsValidPort(port))
+        if (string.IsNullOrWhiteSpace(port) || !SecurityUtils.IsValidPort(port))
         {
             throw new ArgumentException($"Invalid port: '{port}'. Port must be between 1 and 65535.");
         }
@@ -817,80 +909,84 @@ public static class QueryCommand
 
         if (string.IsNullOrWhiteSpace(database))
         {
-            throw new ArgumentException($"Database name is required. Either specify --database, configure Database in the server config, or use --all.");
+            throw new ArgumentException(missingDatabaseMessage);
         }
+    }
 
-        // Prompt for password if not provided
-        if (string.IsNullOrWhiteSpace(password))
+    private static string PromptForPasswordIfMissing(string? password)
+    {
+        if (!string.IsNullOrWhiteSpace(password))
         {
-            Console.Write("Enter password: ");
-            password = ReadPassword();
-            Console.WriteLine();
+            return password;
         }
 
-        // Build connection string
+        Console.Write("Enter password: ");
+        var enteredPassword = ReadPassword();
+        Console.WriteLine();
+        return enteredPassword;
+    }
+
+    private static void LogConnectionContext(ResolvedQueryConnection connection)
+    {
+        Console.WriteLine($"Connection: {connection.Host}:{connection.Port}/{connection.Database}");
+        Console.WriteLine($"Username: {connection.Username}");
+
+        if (!string.IsNullOrWhiteSpace(connection.PrimaryServerName))
+        {
+            Console.WriteLine($"Primary Server: {connection.PrimaryServerName}");
+        }
+    }
+
+    private static string BuildConnectionStringForResolvedConnection(ResolvedQueryConnection connection, QueryCommandOptions options)
+    {
         var builder = new NpgsqlConnectionStringBuilder
         {
-            Host = host,
-            Port = int.Parse(port),
-            Database = database,
-            Username = username,
-            Password = password
+            Host = connection.Host,
+            Port = int.Parse(connection.Port),
+            Database = connection.Database,
+            Username = connection.Username,
+            Password = connection.Password
         };
 
-        // Add optional connection parameters (fallback to primary server config if not in options)
-        var sslMode = options.SslMode ?? primaryServer.SslMode;
-        var timeout = options.Timeout ?? primaryServer.Timeout;
-        var commandTimeout = options.CommandTimeout ?? primaryServer.CommandTimeout;
-        var pooling = options.Pooling ?? primaryServer.Pooling;
-        var minPoolSize = options.MinPoolSize ?? primaryServer.MinPoolSize;
-        var maxPoolSize = options.MaxPoolSize ?? primaryServer.MaxPoolSize;
-        var keepalive = options.Keepalive ?? primaryServer.Keepalive;
-        var connectionLifetime = options.ConnectionLifetime ?? primaryServer.ConnectionLifetime;
-
-        if (!string.IsNullOrWhiteSpace(sslMode))
+        if (!string.IsNullOrWhiteSpace(connection.SslMode))
         {
-            builder.SslMode = ParseSslMode(sslMode);
+            builder.SslMode = ParseSslMode(connection.SslMode);
         }
 
-        if (timeout.HasValue)
+        if (connection.Timeout.HasValue)
         {
-            builder.Timeout = timeout.Value;
+            builder.Timeout = connection.Timeout.Value;
         }
 
-        if (commandTimeout.HasValue)
+        if (connection.CommandTimeout.HasValue)
         {
-            builder.CommandTimeout = commandTimeout.Value;
+            builder.CommandTimeout = connection.CommandTimeout.Value;
         }
 
-        if (pooling.HasValue)
+        if (connection.Pooling.HasValue)
         {
-            builder.Pooling = pooling.Value;
+            builder.Pooling = connection.Pooling.Value;
         }
 
-        if (minPoolSize.HasValue)
+        if (connection.MinPoolSize.HasValue)
         {
-            builder.MinPoolSize = minPoolSize.Value;
+            builder.MinPoolSize = connection.MinPoolSize.Value;
         }
 
-        if (maxPoolSize.HasValue)
+        if (connection.MaxPoolSize.HasValue)
         {
-            builder.MaxPoolSize = maxPoolSize.Value;
+            builder.MaxPoolSize = connection.MaxPoolSize.Value;
         }
 
-        if (keepalive.HasValue)
+        if (connection.Keepalive.HasValue)
         {
-            builder.KeepAlive = keepalive.Value;
+            builder.KeepAlive = connection.Keepalive.Value;
         }
 
-        if (connectionLifetime.HasValue)
+        if (connection.ConnectionLifetime.HasValue)
         {
-            builder.ConnectionLifetime = connectionLifetime.Value;
+            builder.ConnectionLifetime = connection.ConnectionLifetime.Value;
         }
-
-        Console.WriteLine($"Connection: {host}:{port}/{database}");
-        Console.WriteLine($"Username: {username}");
-        Console.WriteLine($"Primary Server: {primaryServerName}");
 
         return builder.ConnectionString;
     }
@@ -1287,6 +1383,22 @@ public static class QueryCommand
 
         return builder.ConnectionString;
     }
+
+    private sealed record ResolvedQueryConnection(
+        string Host,
+        string Port,
+        string Database,
+        string Username,
+        string Password,
+        string? SslMode,
+        int? Timeout,
+        int? CommandTimeout,
+        bool? Pooling,
+        int? MinPoolSize,
+        int? MaxPoolSize,
+        int? Keepalive,
+        int? ConnectionLifetime,
+        string? PrimaryServerName);
 }
 
 // Helper class for deserializing servers configuration

@@ -1,13 +1,14 @@
 using System;
 using System.IO;
-
+using System.Reflection;
 using DevMaid.CLI.CommandOptions;
 using DevMaid.CLI.Services;
 using DevMaid.CLI.Services.Logging;
 using DevMaid.Core.Interfaces;
-
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace DevMaid.Tests.Commands;
 
@@ -221,5 +222,46 @@ public class QueryCommandTests
         };
 
         try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+    }
+
+    [TestMethod]
+    public void BuildConnectionString_ExplicitParameters_DoNotRequireServersConfigurationOrDatabaseAccess()
+    {
+        var mockConfigurationService = new Mock<IConfigurationService>();
+        mockConfigurationService
+            .SetupGet(x => x.Configuration)
+            .Returns(new ConfigurationBuilder().AddInMemoryCollection().Build());
+        mockConfigurationService
+            .Setup(x => x.GetDatabaseConfig())
+            .Returns(new Core.Models.DatabaseConnectionConfig());
+
+        var services = new ServiceCollection();
+        services.AddSingleton(mockConfigurationService.Object);
+        ConfigurationService.SetServiceProvider(services.BuildServiceProvider());
+
+        var options = new QueryCommandOptions
+        {
+            Host = "db.internal",
+            Port = "5433",
+            Database = "reporting",
+            Username = "readonly_user",
+            Password = "secret123"
+        };
+
+        var method = typeof(CLI.Commands.QueryCommand).GetMethod("BuildConnectionString", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.IsNotNull(method);
+
+        var connectionString = method.Invoke(null, [options]) as string;
+
+        Assert.IsNotNull(connectionString);
+        StringAssert.Contains(connectionString, "Host=db.internal");
+        StringAssert.Contains(connectionString, "Port=5433");
+        StringAssert.Contains(connectionString, "Database=reporting");
+        StringAssert.Contains(connectionString, "Username=readonly_user");
+        StringAssert.Contains(connectionString, "Password=secret123");
+
+        mockConfigurationService.Verify(x => x.GetDatabaseConfig(), Times.Once);
+        mockConfigurationService.VerifyGet(x => x.Configuration, Times.Never);
+        mockConfigurationService.VerifyNoOtherCalls();
     }
 }
