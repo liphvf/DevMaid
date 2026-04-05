@@ -26,14 +26,12 @@ DevMaid consolida essas tarefas em uma única ferramenta CLI fácil de usar.
 - **Integração com Claude Code**: Instala e configura CLI do Claude Code
 - **Integração com OpenCode**: Instala e configura CLI do OpenCode
 - **Gerenciador Winget**: Faz backup e restaura pacotes do gerenciador de pacotes Windows
-- **Modo TUI Interativo**: Interface de terminal amigável com navegação
 
 ## Tecnologias
 
 - **Framework**: .NET 10
 - **Linguagem**: C#
 - **CLI Parsing**: System.CommandLine
-- **TUI**: Terminal.Gui
 - **Banco de Dados**: Npgsql (PostgreSQL)
 - **Configuração**: Microsoft.Extensions.Configuration
 
@@ -71,12 +69,6 @@ dotnet build
 
 ```bash
 dotnet run -- --help
-```
-
-### Executar Modo TUI
-
-```bash
-devmaid tui
 ```
 
 ## Exemplos de Uso Básico
@@ -140,14 +132,6 @@ devmaid winget backup -o "C:\backup"
 devmaid winget restore -i "C:\backup\backup-winget.json"
 ```
 
-### Modo TUI Interativo
-
-```bash
-devmaid tui
-```
-
-Use as teclas de seta para navegar, Enter para selecionar, Esc para sair.
-
 ## Lista de Comandos
 
 | Comando | Descrição |
@@ -158,7 +142,6 @@ Use as teclas de seta para navegar, Enter para selecionar, Esc para sair.
 | `claude` | Integração com Claude Code |
 | `opencode` | Integração com CLI do OpenCode |
 | `winget` | Gerenciador de pacotes Windows |
-| `tui` | Inicia modo TUI interativo (Experimental) |
 
 ## Documentação
 

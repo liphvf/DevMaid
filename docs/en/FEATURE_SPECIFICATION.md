@@ -4,21 +4,19 @@
 
 DevMaid is a .NET-based CLI tool designed to automate common development tasks. It provides a unified interface for database operations, file management, AI tool installation, and Windows package management.
 
-The tool offers two modes of operation:
-1. **CLI Mode**: Direct command-line execution
-2. **TUI Mode**: Interactive terminal user interface with menus
-
 ## Feature List
 
 ### Core Features
 
 1. **Table Parser**
-2. **Combine**
-3. **Database Utilities**
+2. **Database Utilities**
+3. **File Utilities (Combine)**
 4. **Claude Code Integration**
 5. **OpenCode Integration**
 6. **Winget Package Manager**
-7. **Interactive TUI Mode**
+7. **SQL Query & CSV Exportation**
+8. **Project Cleaner (.NET Clean)**
+9. **Windows Features Manager**
 
 ---
 
@@ -175,7 +173,7 @@ devmaid database restore --all
 
 ---
 
-## Feature 2: Combine
+## Feature 3: File Utilities (Combine)
 
 ### Objective
 
@@ -385,92 +383,49 @@ devmaid winget restore -i "C:\backups\backup-winget.json"
 
 ---
 
-## Feature 7: Interactive TUI Mode
+## Feature 7: SQL Query & CSV Exportation
 
 ### Objective
-
-Provide a user-friendly terminal interface for navigating and executing DevMaid commands.
+Execute SQL commands against a single database, multiple databases on a single server, or even across multiple servers defined in appsettings.json, automatically exporting the data to `.csv`.
 
 ### Detailed Description
-
-The TUI mode offers an interactive menu-driven interface that makes DevMaid accessible to users who prefer not to remember CLI commands.
+Provides high flexibility for querying data with automated output generation supporting local, multi-database, and multi-server distribution modes for massive reporting routines.
 
 ### Usage Flow
-
 ```bash
-devmaid tui
+devmaid query run --input script.sql --output result.csv -h localhost -d mydb
+devmaid query run --all --input script.sql --output ./results
 ```
 
-1. Main menu is displayed with available commands
-2. User navigates using arrow keys
-3. User selects a menu item with Enter
-4. Sub-menu or command execution occurs
-5. Progress is shown in real-time
-6. Output dialog displays results
-7. User returns to menu or exits
+---
 
-### Menu Structure
+## Feature 8: Project Cleaner (.NET Clean)
 
-```
-DevMaid - Terminal User Interface
-├── Table Parser
-│   ├── Convert Table to C#
-│   └── Back
-├── File Utils
-│   ├── Combine Files
-│   └── Back
-├── Database
-│   ├── Backup
-│   ├── Restore
-│   └── Back
-├── Claude Code
-│   ├── Install Claude Code
-│   ├── Settings
-│   │   ├── MCP Database
-│   │   ├── Windows Environment
-│   │   └── Back
-│   └── Back
-├── OpenCode
-│   ├── Settings
-│   │   ├── MCP Database
-│   │   └── Back
-│   └── Back
-├── Winget
-│   ├── Backup Packages
-│   ├── Restore Packages
-│   └── Back
-└── Exit
+### Objective
+Liberate disk space and resolve `.NET` build cache issues by fully deleting any `bin` and `obj` output directories found recursively.
+
+### Usage Flow
+```bash
+# Clean recursively starting from the current directory:
+devmaid clean
+
+# Clean a specific solution folder
+devmaid clean "C:\MyProjects"
 ```
 
-### Keyboard Navigation
+---
 
-| Key | Action |
-|-----|--------|
-| ↑ / ↓ | Navigate menu items |
-| Enter | Execute selected item |
-| Esc | Go back / Exit |
+## Feature 9: Windows Features Manager
 
-### Theme Support
+### Objective
+Export your activated Windows Optional Features to a JSON backup file using dism, and subsequently import/enable them on new environments.
 
-The TUI automatically detects terminal theme:
-- **Dark terminal**: Black background, white/gray text
-- **Light terminal**: White background, black text
-
-### Real-Time Output
-
-Commands execute asynchronously with real-time output display:
-- Progress dialog shows during execution
-- Output streams to dialog as received
-- Exit code displayed upon completion
-
-### Edge Cases and Error Handling
-
-| Scenario | Handling |
-|----------|----------|
-| Terminal too small | Show minimum size warning |
-| Command not found | Display error in output dialog |
-| Command fails | Show error message with exit code |
-| Long-running command | Show progress, allow cancellation |
+### Usage Flow
+```bash
+devmaid windowsfeatures list --enabled-only
+devmaid windowsfeatures export "C:\backups\windowsfeatures.json"
+devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
+```
 
 ---
 
@@ -482,10 +437,9 @@ Commands execute asynchronously with real-time output display:
 
 **Flow:**
 1. Install DevMaid via dotnet tool
-2. Run `devmaid tui`
-3. Use Winget Backup to restore packages from old machine
-4. Install Claude Code via menu
-5. Install OpenCode via menu
+2. Run `devmaid winget restore` to restore packages from old machine
+3. Install Claude Code: `devmaid claude install`
+4. Install OpenCode: `devmaid opencode install`
 
 ### Use Case 2: Database Class Generation
 
@@ -511,8 +465,6 @@ Commands execute asynchronously with real-time output display:
 ### Priority 1 - Near Term
 
 - [ ] Add support for MySQL/SQL Server in Table Parser
-- [ ] Add file preview in TUI
-- [ ] Add command history in TUI
 - [ ] Add configuration file for default options
 
 ### Priority 2 - Medium Term
@@ -551,7 +503,9 @@ Commands execute asynchronously with real-time output display:
 | `devmaid database` | - | Database commands |
 | `devmaid database backup` | - | Backup database |
 | `devmaid database restore` | - | Restore database |
-| `devmaid tui` | - | Launch TUI |
+| `devmaid query run` | - | Run multi-database query and export CSV |
+| `devmaid clean` | - | Recursively clean bin/obj output folders |
+| `devmaid windowsfeatures` | - | Manage Windows Optional Features |
 
 ---
 
@@ -560,7 +514,6 @@ Commands execute asynchronously with real-time output display:
 | Term | Definition |
 |------|------------|
 | CLI | Command Line Interface |
-| TUI | Terminal User Interface |
 | Winget | Windows Package Manager |
 | MCP | Model Context Protocol |
 | DTO | Data Transfer Object |

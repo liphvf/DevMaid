@@ -4,7 +4,7 @@
 
 DevMaid is a .NET-based command-line interface (CLI) tool designed using a modular, command-based architecture. The application follows the principles of separation of concerns, with clear boundaries between CLI parsing, business logic, and data access layers.
 
-The architecture is built on top of System.CommandLine for CLI argument parsing, Terminal.Gui for the interactive TUI mode, and Microsoft.Extensions.Configuration for flexible configuration management.
+The architecture is built on top of System.CommandLine for CLI argument parsing and Microsoft.Extensions.Configuration for flexible configuration management.
 
 ## High-Level Design
 
@@ -23,11 +23,9 @@ The architecture is built on top of System.CommandLine for CLI argument parsing,
 │  ├── ClaudeCodeCommand                                          │
 │  ├── OpenCodeCommand                                            │
 │  ├── WingetCommand                                              │
-│  └── TuiCommand                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  TUI Layer (Tui/)                                               │
-│  ├── TuiApp (Main Application)                                  │
-│  └── MenuItem (Data Model)                                     │
+│  ├── QueryCommand                                               │
+│  ├── CleanCommand                                               │
+│  └── WindowsFeaturesCommand                                     │
 ├─────────────────────────────────────────────────────────────────┤
 │  Support Layers                                                 │
 │  ├── CommandOptions (DTOs)                                      │
@@ -79,23 +77,20 @@ Each command follows the builder pattern with a static `Build()` method that ret
 - Imports packages from backup
 - Cross-package dependency resolution
 
-#### TuiCommand
-- Launches the interactive Terminal User Interface
-- Entry point for TuiApp
+#### QueryCommand
+- Executes SQL queries and exports results to CSV
+- Supports multiple databases and servers configuration via appsettings.json
 
-### 3. TUI Layer (Tui/)
+#### CleanCommand
+- Recursively cleans bin and obj folders from the current working directory or solution
+- Frees up space and solves compilation caching issues
 
-#### TuiApp
-- Main TUI application controller
-- Manages menu navigation and rendering
-- Handles real-time command execution with progress display
-- Detects terminal theme (light/dark)
+#### WindowsFeaturesCommand
+- Exports currently activated Windows optional features to JSON
+- Imports features from JSON using dism.exe
+- Allows listing activated features
 
-#### MenuItem
-- Data model for menu entries
-- Contains Name, Description, and Action properties
-
-### 4. CommandOptions Layer
+### 3. CommandOptions Layer
 
 Data Transfer Objects (DTOs) that represent command-line options:
 - Strongly typed option classes
@@ -105,62 +100,6 @@ Data Transfer Objects (DTOs) that represent command-line options:
 ## Data Flow
 
 ### CLI Execution Flow
-
-```
-User Input
-    ↓
-System.CommandLine Parser
-    ↓
-Command Handler (e.g., WingetCommand.RunBackup)
-    ↓
-Business Logic
-    ↓
-External Service (Winget, PostgreSQL, File System)
-    ↓
-Output/Result
-```
-
-### TUI Execution Flow
-
-```
-User Launches TUI
-    ↓
-TuiApp.Run()
-    ↓
-Detect Terminal Theme
-    ↓
-Render Main Menu
-    ↓
-User Navigation (Arrow Keys)
-    ↓
-Selection → Execute Action
-    ↓
-Show Progress/Output Dialog
-    ↓
-Return to Menu / Exit
-```
-
-### Real-Time Command Execution Flow
-
-```
-User Selects Command
-    ↓
-Show Progress Dialog
-    ↓
-Start Process (async)
-    ↓
-Capture Output (OutputDataReceived)
-    ↓
-Update UI (Application.MainLoop.Invoke)
-    ↓
-Wait for Completion
-    ↓
-Show Exit Code
-    ↓
-Allow User to Close
-```
-
-## Design Patterns Used
 
 ### 1. Builder Pattern
 
@@ -179,19 +118,7 @@ public static Command Build()
 
 The `Program.AppSettings` property provides centralized access to application configuration.
 
-### 3. Strategy Pattern (TUI Theme)
-
-The `DetectTerminalTheme()` method determines the appropriate color scheme based on terminal detection, with separate strategies for light and dark themes.
-
-### 4. Command Pattern (MenuItems)
-
-Each menu item encapsulates an action that can be executed:
-
-```csharp
-new MenuItem("Name", "Description", () => RunCommand("..."))
-```
-
-### 5. Observer Pattern (Process Events)
+### 3. Observer Pattern (Process Events)
 
 Real-time output capture uses event handlers:
 - `OutputDataReceived`
@@ -209,17 +136,7 @@ Real-time output capture uses event handlers:
 - Built-in help generation
 - Supports subcommands
 
-### 2. Terminal.Gui for TUI
-
-**Decision:** Use Terminal.Gui for the interactive terminal interface.
-
-**Rationale:**
-- Mature and well-maintained
-- Cross-platform support
-- Declarative API
-- Good documentation
-
-### 3. Npgsql for Database Access
+### 2. Npgsql for Database Access
 
 **Decision:** Use Npgsql as the PostgreSQL provider.
 
@@ -229,7 +146,7 @@ Real-time output capture uses event handlers:
 - Full PostgreSQL feature support
 - Active maintenance
 
-### 4. Microsoft.Extensions.Configuration
+### 3. Microsoft.Extensions.Configuration
 
 **Decision:** Use the configuration extensions for flexible settings.
 
@@ -237,15 +154,6 @@ Real-time output capture uses event handlers:
 - Multiple configuration sources (JSON, environment variables, user secrets)
 - Strong typing with configuration binding
 - Industry standard pattern
-
-### 5. Async Process Execution in TUI
-
-**Decision:** Execute external commands asynchronously with real-time UI updates.
-
-**Rationale:**
-- Non-blocking UI
-- Real-time output display
-- Better user experience for long-running commands
 
 ## Scalability Considerations
 
@@ -255,12 +163,6 @@ The architecture supports easy addition of new commands:
 1. Create a new command class in `Commands/`
 2. Implement the `Build()` method
 3. Register in `Program.cs`
-
-### TUI Menu Extensibility
-
-Adding new menu items is straightforward:
-1. Create MenuItem with name, description, and action
-2. Add to the appropriate menu list
 
 ### Configuration Scalability
 
@@ -324,7 +226,6 @@ Add structured logging:
 Improve test coverage:
 - Command unit tests
 - Integration tests for database operations
-- TUI interaction tests
 
 ### 6. Cross-Platform Support
 
@@ -336,26 +237,20 @@ Expand beyond Windows:
 
 ```
 DevMaid/
-├── Program.cs                 # Entry point
-├── DevMaid.csproj            # Project file
-├── Commands/                  # Command implementations
-│   ├── TuiCommand.cs
-│   ├── TableParserCommand.cs
-│   ├── FileCommand.cs
-│   ├── ClaudeCodeCommand.cs
-│   ├── OpenCodeCommand.cs
-│   └── WingetCommand.cs
-├── CommandOptions/            # DTOs for commands
-├── Tui/                       # TUI components
-│   ├── TuiApp.cs
-│   └── MenuItem.cs
-├── Utils.cs                   # Helper functions
-├── Database.cs               # Database utilities
-└── docs/                     # Documentation
-    ├── en/
+├── DevMaid.CLI/               # Command line app project
+│   ├── Program.cs             # Entry point
+│   ├── Commands/              # Command implementations (TableParser, Winget, Query, etc.)
+│   ├── CommandOptions/        # Commands options and DTOs
+│   └── Services/              # Services like Logging, Database listing, etc.
+├── DevMaid.Core/              # Main library containing shared logic
+│   ├── Interfaces/            # Contracts (ILogger, IFileService, etc.)
+│   └── Services/              # Core business services
+├── DevMaid.Tests/             # Testing package (MSTest)
+└── docs/                      # Documentation
+    ├── en/                    # English Documentation
     │   ├── ARCHITECTURE.md
     │   └── FEATURE_SPECIFICATION.md
-    └── pt-BR/
+    └── pt-BR/                 # Portuguese Documentation
         ├── ARCHITECTURE.md
         └── FEATURE_SPECIFICATION.md
 ```
@@ -366,7 +261,6 @@ DevMaid's architecture provides a solid foundation for a CLI tool with:
 - Clean separation of concerns
 - Easy extensibility
 - Maintainable codebase
-- Good user experience through TUI mode
 - Flexible configuration management
 
 The modular design allows for easy addition of new features while maintaining code quality and testability.

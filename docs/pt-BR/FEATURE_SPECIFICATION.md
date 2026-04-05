@@ -4,21 +4,19 @@
 
 DevMaid é uma ferramenta CLI baseada em .NET projetada para automatizar tarefas comuns de desenvolvimento. Ela fornece uma interface unificada para operações de banco de dados, gerenciamento de arquivos, instalação de ferramentas de IA e gerenciamento de pacotes Windows.
 
-A ferramenta oferece dois modos de operação:
-1. **Modo CLI**: Execução direta via linha de comando
-2. **Modo TUI**: Interface de terminal interativa com menus
-
 ## Lista de Funcionalidades
 
 ### Funcionalidades Principais
 
 1. **Table Parser**
-2. **Combine**
-3. **Utilitários de Banco de Dados**
+2. **Utilitários de Banco de Dados**
+3. **Utilitário de Arquivos (Combine)**
 4. **Integração com Claude Code**
 5. **Integração com OpenCode**
 6. **Gerenciador de Pacotes Winget**
-7. **Modo TUI Interativo**
+7. **Query SQL & Exportação**
+8. **Limpeza de Build (.NET Clean)**
+9. **Gerenciador de Features Windows**
 
 ---
 
@@ -175,7 +173,7 @@ devmaid database restore --all
 
 ---
 
-## Funcionalidade 2: Combine
+## Funcionalidade 3: Utilitários de Arquivo (Combine)
 
 ### Objetivo
 
@@ -385,90 +383,46 @@ devmaid winget restore -i "C:\backups\backup-winget.json"
 
 ---
 
-## Funcionalidade 7: Modo TUI Interativo
+## Funcionalidade 7: Query SQL & Exportação
 
 ### Objetivo
-
-Fornecer uma interface de terminal amigável para navegar e executar comandos do DevMaid.
+Executa comandos SQL (script) em diversos lugares e gera uma lista consolidada em CSV automaticamente.
 
 ### Descrição Detalhada
-
-O modo TUI oferece uma interface interativa baseada em menus que torna o DevMaid acessível para usuários que preferem não lembrar comandos CLI.
+Suporta banco de dados único, múltiplos bancos de dados num mesmo localhost ou distribuição em diversos servidores usando configurações do appsettings.json, exportando uma saída formatada e unificada no final do processamento.
 
 ### Fluxo de Uso
-
 ```bash
-devmaid tui
+devmaid query run --input script.sql --output result.csv -h localhost -d mydb
+devmaid query run --all --input script.sql --output ./resultados -h localhost
 ```
 
-1. Menu principal é exibido com comandos disponíveis
-2. Usuário navega usando teclas de seta
-3. Usuário seleciona um item de menu com Enter
-4. Sub-menu ou execução de comando ocorre
-5. Progresso é mostrado em tempo real
-6. Diálogo de saída exibe resultados
-7. Usuário retorna ao menu ou sai
+---
 
-### Estrutura de Menu
+## Funcionalidade 8: Limpeza de Build (.NET Clean)
 
-```
-DevMaid - Interface de Terminal
-├── Table Parser
-│   ├── Parse CSV para Markdown
-│   ├── Parse CSV para JSON
-│   ├── Parse Markdown para CSV
-│   └── Voltar
-├── Utilitários de Arquivo
-│   ├── Buscar Arquivos
-│   ├── Organizar por Extensão
-│   ├── Encontrar Duplicatas
-│   └── Voltar
-├── Claude Code
-│   ├── Instalar Claude Code
-│   ├── Verificar Status
-│   ├── Configurar
-│   └── Voltar
-├── OpenCode
-│   ├── Instalar OpenCode
-│   ├── Verificar Status
-│   ├── Configurar
-│   └── Voltar
-├── Winget
-│   ├── Backup de Pacotes
-│   ├── Restaurar Pacotes
-│   └── Voltar
-└── Sair
+### Objetivo
+Libera espaço e resolve possíveis problemas de cache removendo os diretórios de saída bin e obj.
+
+### Fluxo de Uso
+```bash
+devmaid clean
+devmaid clean "C:\MeusProjetos"
 ```
 
-### Navegação por Teclado
+---
 
-| Tecla | Ação |
-|-------|------|
-| ↑ / ↓ | Navegar itens do menu |
-| Enter | Executar item selecionado |
-| Esc | Voltar / Sair |
+## Funcionalidade 9: Gerenciador de Funcionalidades do Windows
 
-### Suporte a Tema
+### Objetivo
+Permite o backup de Features nativas ativadas no Windows para arquivos JSON, podendo restaurá-las usando o dism.
 
-O TUI detecta automaticamente o tema do terminal:
-- **Terminal escuro**: Fundo preto, texto branco/cinza
-- **Terminal claro**: Fundo branco, texto preto
-
-### Saída em Tempo Real
-
-Comandos executam de forma assíncrona com exibição de saída em tempo real:
-- Diálogo de progresso mostra durante execução
-- Saída flui para o diálogo conforme recebida
-- Código de saída exibido após conclusão
-
-### Casos Extremos e Tratamento de Erros
-
-| Cenário | Tratamento |
-|---------|------------|
-| Terminal muito pequeno | Mostrar aviso de tamanho mínimo |
-| Comando não encontrado | Exibir erro no diálogo de saída |
-| Comando falha | Exibir mensagem de erro com código de saída |
-| Comando de longa duração | Mostrar progresso, permitir cancelamento |
+### Fluxo de Uso
+```bash
+devmaid windowsfeatures list
+devmaid windowsfeatures export "C:\backups\windowsfeatures.json"
+devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
+```
 
 ---
 
@@ -480,10 +434,9 @@ Comandos executam de forma assíncrona com exibição de saída em tempo real:
 
 **Fluxo:**
 1. Instalar DevMaid via dotnet tool
-2. Executar `devmaid tui`
-3. Usar Winget Backup para restaurar pacotes da máquina antiga
-4. Instalar Claude Code via menu
-5. Instalar OpenCode via menu
+2. Executar `devmaid winget restore` para restaurar pacotes da máquina antiga
+3. Instalar Claude Code: `devmaid claude install`
+4. Instalar OpenCode: `devmaid opencode install`
 
 ### Caso de Uso 2: Geração de Classe de Banco de Dados
 
@@ -509,8 +462,6 @@ Comandos executam de forma assíncrona com exibição de saída em tempo real:
 ### Prioridade 1 - Curto Prazo
 
 - [ ] Adicionar suporte para MySQL/SQL Server no Table Parser
-- [ ] Adicionar visualização de arquivo no TUI
-- [ ] Adicionar histórico de comandos no TUI
 - [ ] Adicionar arquivo de configuração para opções padrão
 
 ### Prioridade 2 - Médio Prazo
@@ -549,7 +500,9 @@ Comandos executam de forma assíncrona com exibição de saída em tempo real:
 | `devmaid database` | - | Comandos de banco de dados |
 | `devmaid database backup` | - | Backup de banco de dados |
 | `devmaid database restore` | - | Restore de banco de dados |
-| `devmaid tui` | - | Iniciar TUI |
+| `devmaid query run` | - | Consultar multi-database exportando CSV |
+| `devmaid clean` | - | Limpar pastas bin e obj de um diretorio |
+| `devmaid windowsfeatures` | - | Gerenciar optional Features |
 
 ---
 
@@ -558,7 +511,6 @@ Comandos executam de forma assíncrona com exibição de saída em tempo real:
 | Termo | Definição |
 |-------|-----------|
 | CLI | Interface de Linha de Comando |
-| TUI | Interface de Usuário de Terminal |
 | Winget | Gerenciador de Pacotes Windows |
 | MCP | Protocolo de Contexto de Modelo |
 | DTO | Objeto de Transferência de Dados |
