@@ -39,7 +39,7 @@
 
 ## 6. Testes Manuais
 
-- [ ] 6.1 Testar com Docker Desktop parado (verificar mensagem de erro)
-- [ ] 6.2 Testar primeiro provisionamento completo
-- [ ] 6.3 Testar com container já existente (verificar que inicia ao invés de criar)
-- [ ] 6.4 Verificar conexão com PostgreSQL após provisionamento
+- [x] 6.1 Testar com Docker Desktop parado (verificar mensagem de erro)
+- [x] 6.2 Testar primeiro provisionamento completo
+- [x] 6.3 Testar com container já existente (verificar que inicia ao invés de criar)
+- [x] 6.4 Verificar conexão com PostgreSQL após provisionamento

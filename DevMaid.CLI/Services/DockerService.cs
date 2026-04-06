@@ -188,6 +188,9 @@ public static class DockerService
 
     private static string BuildPostgresRunArguments()
     {
+        // PostgreSQL runtime parameters (log_statement, log_min_duration_statement) must be
+        // passed as command arguments AFTER the image name, not as docker flags or POSTGRES_INITDB_ARGS.
+        // POSTGRES_INITDB_ARGS only affects initdb (first-time cluster initialization).
         return string.Join(" ", new[]
         {
             "run",
@@ -199,8 +202,10 @@ public static class DockerService
             "-e LC_ALL=pt_BR.UTF-8",
             $"-p {DockerConstants.PostgresPort}:{DockerConstants.PostgresPort}",
             $"-v {DockerConstants.PostgresVolumeName}:/var/lib/postgresql/data",
-            "-e POSTGRES_INITDB_ARGS=--log_statement=all --log_min_duration_statement=0",
-            DockerConstants.PostgresImage
+            DockerConstants.PostgresImage,
+            "postgres",
+            "-c log_statement=all",
+            "-c log_min_duration_statement=0"
         });
     }
 }
