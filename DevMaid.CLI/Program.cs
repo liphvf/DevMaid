@@ -59,7 +59,8 @@ internal static class Program
             DatabaseCommand.Build(),
             QueryCommand.Build(),
             CleanCommand.Build(),
-            WindowsFeaturesCommand.Build()
+            WindowsFeaturesCommand.Build(),
+            DockerCommand.Build()
         };
 
         try

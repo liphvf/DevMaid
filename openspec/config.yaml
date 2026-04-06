@@ -2,22 +2,34 @@ schema: spec-driven
 context: |
   Language: Portuguese (pt-BR)
   All artifacts must be written in Brazilian Portuguese.
+  This includes all structural keywords, section headings, labels, and terminology.
+  Translate structural terms as follows:
+    - "Scenario" → "Cenário"
+    - "Requirement" → "Requisito"
+    - "WHEN" → "QUANDO"
+    - "THEN" → "ENTÃO"
+    - "SHALL" → "DEVE"
+    - "ADDED" → "ADICIONADO"
+    - "MODIFIED" → "MODIFICADO"
+    - "REMOVED" → "REMOVIDO"
+    - "New Capabilities" → "Novas Capacidades"
+    - "Modified Capabilities" → "Capacidades Modificadas"
+    - "What Changes" → "O que Muda"
+    - "Impact" → "Impacto"
+    - "Why" → "Por que"
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
-
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - All section headings must be in Portuguese (e.g., "Por que", "O que Muda", "Capacidades", "Impacto")
+    - Use "Novas Capacidades" and "Capacidades Modificadas" instead of English equivalents
+  spec:
+    - Use "Cenário" instead of "Scenario"
+    - Use "Requisito" instead of "Requirement"
+    - Use "QUANDO" instead of "WHEN"
+    - Use "ENTÃO" instead of "THEN"
+    - Use "DEVE" instead of "SHALL"
+    - Use "ADICIONADO", "MODIFICADO", "REMOVIDO" for section prefixes
+  tasks:
+    - All task section headings and labels must be in Portuguese
+  design:
+    - All section headings and labels must be in Portuguese
