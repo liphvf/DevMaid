@@ -2,8 +2,6 @@
 description: Create a change and generate all artifacts needed for implementation in one go
 ---
 
-> **AVISO:** Todo output para o usuário deve ser em **português do Brasil (pt-BR)**. Isso inclui explicações, resumos, perguntas, mensagens de erro e qualquer comunicação direta. Exceção: não traduza nomes de skills, comandos (ex: `openspec-propose`, `opsx-apply`), identificadores de código, nomes de arquivos ou comandos de terminal.
-
 Fast-forward through artifact creation - generate everything needed to start implementation.
 
 **Input**: The argument after `/opsx-ff` is the change name (kebab-case), OR a description of what the user wants to build.
