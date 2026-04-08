@@ -1,6 +1,10 @@
-# DevMaid
+<div align="center">
+  <img src="assets/devmaid_icon.png" alt="DevMaid Logo" width="160" />
 
-A powerful .NET CLI tool to automate common development tasks.
+  # DevMaid
+
+  A powerful .NET CLI tool to automate common development tasks.
+</div>
 
 ## Description
 
