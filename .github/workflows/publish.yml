@@ -27,18 +27,18 @@ jobs:
         run: dotnet restore
 
       - name: Build and create NuGet package
-        run: dotnet publish -c Release
+        run: dotnet pack DevMaid.CLI/DevMaid.CLI.csproj -c Release --no-restore
 
       - name: Extract version
         id: version
         run: |
-          $nupkg = Get-ChildItem bin/Release/*.nupkg | Select-Object -First 1
-          $version = $nupkg.BaseName -replace 'DevMaid\.', ''
+          $nupkg = Get-ChildItem DevMaid.CLI/bin/Release/*.nupkg | Select-Object -First 1
+          $version = $nupkg.BaseName -replace '^DevMaid\.CLI\.', ''
           echo "version=$version" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
       - name: Publish to NuGet.org
-        run: dotnet nuget push bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push DevMaid.CLI/bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         env:
           NUGET_AUTH_TOKEN: ${{ secrets.NUGET_API_KEY }}
 
