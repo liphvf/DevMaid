@@ -1,6 +1,6 @@
 # DevMaid Development Guidelines
 
-Auto-generated from codebase. Last updated: 2026-04-04
+Auto-generated from codebase. Last updated: 2026-04-07
 
 ## Idioma
 
@@ -14,6 +14,7 @@ Exceção: não traduza nomes de skills, comandos do openspec (ex: `openspec-pro
 - System.CommandLine 2.0.5 — CLI argument parsing and subcommand routing
 - Npgsql 10.0.2 — PostgreSQL ADO.NET driver
 - CsvHelper 33.1.0 — CSV export for query results
+- Spectre.Console.Cli 0.55.0 — Interactive TUI prompts (selection menus, styled output)
 - Microsoft.Extensions.Hosting 10.0.5 — Generic host + DI container
 - Microsoft.Extensions.Configuration — JSON / env-var config pipeline
 - Microsoft.Extensions.Logging — Structured logging (wrapped by custom ILogger)
@@ -27,9 +28,10 @@ Exceção: não traduza nomes de skills, comandos do openspec (ex: `openspec-pro
 DevMaid/
 ├── DevMaid.Core/                  ← Business logic, interfaces, models (class library)
 │   ├── Interfaces/                ← IConfigurationService, IDatabaseService, IFileService,
-│   │                                 IProcessExecutor, IWingetService
+│   │                                 IProcessExecutor, IWingetService, IPgPassService
 │   ├── Models/                    ← OperationResult<T>, DatabaseConnectionConfig,
-│   │                                 OperationProgress, WingetOperationOptions, etc.
+│   │                                 OperationProgress, WingetOperationOptions,
+│   │                                 PgPassEntry, PgPassResult, etc.
 │   ├── Services/                  ← Concrete implementations of all interfaces
 │   │   └── ServiceCollectionExtensions.cs  ← AddDevMaidServices() DI registration
 │   ├── Logging/                   ← Custom ILogger + MicrosoftExtensionsLoggerAdapter
@@ -45,29 +47,41 @@ DevMaid/
 │   │   ├── OpenCodeCommand.cs
 │   │   ├── WingetCommand.cs
 │   │   ├── DatabaseCommand.cs
+│   │   ├── PgPassCommand.cs       ← Subcomando de DatabaseCommand (pgpass add/list/remove)
+│   │   ├── DockerCommand.cs       ← Docker utilities (postgres container)
 │   │   ├── QueryCommand.cs
 │   │   ├── CleanCommand.cs
 │   │   └── WindowsFeaturesCommand.cs
 │   ├── CommandOptions/            ← Strongly-typed options DTOs per command
-│   ├── Services/                  ← Static facade wrappers (ConfigurationService, Logger, etc.)
-│   └── SecurityUtils.cs           ← Input validation (path traversal, PostgreSQL identifiers)
+│   ├── Services/                  ← Static facade wrappers (ConfigurationService, Logger,
+│   │                                 DockerService, DockerConstants, PostgresPasswordHandler)
+│   └── SecurityUtils.cs           ← Input validation (path traversal, PostgreSQL identifiers,
+│                                     host/port, wildcard *)
 │
 ├── DevMaid.Tests/                 ← MSTest project (references DevMaid.CLI)
 │   └── Commands/                  ← One test class per command
 │
 ├── DevMaid.CodeAnalysis/          ← Standalone Roslyn analysis utility
 │
-├── specs/                         ← Feature specs (speckit SDD workflow)
-│   ├── README.md                  ← Master index of all specs
-│   └── <NNN>-<slug>/              ← spec.md, plan.md, tasks.md per feature
+├── openspec/                      ← OpenSpec workflow (substituiu specs/ e .specify/)
+│   ├── config.yaml                ← Configuração do projeto (schema, idioma pt-BR)
+│   ├── specs/                     ← Especificações canônicas por feature
+│   │   ├── pgpass-cli-setup/
+│   │   ├── pgpass-wildcard-validation/
+│   │   ├── docker-postgres/
+│   │   └── opencode-default-model/
+│   └── changes/
+│       └── archive/               ← Changes implementados e arquivados
+│
+├── .opencode/
+│   ├── skills/                    ← Skills OpenSpec (openspec-propose, openspec-apply-change, etc.)
+│   └── command/                   ← Slash commands customizados
 │
 ├── docs/
 │   ├── pt-BR/                     ← Primary documentation (Portuguese, source of truth)
 │   └── en/                        ← Secondary documentation (English)
 │
-└── .specify/
-    ├── memory/constitution.md     ← Project constitution (governing principles)
-    └── templates/                 ← speckit templates (spec, plan, tasks, agent)
+└── opencode.json                  ← Configuração local do OpenCode (modelo padrão, etc.)
 ```
 
 ## Commands
@@ -101,6 +115,10 @@ devmaid --help
 devmaid database backup <dbname> [--host] [--port] [--username] [--password] [--output]
 devmaid database restore <dbname> --input <file> [connection options]
 devmaid database backup --all [connection options]
+devmaid database pgpass add <banco> [--host] [--port] [--username] [--password]
+devmaid database pgpass list
+devmaid database pgpass remove <banco> [--host] [--port] [--username]
+devmaid docker postgres
 devmaid table-parser -d <db> -t <table> -H <host> -u <user>
 devmaid file combine -i "<glob>" -o <output>
 devmaid query run -f <sql-file> -d <db> [--all] [--servers]
@@ -111,6 +129,7 @@ devmaid claude install
 devmaid claude settings mcp-database
 devmaid claude settings win-env
 devmaid opencode settings mcp-database
+devmaid opencode settings default-model [model-id] [--global]
 devmaid windowsfeatures export -o <file>
 devmaid windowsfeatures import -i <file>
 devmaid windowsfeatures list
@@ -127,7 +146,7 @@ devmaid windowsfeatures list
 - **External processes**: Always `UseShellExecute = false`, capture stdout/stderr via redirect — never shell out to `cmd.exe` or `powershell.exe`
 - **Test naming**: `<MethodName>_<StateUnderTest>_<ExpectedBehavior>` (e.g., `BackupAsync_ComOpcoesValidas_DeveCriarArquivoDump`)
 - **XML doc comments**: Required on all public members (enforced by `GenerateDocumentationFile true`)
-- **Configuration**: Read from `%LocalAppData%\DevMaid\appsettings.json`; never hard-code connection strings; use `SecurityUtils.IsValidPath()` and `SecurityUtils.IsValidPostgreSQLIdentifier()` before using any user-supplied input
+- **Configuration**: Read from `%LocalAppData%\DevMaid\appsettings.json`; never hard-code connection strings; use `SecurityUtils.IsValidPath()` and `SecurityUtils.IsValidPostgreSQLIdentifier()` before using any user-supplied input; `SecurityUtils.IsValidHost()` and `SecurityUtils.IsValidPort()` para conexões; `*` é aceito como curinga em host/port/username no pgpass
 - **Async**: All service methods that touch I/O or external processes must be `async Task<T>` and accept `CancellationToken`
 - **Progress reporting**: Use `IProgress<OperationProgress>` for operations expected to take > 2s
 - **Logging**: Use `ILogger` from `DevMaid.Core/Logging/ILogger.cs` — not `Microsoft.Extensions.Logging.ILogger` directly in Core
@@ -140,8 +159,31 @@ devmaid windowsfeatures list
 - All inputs validated before use: paths via `SecurityUtils.IsValidPath()`, PostgreSQL identifiers via `SecurityUtils.IsValidPostgreSQLIdentifier()`.
 - Exit codes: `0` success, `1` general error, `2` invalid args, `3` external dependency not found, `130` user cancellation.
 
+## OpenSpec Workflow
+
+O projeto usa o workflow **OpenSpec** para gerenciar features e mudanças:
+
+- **`openspec/config.yaml`** — schema e configurações (idioma pt-BR obrigatório em todos os artefatos)
+- **`openspec/specs/<slug>/spec.md`** — especificações canônicas por feature (substituiu `specs/`)
+- **`openspec/changes/`** — mudanças em andamento (proposal, design, tasks)
+- **`openspec/changes/archive/`** — mudanças implementadas e arquivadas
+
+Skills disponíveis em `.opencode/skills/`:
+- `openspec-propose` — cria proposta completa com todos os artefatos
+- `openspec-apply-change` — implementa tasks de uma mudança
+- `openspec-continue-change` — avança para o próximo artefato
+- `openspec-ff-change` — cria todos os artefatos de uma vez
+- `openspec-verify-change` — valida implementação antes de arquivar
+- `openspec-archive-change` — arquiva mudança concluída
+- `openspec-sync-specs` — sincroniza delta specs com specs principais
+- `openspec-explore` — modo de exploração / pensamento colaborativo
+
 ## Recent Changes
 
+- docker-postgres (2026-04-05): Added `DockerCommand` — `docker postgres` inicia/cria container PostgreSQL local via Docker
+- pgpass-wildcard-fields (2026-04-04): `SecurityUtils.IsValidHost/Port/Username` aceitam `*` como curinga; `database pgpass add/list/remove` suportam wildcard
+- pgpass-cli-setup (2026-04-04): Added `PgPassCommand` — gerenciamento de `pgpass.conf` com subcomandos `add`, `list`, `remove`; `IPgPassService` + `PgPassService`
+- opencode-default-model (2026-04-07): Added `opencode settings default-model` — define modelo padrão via argumento ou menu interativo (Spectre.Console); suporte a `--global`
 - 009-windows-features-manager: Added `WindowsFeaturesCommand` — dism.exe wrapper for export/import/list of Windows optional features
 - 008-project-cleaner: Added `CleanCommand` — recursive `bin/` and `obj/` directory deletion
 - 007-sql-query-csv-export: Added `QueryCommand` — SQL file execution with CSV export, multi-server support
