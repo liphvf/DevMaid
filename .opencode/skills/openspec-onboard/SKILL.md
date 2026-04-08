@@ -9,8 +9,6 @@ metadata:
   generatedBy: "1.2.0"
 ---
 
-> **AVISO:** Todo output para o usuário deve ser em **português do Brasil (pt-BR)**. Isso inclui explicações, resumos, perguntas, mensagens de erro e qualquer comunicação direta. Exceção: não traduza nomes de skills, comandos (ex: `openspec-propose`, `opsx-apply`), identificadores de código, nomes de arquivos ou comandos de terminal.
-
 Guide the user through their first complete OpenSpec workflow cycle. This is a teaching experience—you'll do real work in their codebase while explaining each step.
 
 ---

@@ -9,8 +9,6 @@ metadata:
   generatedBy: "1.2.0"
 ---
 
-> **AVISO:** Todo output para o usuário deve ser em **português do Brasil (pt-BR)**. Isso inclui explicações, resumos, perguntas, mensagens de erro e qualquer comunicação direta. Exceção: não traduza nomes de skills, comandos (ex: `openspec-propose`, `opsx-apply`), identificadores de código, nomes de arquivos ou comandos de terminal.
-
 Implement tasks from an OpenSpec change.
 
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.

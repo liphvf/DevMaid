@@ -2,8 +2,6 @@
 description: Sync delta specs from a change to main specs
 ---
 
-> **AVISO:** Todo output para o usuário deve ser em **português do Brasil (pt-BR)**. Isso inclui explicações, resumos, perguntas, mensagens de erro e qualquer comunicação direta. Exceção: não traduza nomes de skills, comandos (ex: `openspec-propose`, `opsx-apply`), identificadores de código, nomes de arquivos ou comandos de terminal.
-
 Sync delta specs from a change to main specs.
 
 This is an **agent-driven** operation - you will read delta specs and directly edit main specs to apply the changes. This allows intelligent merging (e.g., adding a scenario without copying the entire requirement).
