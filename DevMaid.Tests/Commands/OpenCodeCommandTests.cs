@@ -12,17 +12,27 @@ public class OpenCodeCommandTests
     private string _testDirectory = null!;
     private string _originalDirectory = null!;
 
+    private static readonly System.Collections.Generic.IReadOnlyList<string> FakeModels =
+        new System.Collections.Generic.List<string>
+        {
+            "github-copilot/gpt-4o",
+            "github-copilot/gpt-4.1",
+            "anthropic/claude-3-5-sonnet"
+        }.AsReadOnly();
+
     [TestInitialize]
     public void Setup()
     {
         _testDirectory = Path.Combine(Path.GetTempPath(), $"OpenCodeCommandTests_{Guid.NewGuid():N}");
         Directory.CreateDirectory(_testDirectory);
         _originalDirectory = Directory.GetCurrentDirectory();
+        CLI.Commands.OpenCodeCommand.ModelsProvider = () => FakeModels;
     }
 
     [TestCleanup]
     public void Cleanup()
     {
+        CLI.Commands.OpenCodeCommand.ModelsProvider = null;
         Directory.SetCurrentDirectory(_originalDirectory);
 
         if (Directory.Exists(_testDirectory))

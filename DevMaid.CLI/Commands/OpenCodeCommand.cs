@@ -18,6 +18,12 @@ public static class OpenCodeCommand
         ".config", "opencode");
 
     /// <summary>
+    /// Hook that overrides model fetching in tests. When non-null, replaces the
+    /// real <c>opencode models</c> process call inside <see cref="GetAvailableModels"/>.
+    /// </summary>
+    internal static Func<IReadOnlyList<string>>? ModelsProvider { get; set; }
+
+    /// <summary>
     /// Builds the opencode command structure.
     /// </summary>
     /// <returns>The configured <see cref="Command"/>.</returns>
@@ -152,6 +158,11 @@ public static class OpenCodeCommand
     /// <exception cref="InvalidOperationException">Thrown when opencode is not found in PATH.</exception>
     public static IReadOnlyList<string> GetAvailableModels()
     {
+        if (ModelsProvider is not null)
+        {
+            return ModelsProvider();
+        }
+
         try
         {
             using var process = new Process();
