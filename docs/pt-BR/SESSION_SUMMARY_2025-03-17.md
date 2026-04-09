@@ -98,7 +98,6 @@
   - DatabaseCommand.cs
   - FileCommand.cs
   - WingetCommand.cs
-  - TableParserCommand.cs
   - QueryCommand.cs
   - CleanCommand.cs
   - ClaudeCodeCommand.cs
@@ -111,7 +110,6 @@
   - FileCommandOptions.cs
   - QueryCommandOptions.cs
   - ServerConfig.cs
-  - TableParserOptions.cs
   - DatabaseConnectionConfig.cs (novo)
 
 - **Tui/** - Componentes TUI movidos para `DevMaid.CLI/Tui/`
@@ -220,7 +218,6 @@ DevMaid/
 │   │   ├── DatabaseCommand.cs
 │   │   ├── FileCommand.cs
 │   │   ├── WingetCommand.cs
-│   │   ├── TableParserCommand.cs
 │   │   ├── QueryCommand.cs
 │   │   ├── CleanCommand.cs
 │   │   ├── ClaudeCodeCommand.cs
@@ -232,7 +229,6 @@ DevMaid/
 │   │   ├── FileCommandOptions.cs
 │   │   ├── QueryCommandOptions.cs
 │   │   ├── ServerConfig.cs
-│   │   ├── TableParserOptions.cs
 │   │   └── DatabaseConnectionConfig.cs
 │   ├── Tui/
 │   │   ├── MenuItem.cs

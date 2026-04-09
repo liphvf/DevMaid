@@ -51,7 +51,6 @@ internal static class Program
 
         var rootCommand = new RootCommand("DevMaid command line tools")
         {
-            TableParserCommand.Build(),
             FileCommand.Build(),
             ClaudeCodeCommand.Build(),
             OpenCodeCommand.Build(),
