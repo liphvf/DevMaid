@@ -180,7 +180,7 @@ public static class OpenCodeCommand
     /// Looks for the opencode executable in known installation locations.
     /// Falls back to a plain <c>"opencode"</c> name so the OS PATH is tried last.
     /// </summary>
-    /// <returns>Full path to the executable, or <c>"opencode"</c> if no known path was found.</returns>
+    /// <returns>Full path to the executable (or script), or <c>"opencode"</c> if no known path was found.</returns>
     internal static string ResolveOpenCodeExecutable()
     {
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -196,10 +196,11 @@ public static class OpenCodeCommand
             }
         }
 
-        // 2. Tauri Desktop installer: winget install SST.OpenCodeDesktop
-        //    Installs to %LocalAppData%\OpenCode\ with main binary OpenCode.exe
-        var desktopExe = Path.Combine(localAppData, "OpenCode", "OpenCode.exe");
-        if (File.Exists(desktopExe)) return desktopExe;
+        // 2. npm global install: npm install -g opencode
+        //    Installs a .ps1 wrapper to %APPDATA%\npm\opencode.ps1
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var npmPs1 = Path.Combine(appData, "npm", "opencode.ps1");
+        if (File.Exists(npmPs1)) return npmPs1;
 
         // 3. Fall back to PATH lookup
         return "opencode";
@@ -222,15 +223,25 @@ public static class OpenCodeCommand
         try
         {
             using var process = new Process();
-            process.StartInfo = new ProcessStartInfo
-            {
-                FileName = executable,
-                Arguments = "models",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+            process.StartInfo = executable.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase)
+                ? new ProcessStartInfo
+                {
+                    FileName = "pwsh.exe",
+                    Arguments = $"-NonInteractive -NoProfile -File \"{executable}\" models",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+                : new ProcessStartInfo
+                {
+                    FileName = executable,
+                    Arguments = "models",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
             process.Start();
             var output = process.StandardOutput.ReadToEnd();

@@ -244,6 +244,29 @@ public class OpenCodeCommandTests
             "Deve retornar 'opencode' (fallback PATH) ou um caminho existente.");
     }
 
+    [TestMethod]
+    public void ResolveOpenCodeExecutable_NpmPs1Exists_ReturnsPs1Path()
+    {
+        // Verifica que o método retorna o caminho do .ps1 do npm quando ele existe na máquina.
+        // Se o npm não estiver instalado com opencode, o teste apenas valida o contrato geral.
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var npmPs1 = Path.Combine(appData, "npm", "opencode.ps1");
+
+        var result = CLI.Commands.OpenCodeCommand.ResolveOpenCodeExecutable();
+
+        if (File.Exists(npmPs1))
+        {
+            Assert.AreEqual(npmPs1, result,
+                "Quando opencode.ps1 do npm existe, deve ser retornado com prioridade sobre o fallback.");
+        }
+        else
+        {
+            Assert.IsTrue(
+                result == "opencode" || File.Exists(result),
+                "Deve retornar 'opencode' (fallback PATH) ou um caminho existente.");
+        }
+    }
+
     // --- Validacao de model-id ---
 
     [TestMethod]
