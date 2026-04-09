@@ -89,28 +89,54 @@ public static class OpenCodeCommand
     /// <param name="global">If true, modifies the global config; otherwise modifies the local config.</param>
     public static void SetDefaultModel(string? modelId, bool global)
     {
-        var availableModels = GetAvailableModels();
-
         string selectedModel;
+
         if (modelId is not null)
         {
-            if (!availableModels.Contains(modelId, StringComparer.Ordinal))
+            // Model ID supplied explicitly: try to validate, but proceed anyway if opencode is not in PATH.
+            try
             {
-                Console.Error.WriteLine($"Modelo '{modelId}' nao encontrado.");
-                Console.Error.WriteLine("Modelos disponiveis:");
-                foreach (var m in availableModels)
+                var availableModels = GetAvailableModels();
+                if (!availableModels.Contains(modelId, StringComparer.Ordinal))
                 {
-                    Console.Error.WriteLine($"  {m}");
-                }
+                    Console.Error.WriteLine($"Modelo '{modelId}' nao encontrado.");
+                    Console.Error.WriteLine("Modelos disponiveis:");
+                    foreach (var m in availableModels)
+                    {
+                        Console.Error.WriteLine($"  {m}");
+                    }
 
-                Environment.Exit(1);
-                return;
+                    Environment.Exit(1);
+                    return;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // opencode not available in PATH (e.g. Desktop installer without PATH entry).
+                // Skip validation and trust the provided model ID.
+                AnsiConsole.MarkupLine(
+                    "[yellow]Aviso:[/] Nao foi possivel validar o modelo (opencode nao encontrado no PATH). Definindo sem validacao.");
             }
 
             selectedModel = modelId;
         }
         else
         {
+            // No model ID supplied: need opencode to list candidates for interactive selection.
+            IReadOnlyList<string> availableModels;
+            try
+            {
+                availableModels = GetAvailableModels();
+            }
+            catch (InvalidOperationException ex)
+            {
+                AnsiConsole.MarkupLine($"[red]Erro:[/] {ex.Message}");
+                AnsiConsole.MarkupLine(
+                    "[yellow]Dica:[/] Forneça o ID do modelo diretamente: devmaid opencode settings default-model [grey]<model-id>[/]");
+                Environment.Exit(1);
+                return;
+            }
+
             var chosen = SelectModelInteractively(availableModels);
             if (chosen is null)
             {
@@ -151,10 +177,39 @@ public static class OpenCodeCommand
     }
 
     /// <summary>
+    /// Looks for the opencode executable in known installation locations.
+    /// Falls back to a plain <c>"opencode"</c> name so the OS PATH is tried last.
+    /// </summary>
+    /// <returns>Full path to the executable, or <c>"opencode"</c> if no known path was found.</returns>
+    internal static string ResolveOpenCodeExecutable()
+    {
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+        // 1. WinGet portable package: winget install SST.opencode
+        var wingetPackages = Path.Combine(localAppData, "Microsoft", "WinGet", "Packages");
+        if (Directory.Exists(wingetPackages))
+        {
+            foreach (var dir in Directory.GetDirectories(wingetPackages, "SST.opencode_*"))
+            {
+                var exe = Path.Combine(dir, "opencode.exe");
+                if (File.Exists(exe)) return exe;
+            }
+        }
+
+        // 2. Tauri Desktop installer: winget install SST.OpenCodeDesktop
+        //    Installs to %LocalAppData%\OpenCode\ with main binary OpenCode.exe
+        var desktopExe = Path.Combine(localAppData, "OpenCode", "OpenCode.exe");
+        if (File.Exists(desktopExe)) return desktopExe;
+
+        // 3. Fall back to PATH lookup
+        return "opencode";
+    }
+
+    /// <summary>
     /// Returns the list of available models from the `opencode models` command.
     /// </summary>
     /// <returns>A read-only list of model IDs.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when opencode is not found in PATH.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when opencode is not found.</exception>
     public static IReadOnlyList<string> GetAvailableModels()
     {
         if (ModelsProvider is not null)
@@ -162,12 +217,14 @@ public static class OpenCodeCommand
             return ModelsProvider();
         }
 
+        var executable = ResolveOpenCodeExecutable();
+
         try
         {
             using var process = new Process();
             process.StartInfo = new ProcessStartInfo
             {
-                FileName = "opencode",
+                FileName = executable,
                 Arguments = "models",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -189,7 +246,13 @@ public static class OpenCodeCommand
         catch (Win32Exception ex)
         {
             throw new InvalidOperationException(
-                "Nao foi possivel executar 'opencode'. Verifique se o OpenCode esta instalado e disponivel no PATH.", ex);
+                """
+                Nao foi possivel encontrar o executavel do OpenCode.
+                Tente uma das opcoes abaixo:
+                  1. Instalar o CLI via WinGet:  winget install SST.opencode
+                  2. Adicionar o diretorio de instalacao ao PATH manualmente.
+                  3. Fornecer o model-id diretamente:  devmaid opencode settings default-model <model-id>
+                """, ex);
         }
     }
 
