@@ -1,6 +1,6 @@
 ## Contexto
 
-O comando `devmaid database pgpass` permite que desenvolvedores gerenciem arquivos de senha do PostgreSQL para desenvolvimento local. O modelo subjacente (`PgPassEntry.cs`) já documenta suporte a curinga (`*`) em todos os campos, mas a camada de validação em `SecurityUtils.cs` rejeita `*` para host, porta e usuário.
+O comando `FurLab database pgpass` permite que desenvolvedores gerenciem arquivos de senha do PostgreSQL para desenvolvimento local. O modelo subjacente (`PgPassEntry.cs`) já documenta suporte a curinga (`*`) em todos os campos, mas a camada de validação em `SecurityUtils.cs` rejeita `*` para host, porta e usuário.
 
 Esta é uma mudança localizada em três métodos de validação, sem preocupações transversais.
 

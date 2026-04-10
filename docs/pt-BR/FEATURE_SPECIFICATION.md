@@ -2,7 +2,7 @@
 
 ## Visão Geral do Produto
 
-DevMaid é uma ferramenta CLI baseada em .NET projetada para automatizar tarefas comuns de desenvolvimento. Ela fornece uma interface unificada para operações de banco de dados, gerenciamento de arquivos, instalação de ferramentas de IA e gerenciamento de pacotes Windows.
+FurLab é uma ferramenta CLI baseada em .NET projetada para automatizar tarefas comuns de desenvolvimento. Ela fornece uma interface unificada para operações de banco de dados, gerenciamento de arquivos, instalação de ferramentas de IA e gerenciamento de pacotes Windows.
 
 ## Lista de Funcionalidades
 
@@ -99,19 +99,19 @@ Restaura bancos de dados PostgreSQL usando pg_restore a partir de arquivos .dump
 
 ```bash
 # Backup de um único banco de dados
-devmaid database backup meubanco -h localhost -U postgres
+FurLab database backup meubanco -h localhost -U postgres
 
 # Backup de todos os bancos de dados
-devmaid database backup --all -h localhost -U postgres -o "C:\backups"
+FurLab database backup --all -h localhost -U postgres -o "C:\backups"
 
 # Restore de um banco de dados específico
-devmaid database restore meubanco "C:\backups\meubanco.dump"
+FurLab database restore meubanco "C:\backups\meubanco.dump"
 
 # Restore de todos os bancos de dados de um diretório
-devmaid database restore --all "C:\backups"
+FurLab database restore --all "C:\backups"
 
 # Restore de todos os bancos de dados do diretório atual
-devmaid database restore --all
+FurLab database restore --all
 ```
 
 ### Regras de Negócio
@@ -183,10 +183,10 @@ O recurso Combine pega múltiplos arquivos de entrada que correspondem a um padr
 
 ```bash
 # Combinar todos os arquivos SQL em um diretório
-devmaid file combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
+FurLab file combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
 
 # Combinar com nome de saída padrão
-devmaid file combine -i "C:\temp\*.txt"
+FurLab file combine -i "C:\temp\*.txt"
 ```
 
 ### Regras de Negócio
@@ -235,16 +235,16 @@ Atualiza configurações do Claude para ambiente Windows (shell, permissões).
 
 ```bash
 # Instalar Claude Code
-devmaid claude install
+FurLab claude install
 
 # Verificar status
-devmaid claude status
+FurLab claude status
 
 # Configurar MCP de banco de dados
-devmaid claude settings mcp-database
+FurLab claude settings mcp-database
 
 # Configurar ambiente Windows
-devmaid claude settings win-env
+FurLab claude settings win-env
 ```
 
 ### Regras de Negócio
@@ -293,13 +293,13 @@ Define configuração do OpenCode.
 
 ```bash
 # Instalar OpenCode
-devmaid opencode install
+FurLab opencode install
 
 # Verificar status
-devmaid opencode status
+FurLab opencode status
 
 # Configurar
-devmaid opencode config
+FurLab opencode config
 ```
 
 ### Casos Extremos e Tratamento de Erros
@@ -336,10 +336,10 @@ Importa pacotes de um backup criado anteriormente.
 
 ```bash
 # Backup de pacotes
-devmaid winget backup -o "C:\backups"
+FurLab winget backup -o "C:\backups"
 
 # Restaurar pacotes
-devmaid winget restore -i "C:\backups\backup-winget.json"
+FurLab winget restore -i "C:\backups\backup-winget.json"
 ```
 
 ### Regras de Negócio
@@ -389,8 +389,8 @@ Suporta banco de dados único, múltiplos bancos de dados num mesmo localhost ou
 
 ### Fluxo de Uso
 ```bash
-devmaid query run --input script.sql --output result.csv -h localhost -d mydb
-devmaid query run --all --input script.sql --output ./resultados -h localhost
+FurLab query run --input script.sql --output result.csv -h localhost -d mydb
+FurLab query run --all --input script.sql --output ./resultados -h localhost
 ```
 
 ---
@@ -402,8 +402,8 @@ Libera espaço e resolve possíveis problemas de cache removendo os diretórios 
 
 ### Fluxo de Uso
 ```bash
-devmaid clean
-devmaid clean "C:\MeusProjetos"
+FurLab clean
+FurLab clean "C:\MeusProjetos"
 ```
 
 ---
@@ -415,9 +415,9 @@ Permite o backup de Features nativas ativadas no Windows para arquivos JSON, pod
 
 ### Fluxo de Uso
 ```bash
-devmaid windowsfeatures list
-devmaid windowsfeatures export "C:\backups\windowsfeatures.json"
-devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
+FurLab windowsfeatures list
+FurLab windowsfeatures export "C:\backups\windowsfeatures.json"
+FurLab windowsfeatures import "C:\backups\windowsfeatures.json"
 ```
 
 ---
@@ -429,10 +429,10 @@ devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
 **Cenário:** Desenvolvedor obtém uma nova máquina Windows e deseja configurar seu ambiente de desenvolvimento.
 
 **Fluxo:**
-1. Instalar DevMaid via dotnet tool
-2. Executar `devmaid winget restore` para restaurar pacotes da máquina antiga
-3. Instalar Claude Code: `devmaid claude install`
-4. Instalar OpenCode: `devmaid opencode install`
+1. Instalar FurLab via dotnet tool
+2. Executar `FurLab winget restore` para restaurar pacotes da máquina antiga
+3. Instalar Claude Code: `FurLab claude install`
+4. Instalar OpenCode: `FurLab opencode install`
 
 ### Caso de Uso 2: Geração de Classe de Banco de Dados
 
@@ -447,7 +447,7 @@ devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
 **Cenário:** Desenvolvedor deseja fazer backup de aplicativos instalados antes de reinstalar o sistema.
 
 **Fluxo:**
-1. Executar `devmaid winget backup -o D:\backups`
+1. Executar `FurLab winget backup -o D:\backups`
 2. Armazenar arquivo de backup em local seguro
 
 ---
@@ -480,22 +480,22 @@ devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
 
 | Comando | Atalho | Descrição |
 |---------|--------|-----------|
-| `devmaid file` | - | Utilitários de arquivo |
-| `devmaid file combine` | - | Combinar arquivos em um |
-| `devmaid claude` | - | Comandos do Claude Code |
-| `devmaid claude install` | - | Instalar Claude Code |
-| `devmaid claude status` | - | Verificar status do Claude |
-| `devmaid claude config` | - | Configurar Claude |
-| `devmaid opencode` | - | Comandos do OpenCode |
-| `devmaid winget` | - | Comandos do Winget |
-| `devmaid winget backup` | - | Backup de pacotes |
-| `devmaid winget restore` | - | Restaurar pacotes |
-| `devmaid database` | - | Comandos de banco de dados |
-| `devmaid database backup` | - | Backup de banco de dados |
-| `devmaid database restore` | - | Restore de banco de dados |
-| `devmaid query run` | - | Consultar multi-database exportando CSV |
-| `devmaid clean` | - | Limpar pastas bin e obj de um diretorio |
-| `devmaid windowsfeatures` | - | Gerenciar optional Features |
+| `FurLab file` | - | Utilitários de arquivo |
+| `FurLab file combine` | - | Combinar arquivos em um |
+| `FurLab claude` | - | Comandos do Claude Code |
+| `FurLab claude install` | - | Instalar Claude Code |
+| `FurLab claude status` | - | Verificar status do Claude |
+| `FurLab claude config` | - | Configurar Claude |
+| `FurLab opencode` | - | Comandos do OpenCode |
+| `FurLab winget` | - | Comandos do Winget |
+| `FurLab winget backup` | - | Backup de pacotes |
+| `FurLab winget restore` | - | Restaurar pacotes |
+| `FurLab database` | - | Comandos de banco de dados |
+| `FurLab database backup` | - | Backup de banco de dados |
+| `FurLab database restore` | - | Restore de banco de dados |
+| `FurLab query run` | - | Consultar multi-database exportando CSV |
+| `FurLab clean` | - | Limpar pastas bin e obj de um diretorio |
+| `FurLab windowsfeatures` | - | Gerenciar optional Features |
 
 ---
 

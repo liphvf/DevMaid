@@ -13,7 +13,7 @@ A lista de modelos disponíveis é obtida via `opencode models` (saída: uma lin
 ## Objetivos / Não-Objetivos
 
 **Objetivos:**
-- Adicionar subcomando `devmaid opencode settings default-model [--global] [<model-id>]`
+- Adicionar subcomando `FurLab opencode settings default-model [--global] [<model-id>]`
 - Quando `model-id` for omitido, exibir menu interativo com os modelos disponíveis
 - Quando `--global` for passado, alterar `~/.config/opencode/opencode.jsonc`
 - Quando `--global` for omitido, alterar o arquivo de configuração local do diretório atual
@@ -69,9 +69,9 @@ nenhum existe? → cria opencode.jsonc
 **Decisão:** `model-id` como argumento posicional opcional, `--global` como flag.
 
 ```
-devmaid opencode settings default-model github-copilot/claude-sonnet-4.6 --global
-devmaid opencode settings default-model --global   ← abre menu
-devmaid opencode settings default-model            ← abre menu, escopo local
+FurLab opencode settings default-model github-copilot/claude-sonnet-4.6 --global
+FurLab opencode settings default-model --global   ← abre menu
+FurLab opencode settings default-model            ← abre menu, escopo local
 ```
 
 **Rationale:** consistente com convenções de CLI (flags modificam comportamento, argumentos são dados). `System.CommandLine` trata a ordem como transparente.

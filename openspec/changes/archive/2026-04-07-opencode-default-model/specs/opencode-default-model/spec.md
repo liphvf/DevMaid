@@ -1,18 +1,18 @@
 ## Requisitos ADICIONADOS
 
 ### Requisito: Configurar modelo padrão via CLI
-O sistema DEVE permitir ao usuário definir o campo `"model"` no arquivo de configuração do OpenCode através do subcomando `devmaid opencode settings default-model`, tanto em escopo global quanto local.
+O sistema DEVE permitir ao usuário definir o campo `"model"` no arquivo de configuração do OpenCode através do subcomando `FurLab opencode settings default-model`, tanto em escopo global quanto local.
 
 #### Cenário: Definir modelo com argumento direto em escopo local
-- **QUANDO** o usuário executa `devmaid opencode settings default-model <model-id>` sem a flag `--global` e o modelo informado existe na lista de modelos disponíveis
+- **QUANDO** o usuário executa `FurLab opencode settings default-model <model-id>` sem a flag `--global` e o modelo informado existe na lista de modelos disponíveis
 - **ENTÃO** o sistema DEVE localizar o arquivo de configuração local (`opencode.jsonc` ou `opencode.json`) no diretório atual, atualizar o campo `"model"` com o valor informado e exibir o caminho do arquivo alterado
 
 #### Cenário: Definir modelo com argumento direto em escopo global
-- **QUANDO** o usuário executa `devmaid opencode settings default-model <model-id> --global` e o modelo informado existe na lista de modelos disponíveis
+- **QUANDO** o usuário executa `FurLab opencode settings default-model <model-id> --global` e o modelo informado existe na lista de modelos disponíveis
 - **ENTÃO** o sistema DEVE alterar o campo `"model"` em `~/.config/opencode/opencode.jsonc` e exibir o caminho do arquivo alterado
 
 #### Cenário: Definir modelo via menu interativo
-- **QUANDO** o usuário executa `devmaid opencode settings default-model` sem informar `<model-id>`
+- **QUANDO** o usuário executa `FurLab opencode settings default-model` sem informar `<model-id>`
 - **ENTÃO** o sistema DEVE executar `opencode models`, exibir um menu interativo com a lista de modelos disponíveis e, após a seleção do usuário, aplicar o modelo escolhido ao arquivo de configuração correspondente ao escopo
 
 #### Cenário: Cancelar seleção no menu interativo

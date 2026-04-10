@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-DevMaid is a .NET-based command-line interface (CLI) tool designed using a modular, command-based architecture. The application follows the principles of separation of concerns, with clear boundaries between CLI parsing, business logic, and data access layers.
+FurLab is a .NET-based command-line interface (CLI) tool designed using a modular, command-based architecture. The application follows the principles of separation of concerns, with clear boundaries between CLI parsing, business logic, and data access layers.
 
 The architecture is built on top of System.CommandLine for CLI argument parsing and Microsoft.Extensions.Configuration for flexible configuration management.
 
@@ -10,7 +10,7 @@ The architecture is built on top of System.CommandLine for CLI argument parsing 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        DevMaid CLI                              │
+│                        FurLab CLI                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Entry Point (Program.cs)                                       │
 │  ├── Configuration Loading                                      │
@@ -234,15 +234,15 @@ Expand beyond Windows:
 ## Directory Structure
 
 ```
-DevMaid/
-├── DevMaid.CLI/               # Command line app project
+FurLab/
+├── FurLab.CLI/               # Command line app project
 │   ├── Program.cs             # Entry point
 │   ├── CommandOptions/        # Commands options and DTOs
 │   └── Services/              # Services like Logging, Database listing, etc.
-├── DevMaid.Core/              # Main library containing shared logic
+├── FurLab.Core/              # Main library containing shared logic
 │   ├── Interfaces/            # Contracts (ILogger, IFileService, etc.)
 │   └── Services/              # Core business services
-├── DevMaid.Tests/             # Testing package (MSTest)
+├── FurLab.Tests/             # Testing package (MSTest)
 └── docs/                      # Documentation
     ├── en/                    # English Documentation
     │   ├── ARCHITECTURE.md
@@ -254,7 +254,7 @@ DevMaid/
 
 ## Conclusion
 
-DevMaid's architecture provides a solid foundation for a CLI tool with:
+FurLab's architecture provides a solid foundation for a CLI tool with:
 - Clean separation of concerns
 - Easy extensibility
 - Maintainable codebase

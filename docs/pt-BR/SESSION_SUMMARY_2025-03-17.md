@@ -2,7 +2,7 @@
 
 ## 📋 Status Atual
 
-**Projeto**: DevMaid - Refatoração GUI  
+**Projeto**: FurLab - Refatoração GUI  
 **Branch**: `feature/quality`  
 **Objetivo**: Implementar Fase 2 do plano de refatoração GUI (CLI Refactoring)
 
@@ -12,8 +12,8 @@
 
 ### Fase 1: Extração da Camada Core (Concluída)
 
-#### 1.1 Projeto DevMaid.Core Criado
-- **Localização**: `DevMaid.Core/`
+#### 1.1 Projeto FurLab.Core Criado
+- **Localização**: `FurLab.Core/`
 - **Framework**: .NET 10.0
 - **Tipo**: Class Library
 
@@ -80,12 +80,12 @@
 
 ### Fase 2: Refatoração da CLI (Concluída)
 
-#### 2.1 Projeto DevMaid.CLI Criado
-- **Localização**: `DevMaid.CLI/`
+#### 2.1 Projeto FurLab.CLI Criado
+- **Localização**: `FurLab.CLI/`
 - **Framework**: .NET 10.0
 - **Tipo**: Console Application / .NET Tool
 - **Dependências**:
-  - ProjectReference: DevMaid.Core
+  - ProjectReference: FurLab.Core
   - System.CommandLine 2.0.3
   - CsvHelper 33.1.0
   - ConsoleTables 2.7.0
@@ -94,7 +94,7 @@
   - Nerdbank.GitVersioning 3.9.50
 
 #### 2.2 Arquivos Migrados
-- **Commands/** - Todos os comandos movidos para `DevMaid.CLI/Commands/`
+- **Commands/** - Todos os comandos movidos para `FurLab.CLI/Commands/`
   - DatabaseCommand.cs
   - FileCommand.cs
   - WingetCommand.cs
@@ -105,54 +105,54 @@
   - TuiCommand.cs
   - WindowsFeaturesCommand.cs
 
-- **CommandOptions/** - DTOs movidos para `DevMaid.CLI/CommandOptions/`
+- **CommandOptions/** - DTOs movidos para `FurLab.CLI/CommandOptions/`
   - DatabaseCommandOptions.cs
   - FileCommandOptions.cs
   - QueryCommandOptions.cs
   - ServerConfig.cs
   - DatabaseConnectionConfig.cs (novo)
 
-- **Tui/** - Componentes TUI movidos para `DevMaid.CLI/Tui/`
+- **Tui/** - Componentes TUI movidos para `FurLab.CLI/Tui/`
   - MenuItem.cs
   - TuiApp.cs
 
-- **Utilitários** movidos para `DevMaid.CLI/`
+- **Utilitários** movidos para `FurLab.CLI/`
   - Utils.cs
   - SecurityUtils.cs
   - Database.cs
   - Program.cs
 
 #### 2.3 Wrappers de Compatibilidade Criados
-- **DevMaid.CLI/Services/ConfigurationService.cs**
+- **FurLab.CLI/Services/ConfigurationService.cs**
   - Wrapper estático para Core.ConfigurationService
   - Mantém compatibilidade com código existente
 
-- **DevMaid.CLI/Services/PostgresBinaryLocator.cs**
+- **FurLab.CLI/Services/PostgresBinaryLocator.cs**
   - Wrapper estático para Core.Services.PostgresBinaryLocator
 
-- **DevMaid.CLI/Services/PostgresDatabaseLister.cs**
+- **FurLab.CLI/Services/PostgresDatabaseLister.cs**
   - Wrapper estático usando Core.DatabaseService
   - Método síncrono ListAllDatabases
 
-- **DevMaid.CLI/Services/PostgresPasswordHandler.cs**
+- **FurLab.CLI/Services/PostgresPasswordHandler.cs**
   - Métodos para leitura segura de senha
 
-- **DevMaid.CLI/Services/DevMaidConstants.cs**
+- **FurLab.CLI/Services/FurLabConstants.cs**
   - Constantes usadas no projeto
 
-- **DevMaid.CLI/Services/DevMaidExceptions.cs**
+- **FurLab.CLI/Services/FurLabExceptions.cs**
   - Exceções customizadas
 
-- **DevMaid.CLI/Services/Logging/ConsoleLogger.cs**
+- **FurLab.CLI/Services/Logging/ConsoleLogger.cs**
   - Implementação de Core.Logging.ILogger
   - Suporte a cores
   - Log com formatação e exceções
 
-- **DevMaid.CLI/Services/Logging/Logger.cs**
+- **FurLab.CLI/Services/Logging/Logger.cs**
   - Logger estático para compatibilidade
 
 #### 2.4 ServiceContainer Implementado
-- **Localização**: `DevMaid.CLI/Program.cs`
+- **Localização**: `FurLab.CLI/Program.cs`
 - **Propósito**: Injeção de dependência simples
 - **Serviços Registrados**:
   - IConfigurationService
@@ -181,9 +181,9 @@
 ## 📊 Estrutura Final de Projetos
 
 ```
-DevMaid/
-├── DevMaid.Core/                    ✅ Core Business Logic
-│   ├── DevMaid.Core.csproj
+FurLab/
+├── FurLab.Core/                    ✅ Core Business Logic
+│   ├── FurLab.Core.csproj
 │   ├── Interfaces/
 │   │   ├── IConfigurationService.cs
 │   │   ├── IDatabaseService.cs
@@ -211,8 +211,8 @@ DevMaid/
 │       ├── WingetService.cs
 │       └── PostgresBinaryLocator.cs
 │
-├── DevMaid.CLI/                     ✅ CLI Application
-│   ├── DevMaid.CLI.csproj
+├── FurLab.CLI/                     ✅ CLI Application
+│   ├── FurLab.CLI.csproj
 │   ├── Program.cs
 │   ├── Commands/
 │   │   ├── DatabaseCommand.cs
@@ -238,8 +238,8 @@ DevMaid/
 │   │   ├── PostgresBinaryLocator.cs
 │   │   ├── PostgresDatabaseLister.cs
 │   │   ├── PostgresPasswordHandler.cs
-│   │   ├── DevMaidConstants.cs
-│   │   ├── DevMaidExceptions.cs
+│   │   ├── FurLabConstants.cs
+│   │   ├── FurLabExceptions.cs
 │   │   └── Logging/
 │   │       ├── ConsoleLogger.cs
 │   │       └── Logger.cs
@@ -247,13 +247,13 @@ DevMaid/
 │   ├── SecurityUtils.cs
 │   └── Database.cs
 │
-├── DevMaid.Tests/                   ⏳ Testes (não modificados)
-│   └── DevMaid.Tests.csproj
+├── FurLab.Tests/                   ⏳ Testes (não modificados)
+│   └── FurLab.Tests.csproj
 │
 ├── Services/                        ⚠️ Arquivos antigos (remover depois)
 │   ├── ConfigurationService.cs
-│   ├── DevMaidConstants.cs
-│   ├── DevMaidExceptions.cs
+│   ├── FurLabConstants.cs
+│   ├── FurLabExceptions.cs
 │   ├── Logging/
 │   ├── PostgresBinaryLocator.cs
 │   ├── PostgresDatabaseLister.cs
@@ -274,8 +274,8 @@ DevMaid/
 │   ├── ISSUE_TEMPLATE/
 │   └── workflows/
 │
-├── DevMaid.slnx                    ✅ Solution atualizada
-├── DevMaid.csproj                  ⚠️ Antigo (projeto CLI)
+├── FurLab.slnx                    ✅ Solution atualizada
+├── FurLab.csproj                  ⚠️ Antigo (projeto CLI)
 ├── Database.cs                     ⚠️ Movido para CLI
 ├── SecurityUtils.cs                ⚠️ Movido para CLI
 ├── Utils.cs                        ⚠️ Movido para CLI
@@ -297,9 +297,9 @@ DevMaid/
 
 ### Fase 3: Criação da API Backend
 
-#### 3.1 Criar Projeto DevMaid.Api
+#### 3.1 Criar Projeto FurLab.Api
 ```bash
-dotnet new webapi -n DevMaid.Api -f net10.0
+dotnet new webapi -n FurLab.Api -f net10.0
 ```
 
 #### 3.2 Implementar Controllers
@@ -338,7 +338,7 @@ dotnet new webapi -n DevMaid.Api -f net10.0
 - Swagger/OpenAPI
 
 #### 3.5 Atualizar Solution
-- Adicionar projeto DevMaid.Api ao DevMaid.slnx
+- Adicionar projeto FurLab.Api ao FurLab.slnx
 
 ---
 
@@ -346,23 +346,23 @@ dotnet new webapi -n DevMaid.Api -f net10.0
 
 ### Build
 ```bash
-dotnet build DevMaid.slnx
+dotnet build FurLab.slnx
 ```
 
 ### Testar CLI
 ```bash
-dotnet run --project DevMaid.CLI\DevMaid.CLI.csproj -- --help
-dotnet run --project DevMaid.CLI\DevMaid.CLI.csproj -- database --help
+dotnet run --project FurLab.CLI\FurLab.CLI.csproj -- --help
+dotnet run --project FurLab.CLI\FurLab.CLI.csproj -- database --help
 ```
 
 ### Criar novo projeto API
 ```bash
-dotnet new webapi -n DevMaid.Api -f net10.0
+dotnet new webapi -n FurLab.Api -f net10.0
 ```
 
 ### Adicionar referência ao Core
 ```bash
-dotnet add DevMaid.Api\DevMaid.Api.csproj reference DevMaid.Core\DevMaid.Core.csproj
+dotnet add FurLab.Api\FurLab.Api.csproj reference FurLab.Core\FurLab.Core.csproj
 ```
 
 ---
@@ -371,7 +371,7 @@ dotnet add DevMaid.Api\DevMaid.Api.csproj reference DevMaid.Core\DevMaid.Core.cs
 
 ### Arquivos Antigos a Remover
 Depois de validar que tudo funciona, remover:
-- `DevMaid.csproj` (projeto CLI antigo)
+- `FurLab.csproj` (projeto CLI antigo)
 - `Services/` (pasta com serviços antigos)
 - `Commands/` (pasta vazia)
 - `CommandOptions/` (pasta vazia)
@@ -462,10 +462,10 @@ Depois de validar que tudo funciona, remover:
 
 **Comando para Começar**:
 ```bash
-dotnet new webapi -n DevMaid.Api -f net10.0
+dotnet new webapi -n FurLab.Api -f net10.0
 ```
 
-**Arquivo a Editar**: `DevMaid.slnx` (adicionar novo projeto)
+**Arquivo a Editar**: `FurLab.slnx` (adicionar novo projeto)
 
 **Referência Principal**: `docs/pt-BR/GUI_REFACTORING_PLAN.md` - seção 3.3
 

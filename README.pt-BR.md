@@ -1,14 +1,14 @@
 <div align="center">
-  <img src="assets/devmaid_icon.png" alt="DevMaid Logo" width="160" />
+  <img src="assets/FurLab_icon.png" alt="FurLab Logo" width="160" />
 
-  # DevMaid
+  # FurLab
 
   Uma poderosa ferramenta CLI .NET para automatizar tarefas comuns de desenvolvimento.
 </div>
 
 ## Descrição
 
-DevMaid é uma interface de linha de comando (CLI) multiplataforma construída com .NET que ajuda desenvolvedores a automatizar tarefas repetitivas de desenvolvimento. Ela fornece comandos para operações de banco de dados, gerenciamento de arquivos, instalação de ferramentas de IA (Claude Code, OpenCode) e gerenciamento de pacotes Windows.
+FurLab é uma interface de linha de comando (CLI) multiplataforma construída com .NET que ajuda desenvolvedores a automatizar tarefas repetitivas de desenvolvimento. Ela fornece comandos para operações de banco de dados, gerenciamento de arquivos, instalação de ferramentas de IA (Claude Code, OpenCode) e gerenciamento de pacotes Windows.
 
 > **Nota**: Este é um projeto hobby criado para uso pessoal. Pode não seguir todas as melhores práticas ou ter testes abrangentes. Contribuições e feedback são bem-vindos, mas por favor tenha em mente que isso foi criado para resolver as necessidades específicas do autor.
 
@@ -19,7 +19,7 @@ Desenvolvedores frequentemente executam tarefas repetitivas que podem ser automa
 - Instalar e configurar ferramentas de IA para desenvolvimento
 - Fazer backup e restaurar pacotes do Windows
 
-DevMaid consolida essas tarefas em uma única ferramenta CLI fácil de usar.
+FurLab consolida essas tarefas em uma única ferramenta CLI fácil de usar.
 
 ## Principais Funcionalidades
 
@@ -47,20 +47,20 @@ DevMaid consolida essas tarefas em uma única ferramenta CLI fácil de usar.
 ### Instalar como Ferramenta .NET
 
 ```bash
-dotnet tool install --global DevMaid
+dotnet tool install --global FurLab
 ```
 
 Ou instalar pelo NuGet:
 
 ```bash
-dotnet tool install -g DevMaid
+dotnet tool install -g FurLab
 ```
 
 ### Compilar a Partir do Código Fonte
 
 ```bash
-git clone https://github.com/seu-repositorio/DevMaid.git
-cd DevMaid
+git clone https://github.com/seu-repositorio/FurLab.git
+cd FurLab
 dotnet restore
 dotnet build
 ```
@@ -79,19 +79,19 @@ dotnet run -- --help
 
 ```bash
 # Backup com configurações de conexão padrão (do appsettings.json)
-devmaid database backup meubanco
+FurLab database backup meubanco
 
 # Backup com configurações de conexão personalizadas
-devmaid database backup meubanco --host localhost --port 5432 --username postgres --password minhasenha
+FurLab database backup meubanco --host localhost --port 5432 --username postgres --password minhasenha
 
 # Backup com caminho de saída personalizado
-devmaid database backup meubanco -o "C:\backups\meubanco.backup"
+FurLab database backup meubanco -o "C:\backups\meubanco.backup"
 
 # Backup com prompt de senha (senha não fornecida na linha de comando)
-devmaid database backup meubanco --host localhost --username postgres
+FurLab database backup meubanco --host localhost --username postgres
 ```
 
-**Arquivo de Configuração**: Crie um `appsettings.json` em `%LocalAppData%\DevMaid\` para definir valores de conexão padrão:
+**Arquivo de Configuração**: Crie um `appsettings.json` em `%LocalAppData%\FurLab\` para definir valores de conexão padrão:
 
 ```json
 {
@@ -111,25 +111,25 @@ devmaid database backup meubanco --host localhost --username postgres
 ### Combinar Arquivos
 
 ```bash
-devmaid file combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
+FurLab file combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
 ```
 
 ### Instalar Claude Code
 
 ```bash
-devmaid claude install
+FurLab claude install
 ```
 
 ### Backup Winget
 
 ```bash
-devmaid winget backup -o "C:\backup"
+FurLab winget backup -o "C:\backup"
 ```
 
 ### Restaurar Winget
 
 ```bash
-devmaid winget restore -i "C:\backup\backup-winget.json"
+FurLab winget restore -i "C:\backup\backup-winget.json"
 ```
 
 ## Lista de Comandos

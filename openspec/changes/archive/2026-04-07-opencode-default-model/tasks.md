@@ -1,6 +1,6 @@
 ## 1. Dependência
 
-- [x] 1.1 Adicionar `Spectre.Console.Cli 0.55.0` ao `DevMaid.CLI/DevMaid.CLI.csproj` via `dotnet add package`
+- [x] 1.1 Adicionar `Spectre.Console.Cli 0.55.0` ao `FurLab.CLI/FurLab.CLI.csproj` via `dotnet add package`
 
 ## 2. Lógica de Resolução de Arquivo
 

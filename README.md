@@ -1,14 +1,14 @@
 <div align="center">
-  <img src="assets/devmaid_icon.png" alt="DevMaid Logo" width="160" />
+  <img src="assets/FurLab_icon.png" alt="FurLab Logo" width="160" />
 
-  # DevMaid
+  # FurLab
 
   A powerful .NET CLI tool to automate common development tasks.
 </div>
 
 ## Description
 
-DevMaid is a cross-platform command-line interface (CLI) built with .NET that helps developers automate repetitive development tasks. It provides commands for database operations, file management, AI tool installation (Claude Code, OpenCode), and Windows package management.
+FurLab is a cross-platform command-line interface (CLI) built with .NET that helps developers automate repetitive development tasks. It provides commands for database operations, file management, AI tool installation (Claude Code, OpenCode), and Windows package management.
 
 > **Note**: This is a hobby project created for personal use. It may not follow all best practices or have comprehensive testing. Contributions and feedback are welcome, but please keep in mind this was built to solve the author's specific needs.
 
@@ -19,7 +19,7 @@ Developers often perform repetitive tasks that can be automated:
 - Installing and configuring AI development tools
 - Backing up and restoring Windows packages
 
-DevMaid consolidates these tasks into a single, easy-to-use CLI tool.
+FurLab consolidates these tasks into a single, easy-to-use CLI tool.
 
 ## Key Features
 
@@ -47,20 +47,20 @@ DevMaid consolidates these tasks into a single, easy-to-use CLI tool.
 ### Install as .NET Tool
 
 ```bash
-dotnet tool install --global DevMaid
+dotnet tool install --global FurLab
 ```
 
 Or install from NuGet:
 
 ```bash
-dotnet tool install -g DevMaid
+dotnet tool install -g FurLab
 ```
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/your-repo/DevMaid.git
-cd DevMaid
+git clone https://github.com/your-repo/FurLab.git
+cd FurLab
 dotnet restore
 dotnet build
 ```
@@ -79,19 +79,19 @@ dotnet run -- --help
 
 ```bash
 # Backup with default connection settings (from appsettings.json)
-devmaid database backup mydb
+FurLab database backup mydb
 
 # Backup with custom connection settings
-devmaid database backup mydb --host localhost --port 5432 --username postgres --password mypassword
+FurLab database backup mydb --host localhost --port 5432 --username postgres --password mypassword
 
 # Backup with custom output path
-devmaid database backup mydb -o "C:\backups\mydb.backup"
+FurLab database backup mydb -o "C:\backups\mydb.backup"
 
 # Backup with password prompt (password not provided in command line)
-devmaid database backup mydb --host localhost --username postgres
+FurLab database backup mydb --host localhost --username postgres
 ```
 
-**Configuration File**: Create an `appsettings.json` in `%LocalAppData%\DevMaid\` to set default connection values:
+**Configuration File**: Create an `appsettings.json` in `%LocalAppData%\FurLab\` to set default connection values:
 
 ```json
 {
@@ -111,25 +111,25 @@ devmaid database backup mydb --host localhost --username postgres
 ### Combine Files
 
 ```bash
-devmaid file combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
+FurLab file combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
 ```
 
 ### Install Claude Code
 
 ```bash
-devmaid claude install
+FurLab claude install
 ```
 
 ### Winget Backup
 
 ```bash
-devmaid winget backup -o "C:\backup"
+FurLab winget backup -o "C:\backup"
 ```
 
 ### Winget Restore
 
 ```bash
-devmaid winget restore -i "C:\backup\backup-winget.json"
+FurLab winget restore -i "C:\backup\backup-winget.json"
 ```
 
 ## Command List

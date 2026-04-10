@@ -2,7 +2,7 @@
 
 ## Product Overview
 
-DevMaid is a .NET-based CLI tool designed to automate common development tasks. It provides a unified interface for database operations, file management, AI tool installation, and Windows package management.
+FurLab is a .NET-based CLI tool designed to automate common development tasks. It provides a unified interface for database operations, file management, AI tool installation, and Windows package management.
 
 ## Feature List
 
@@ -99,19 +99,19 @@ Restores PostgreSQL databases using pg_restore from .dump files.
 
 ```bash
 # Backup a single database
-devmaid database backup mydb -h localhost -U postgres
+FurLab database backup mydb -h localhost -U postgres
 
 # Backup all databases
-devmaid database backup --all -h localhost -U postgres -o "C:\backups"
+FurLab database backup --all -h localhost -U postgres -o "C:\backups"
 
 # Restore a specific database
-devmaid database restore mydb "C:\backups\mydb.dump"
+FurLab database restore mydb "C:\backups\mydb.dump"
 
 # Restore all databases from a directory
-devmaid database restore --all "C:\backups"
+FurLab database restore --all "C:\backups"
 
 # Restore all databases from current directory
-devmaid database restore --all
+FurLab database restore --all
 ```
 
 ### Business Rules
@@ -183,10 +183,10 @@ The Combine feature takes multiple input files matching a pattern and combines t
 
 ```bash
 # Combine all SQL files in a directory
-devmaid file combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
+FurLab file combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
 
 # Combine with default output name
-devmaid file combine -i "C:\temp\*.txt"
+FurLab file combine -i "C:\temp\*.txt"
 ```
 
 ### Business Rules
@@ -235,16 +235,16 @@ Update Claude settings for Windows environment (shell, permissions).
 
 ```bash
 # Install Claude Code
-devmaid claude install
+FurLab claude install
 
 # Check status
-devmaid claude status
+FurLab claude status
 
 # Configure MCP database
-devmaid claude settings mcp-database
+FurLab claude settings mcp-database
 
 # Configure Windows environment
-devmaid claude settings win-env
+FurLab claude settings win-env
 ```
 
 ### Business Rules
@@ -293,13 +293,13 @@ Set up OpenCode configuration.
 
 ```bash
 # Install OpenCode
-devmaid opencode install
+FurLab opencode install
 
 # Check status
-devmaid opencode status
+FurLab opencode status
 
 # Configure
-devmaid opencode config
+FurLab opencode config
 ```
 
 ### Edge Cases and Error Handling
@@ -336,10 +336,10 @@ Import packages from a previously created backup.
 
 ```bash
 # Backup packages
-devmaid winget backup -o "C:\backups"
+FurLab winget backup -o "C:\backups"
 
 # Restore packages
-devmaid winget restore -i "C:\backups\backup-winget.json"
+FurLab winget restore -i "C:\backups\backup-winget.json"
 ```
 
 ### Business Rules
@@ -389,8 +389,8 @@ Provides high flexibility for querying data with automated output generation sup
 
 ### Usage Flow
 ```bash
-devmaid query run --input script.sql --output result.csv -h localhost -d mydb
-devmaid query run --all --input script.sql --output ./results
+FurLab query run --input script.sql --output result.csv -h localhost -d mydb
+FurLab query run --all --input script.sql --output ./results
 ```
 
 ---
@@ -403,10 +403,10 @@ Liberate disk space and resolve `.NET` build cache issues by fully deleting any 
 ### Usage Flow
 ```bash
 # Clean recursively starting from the current directory:
-devmaid clean
+FurLab clean
 
 # Clean a specific solution folder
-devmaid clean "C:\MyProjects"
+FurLab clean "C:\MyProjects"
 ```
 
 ---
@@ -418,9 +418,9 @@ Export your activated Windows Optional Features to a JSON backup file using dism
 
 ### Usage Flow
 ```bash
-devmaid windowsfeatures list --enabled-only
-devmaid windowsfeatures export "C:\backups\windowsfeatures.json"
-devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
+FurLab windowsfeatures list --enabled-only
+FurLab windowsfeatures export "C:\backups\windowsfeatures.json"
+FurLab windowsfeatures import "C:\backups\windowsfeatures.json"
 ```
 
 ---
@@ -432,10 +432,10 @@ devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
 **Scenario:** Developer gets a new Windows machine and wants to set up their development environment.
 
 **Flow:**
-1. Install DevMaid via dotnet tool
-2. Run `devmaid winget restore` to restore packages from old machine
-3. Install Claude Code: `devmaid claude install`
-4. Install OpenCode: `devmaid opencode install`
+1. Install FurLab via dotnet tool
+2. Run `FurLab winget restore` to restore packages from old machine
+3. Install Claude Code: `FurLab claude install`
+4. Install OpenCode: `FurLab opencode install`
 
 ### Use Case 2: Database Class Generation
 
@@ -450,7 +450,7 @@ devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
 **Scenario:** Developer wants to backup installed applications before system reinstall.
 
 **Flow:**
-1. Run `devmaid winget backup -o D:\backups`
+1. Run `FurLab winget backup -o D:\backups`
 2. Store backup file in safe location
 
 ---
@@ -483,22 +483,22 @@ devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
 
 | Command | Shortcut | Description |
 |---------|----------|-------------|
-| `devmaid file` | - | File utilities |
-| `devmaid file combine` | - | Combine files into one |
-| `devmaid claude` | - | Claude Code commands |
-| `devmaid claude install` | - | Install Claude Code |
-| `devmaid claude status` | - | Check Claude status |
-| `devmaid claude config` | - | Configure Claude |
-| `devmaid opencode` | - | OpenCode commands |
-| `devmaid winget` | - | Winget commands |
-| `devmaid winget backup` | - | Backup packages |
-| `devmaid winget restore` | - | Restore packages |
-| `devmaid database` | - | Database commands |
-| `devmaid database backup` | - | Backup database |
-| `devmaid database restore` | - | Restore database |
-| `devmaid query run` | - | Run multi-database query and export CSV |
-| `devmaid clean` | - | Recursively clean bin/obj output folders |
-| `devmaid windowsfeatures` | - | Manage Windows Optional Features |
+| `FurLab file` | - | File utilities |
+| `FurLab file combine` | - | Combine files into one |
+| `FurLab claude` | - | Claude Code commands |
+| `FurLab claude install` | - | Install Claude Code |
+| `FurLab claude status` | - | Check Claude status |
+| `FurLab claude config` | - | Configure Claude |
+| `FurLab opencode` | - | OpenCode commands |
+| `FurLab winget` | - | Winget commands |
+| `FurLab winget backup` | - | Backup packages |
+| `FurLab winget restore` | - | Restore packages |
+| `FurLab database` | - | Database commands |
+| `FurLab database backup` | - | Backup database |
+| `FurLab database restore` | - | Restore database |
+| `FurLab query run` | - | Run multi-database query and export CSV |
+| `FurLab clean` | - | Recursively clean bin/obj output folders |
+| `FurLab windowsfeatures` | - | Manage Windows Optional Features |
 
 ---
 

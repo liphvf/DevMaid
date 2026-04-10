@@ -61,7 +61,7 @@ Para cada servidor, você pode especificar:
 ### Executar em Todos os Servidores Configurados
 
 ```bash
-devmaid query run --servers --input query.sql --output ./results
+FurLab query run --servers --input query.sql --output ./results
 ```
 
 **Saída:**
@@ -83,13 +83,13 @@ Use `--server-filter` para selecionar servidores específicos:
 
 ```bash
 # Apenas servidores de produção
-devmaid query run --servers --server-filter "prod-*" --input query.sql --output ./results
+FurLab query run --servers --server-filter "prod-*" --input query.sql --output ./results
 
 # Apenas servidores primários
-devmaid query run --servers --server-filter "*-primary" --input query.sql --output ./results
+FurLab query run --servers --server-filter "*-primary" --input query.sql --output ./results
 
 # Apenas servidor específico
-devmaid query run --servers --server-filter "staging" --input query.sql --output ./results
+FurLab query run --servers --server-filter "staging" --input query.sql --output ./results
 ```
 
 O filtro suporta o caractere curinga `*` e é case-insensitive.
@@ -99,7 +99,7 @@ O filtro suporta o caractere curinga `*` e é case-insensitive.
 Se um servidor não tiver a lista `Databases` configurada, você pode usar `--all` para consultar todos os bancos:
 
 ```bash
-devmaid query run --servers --all --input query.sql --output ./results
+FurLab query run --servers --all --input query.sql --output ./results
 ```
 
 ### Excluir Bancos Específicos
@@ -107,7 +107,7 @@ devmaid query run --servers --all --input query.sql --output ./results
 Use `--exclude` para pular bancos do sistema:
 
 ```bash
-devmaid query run --servers --all --exclude "postgres,template0,template1" --input query.sql --output ./results
+FurLab query run --servers --all --exclude "postgres,template0,template1" --input query.sql --output ./results
 ```
 
 ## Comportamento
@@ -134,10 +134,10 @@ Quando você executa um comando sem `--servers`, a ferramenta usa o servidor con
 
 ```bash
 # Usa o servidor configurado em PrimaryServer
-devmaid query run --input query.sql --output result.csv
+FurLab query run --input query.sql --output result.csv
 
 # Sobrescreve configurações do PrimaryServer
-devmaid query run --input query.sql --output result.csv --host other-host.com --database otherdb
+FurLab query run --input query.sql --output result.csv --host other-host.com --database otherdb
 ```
 
 ## Exemplos
@@ -146,13 +146,13 @@ devmaid query run --input query.sql --output result.csv --host other-host.com --
 
 ```bash
 # Usa o servidor configurado em PrimaryServer
-devmaid query run --input query.sql --output result.csv
+FurLab query run --input query.sql --output result.csv
 ```
 
 ### Auditoria em Todos os Servidores de Produção
 
 ```bash
-devmaid query run --servers --server-filter "prod-*" \
+FurLab query run --servers --server-filter "prod-*" \
     --input audit_tables.sql \
     --output ./audit_results \
     --exclude "postgres,template0,template1"
@@ -175,7 +175,7 @@ ORDER BY
 ### Relatório de Usuários com Timeout Estendido
 
 ```bash
-devmaid query run --servers --input users_report.sql \
+FurLab query run --servers --input users_report.sql \
     --output ./reports \
     --command-timeout 600
 ```

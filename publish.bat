@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set PROJECT=DevMaid.csproj
+set PROJECT=FurLab.csproj
 set RUNTIME=win-x64
 set CONFIG=Release
 
@@ -14,7 +14,7 @@ goto usage
 :nuget
 echo.
 echo ========================================
-echo Publishing DevMaid - NuGet Package
+echo Publishing FurLab - NuGet Package
 echo ========================================
 echo.
 echo Creating NuGet package...
@@ -27,14 +27,14 @@ echo.
 echo [OK] NuGet package created in bin\%CONFIG%\net10.0\
 echo.
 echo To install locally:
-echo   dotnet tool install --add-source bin\%CONFIG%\net10.0\ devmaid
+echo   dotnet tool install --add-source bin\%CONFIG%\net10.0\ FurLab
 echo.
 goto end
 
 :exe
 echo.
 echo ========================================
-echo Publishing DevMaid - Standalone EXE
+echo Publishing FurLab - Standalone EXE
 echo ========================================
 echo.
 dotnet publish %PROJECT% ^
@@ -48,14 +48,14 @@ if %ERRORLEVEL% neq 0 (
     exit /b %ERRORLEVEL%
 )
 echo.
-echo [OK] EXE created in .\publish\exe\DevMaid.exe
+echo [OK] EXE created in .\publish\exe\FurLab.exe
 echo.
 goto end
 
 :all
 echo.
 echo ========================================
-echo Publishing DevMaid - All Targets
+echo Publishing FurLab - All Targets
 echo ========================================
 echo.
 echo [1/2] Creating NuGet package...
@@ -85,14 +85,14 @@ echo ========================================
 echo.
 echo Outputs:
 echo   - NuGet: bin\%CONFIG%\net10.0\*.nupkg
-echo   - EXE:   publish\exe\DevMaid.exe
+echo   - EXE:   publish\exe\FurLab.exe
 echo.
 goto end
 
 :usage
 echo.
 echo ========================================
-echo DevMaid Publish Script
+echo FurLab Publish Script
 echo ========================================
 echo.
 echo Usage: publish.bat [target]

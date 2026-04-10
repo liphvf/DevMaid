@@ -23,4 +23,4 @@
 ## 4. Verificação
 
 - [x] 4.1 Executar todos os testes para garantir ausência de regressões
-- [x] 4.2 Verificar que `devmaid database pgpass add "*" --host "*" --port "*" --username "*" --password teste` cria a entrada correta
+- [x] 4.2 Verificar que `FurLab database pgpass add "*" --host "*" --port "*" --username "*" --password teste` cria a entrada correta

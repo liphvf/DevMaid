@@ -2,7 +2,7 @@
 
 ## Visão Geral da Arquitetura
 
-DevMaid é uma ferramenta de interface de linha de comando (CLI) baseada em .NET projetada usando uma arquitetura modular baseada em comandos. O aplicativo segue os princípios de separação de preocupações, com limites claros entre parsing de CLI, lógica de negócio e camadas de acesso a dados.
+FurLab é uma ferramenta de interface de linha de comando (CLI) baseada em .NET projetada usando uma arquitetura modular baseada em comandos. O aplicativo segue os princípios de separação de preocupações, com limites claros entre parsing de CLI, lógica de negócio e camadas de acesso a dados.
 
 A arquitetura é construída sobre System.CommandLine para parsing de argumentos da CLI e Microsoft.Extensions.Configuration para gerenciamento flexível de configuração.
 
@@ -10,7 +10,7 @@ A arquitetura é construída sobre System.CommandLine para parsing de argumentos
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        DevMaid CLI                              │
+│                        FurLab CLI                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Ponto de Entrada (Program.cs)                                  │
 │  ├── Carregamento de Configuração                               │
@@ -236,15 +236,15 @@ Expansão além do Windows:
 ## Estrutura de Diretórios
 
 ```
-DevMaid/
-├── DevMaid.CLI/               # Projeto principal (Linha de Comando)
+FurLab/
+├── FurLab.CLI/               # Projeto principal (Linha de Comando)
 │   ├── Program.cs             # Ponto de entrada
 │   ├── CommandOptions/        # Objetos DTOs de Options dos Comandos
 │   └── Services/              # Logging, Utilitarios, Componentes da Aplicação, Listadores
-├── DevMaid.Core/              # Bibliotecas Centrais e Utilitários de Domínio
+├── FurLab.Core/              # Bibliotecas Centrais e Utilitários de Domínio
 │   ├── Interfaces/            # Contratos Injetáveis Compartilhados (ILogger, IFileService, etc.)
 │   └── Services/              # Implementação de Executores (WingetService, DatabaseService, etc.)
-├── DevMaid.Tests/             # Projeto de Bateria de Testes Unidade e Integração (MSTest)
+├── FurLab.Tests/             # Projeto de Bateria de Testes Unidade e Integração (MSTest)
 └── docs/                      # Documentação
     ├── en/
     │   ├── ARCHITECTURE.md
@@ -256,7 +256,7 @@ DevMaid/
 
 ## Conclusão
 
-A arquitetura do DevMaid fornece uma base sólida para uma ferramenta CLI com:
+A arquitetura do FurLab fornece uma base sólida para uma ferramenta CLI com:
 - Separação clara de preocupações
 - Extensibilidade fácil
 - Código manutenível

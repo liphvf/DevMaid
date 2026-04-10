@@ -1,6 +1,6 @@
 ## Context
 
-O projeto DevMaid é uma CLI .NET para automação de tarefas de desenvolvimento. O comando será implementado seguindo a arquitetura existente de comandos aninhados (ex: `devmaid git`, `devmaid db`).
+O projeto FurLab é uma CLI .NET para automação de tarefas de desenvolvimento. O comando será implementado seguindo a arquitetura existente de comandos aninhados (ex: `FurLab git`, `FurLab db`).
 
 ### Estado Atual
 - CLI com estrutura de comandos hierárquicos via `System.CommandLine`
@@ -15,7 +15,7 @@ O projeto DevMaid é uma CLI .NET para automação de tarefas de desenvolvimento
 ## Goals / Non-Goals
 
 **Goals:**
-- Criar subcomando `devmaid docker postgres` que provisiona PostgreSQL em um comando
+- Criar subcomando `FurLab docker postgres` que provisiona PostgreSQL em um comando
 - Validar disponibilidade do Docker antes de executar
 - Configurar container com locale pt-BR e logging completo
 - Garantir persistência de dados via volume Docker
@@ -33,7 +33,7 @@ O projeto DevMaid é uma CLI .NET para automação de tarefas de desenvolvimento
 **Rationale:** Segue o padrão existente da CLI (ex: `GitCommand` → `GitCloneCommand`). Permite futura expansão com outros utilitários Docker (`docker ps`, `docker logs`, etc).
 
 **Alternativas consideradas:**
-- Comando plano `devmaid postgres-docker`: Rejeitado por não seguir convenção existente e dificultar expansão
+- Comando plano `FurLab postgres-docker`: Rejeitado por não seguir convenção existente e dificultar expansão
 
 ### 2. Validação Pré-Execução
 **Decisão:** Verificar `docker info` antes de executar `docker run`.

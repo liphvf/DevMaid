@@ -1,4 +1,4 @@
-# DevMaid Development Guidelines
+# FurLab Development Guidelines
 
 Auto-generated from codebase. Last updated: 2026-04-07
 
@@ -25,20 +25,20 @@ Exceção: não traduza nomes de skills, comandos do openspec (ex: `openspec-pro
 ## Project Structure
 
 ```text
-DevMaid/
-├── DevMaid.Core/                  ← Business logic, interfaces, models (class library)
+FurLab/
+├── FurLab.Core/                  ← Business logic, interfaces, models (class library)
 │   ├── Interfaces/                ← IConfigurationService, IDatabaseService, IFileService,
 │   │                                 IProcessExecutor, IWingetService, IPgPassService
 │   ├── Models/                    ← OperationResult<T>, DatabaseConnectionConfig,
 │   │                                 OperationProgress, WingetOperationOptions,
 │   │                                 PgPassEntry, PgPassResult, etc.
 │   ├── Services/                  ← Concrete implementations of all interfaces
-│   │   └── ServiceCollectionExtensions.cs  ← AddDevMaidServices() DI registration
+│   │   └── ServiceCollectionExtensions.cs  ← AddFurLabServices() DI registration
 │   ├── Logging/                   ← Custom ILogger + MicrosoftExtensionsLoggerAdapter
 │   ├── HealthChecks/              ← PostgresBinaryHealthCheck, ConfigurationHealthCheck
 │   └── Resilience/                ← ResiliencePolicies (Polly retry pipelines)
 │
-├── DevMaid.CLI/                   ← CLI executable (depends on DevMaid.Core)
+├── FurLab.CLI/                   ← CLI executable (depends on FurLab.Core)
 │   ├── Program.cs                 ← Host builder, DI setup, RootCommand registration
 │   ├── Commands/                  ← One static class per command, Build() factory method
 │   │   ├── FileCommand.cs
@@ -57,10 +57,10 @@ DevMaid/
 │   └── SecurityUtils.cs           ← Input validation (path traversal, PostgreSQL identifiers,
 │                                     host/port, wildcard *)
 │
-├── DevMaid.Tests/                 ← MSTest project (references DevMaid.CLI)
+├── FurLab.Tests/                 ← MSTest project (references FurLab.CLI)
 │   └── Commands/                  ← One test class per command
 │
-├── DevMaid.CodeAnalysis/          ← Standalone Roslyn analysis utility
+├── FurLab.CodeAnalysis/          ← Standalone Roslyn analysis utility
 │
 ├── openspec/                      ← OpenSpec workflow (substituiu specs/ e .specify/)
 │   ├── config.yaml                ← Configuração do projeto (schema, idioma pt-BR)
@@ -107,30 +107,30 @@ dotnet test --filter "ClassName=DatabaseCommandTests"
 ./publish.bat all     # Both
 
 # Install as global tool (from source)
-dotnet tool install --add-source bin/Release/net10.0/ devmaid --global
+dotnet tool install --add-source bin/Release/net10.0/ FurLab --global
 
 # CLI usage
-devmaid --help
-devmaid database backup <dbname> [--host] [--port] [--username] [--password] [--output]
-devmaid database restore <dbname> --input <file> [connection options]
-devmaid database backup --all [connection options]
-devmaid database pgpass add <banco> [--host] [--port] [--username] [--password]
-devmaid database pgpass list
-devmaid database pgpass remove <banco> [--host] [--port] [--username]
-devmaid docker postgres
-devmaid file combine -i "<glob>" -o <output>
-devmaid query run -f <sql-file> -d <db> [--all] [--servers]
-devmaid clean [path]
-devmaid winget backup -o <dir>
-devmaid winget restore -i <json-file>
-devmaid claude install
-devmaid claude settings mcp-database
-devmaid claude settings win-env
-devmaid opencode settings mcp-database
-devmaid opencode settings default-model [model-id] [--global]
-devmaid windowsfeatures export -o <file>
-devmaid windowsfeatures import -i <file>
-devmaid windowsfeatures list
+FurLab --help
+FurLab database backup <dbname> [--host] [--port] [--username] [--password] [--output]
+FurLab database restore <dbname> --input <file> [connection options]
+FurLab database backup --all [connection options]
+FurLab database pgpass add <banco> [--host] [--port] [--username] [--password]
+FurLab database pgpass list
+FurLab database pgpass remove <banco> [--host] [--port] [--username]
+FurLab docker postgres
+FurLab file combine -i "<glob>" -o <output>
+FurLab query run -f <sql-file> -d <db> [--all] [--servers]
+FurLab clean [path]
+FurLab winget backup -o <dir>
+FurLab winget restore -i <json-file>
+FurLab claude install
+FurLab claude settings mcp-database
+FurLab claude settings win-env
+FurLab opencode settings mcp-database
+FurLab opencode settings default-model [model-id] [--global]
+FurLab windowsfeatures export -o <file>
+FurLab windowsfeatures import -i <file>
+FurLab windowsfeatures list
 ```
 
 ## Code Style
@@ -138,16 +138,16 @@ devmaid windowsfeatures list
 - **Language**: C# 13, `<Nullable>enable</Nullable>`, `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`
 - **Naming**: PascalCase for types/methods/properties; camelCase for locals and parameters
 - **Command classes**: Always `static`, expose `static Build(): Command` factory — never inherit
-- **Service classes**: Always implement a `IXxxService` interface in `DevMaid.Core/Interfaces/`; concrete implementation in `DevMaid.Core/Services/`
+- **Service classes**: Always implement a `IXxxService` interface in `FurLab.Core/Interfaces/`; concrete implementation in `FurLab.Core/Services/`
 - **No business logic in commands**: Commands parse input into a typed Options DTO, then call the service method. Never put logic inside the command handler lambda.
 - **Result pattern**: Return `OperationResult` / `OperationResult<T>` records — use `SuccessResult(...)` / `FailureResult(...)` factory methods
 - **External processes**: Always `UseShellExecute = false`, capture stdout/stderr via redirect — never shell out to `cmd.exe` or `powershell.exe`
 - **Test naming**: `<MethodName>_<StateUnderTest>_<ExpectedBehavior>` (e.g., `BackupAsync_ComOpcoesValidas_DeveCriarArquivoDump`)
 - **XML doc comments**: Required on all public members (enforced by `GenerateDocumentationFile true`)
-- **Configuration**: Read from `%LocalAppData%\DevMaid\appsettings.json`; never hard-code connection strings; use `SecurityUtils.IsValidPath()` and `SecurityUtils.IsValidPostgreSQLIdentifier()` before using any user-supplied input; `SecurityUtils.IsValidHost()` and `SecurityUtils.IsValidPort()` para conexões; `*` é aceito como curinga em host/port/username no pgpass
+- **Configuration**: Read from `%LocalAppData%\FurLab\appsettings.json`; never hard-code connection strings; use `SecurityUtils.IsValidPath()` and `SecurityUtils.IsValidPostgreSQLIdentifier()` before using any user-supplied input; `SecurityUtils.IsValidHost()` and `SecurityUtils.IsValidPort()` para conexões; `*` é aceito como curinga em host/port/username no pgpass
 - **Async**: All service methods that touch I/O or external processes must be `async Task<T>` and accept `CancellationToken`
 - **Progress reporting**: Use `IProgress<OperationProgress>` for operations expected to take > 2s
-- **Logging**: Use `ILogger` from `DevMaid.Core/Logging/ILogger.cs` — not `Microsoft.Extensions.Logging.ILogger` directly in Core
+- **Logging**: Use `ILogger` from `FurLab.Core/Logging/ILogger.cs` — not `Microsoft.Extensions.Logging.ILogger` directly in Core
 
 ## Architecture Constraints
 

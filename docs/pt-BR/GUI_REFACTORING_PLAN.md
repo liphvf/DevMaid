@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Este documento descreve o plano de refatoração do DevMaid para incluir uma interface gráfica (GUI) moderna construída com Electron e Angular, mantendo a funcionalidade CLI existente.
+Este documento descreve o plano de refatoração do FurLab para incluir uma interface gráfica (GUI) moderna construída com Electron e Angular, mantendo a funcionalidade CLI existente.
 
 ## 1. Stack Tecnológica
 
@@ -65,7 +65,7 @@ Este documento descreve o plano de refatoração do DevMaid para incluir uma int
 
 #### Modo Desktop (Padrão)
 ```bash
-devmaid gui
+FurLab gui
 ```
 - Inicia Electron com Angular integrado
 - Backend .NET roda em background
@@ -74,7 +74,7 @@ devmaid gui
 
 #### Modo Web
 ```bash
-devmaid gui --web
+FurLab gui --web
 ```
 - Abre aplicação Angular no navegador padrão
 - Backend .NET roda como servidor separado
@@ -85,7 +85,7 @@ devmaid gui --web
 
 ### 1.1 Estrutura Atual
 ```
-DevMaid/
+FurLab/
 ├── Program.cs                 # Entry point CLI
 ├── Commands/                  # Implementações de comandos
 ├── CommandOptions/            # DTOs para opções de comando
@@ -155,27 +155,27 @@ graph TB
 ### 2.2 Nova Estrutura de Projetos
 
 ```
-DevMaid/
-├── DevMaid.Core/                    # Core Business Logic
+FurLab/
+├── FurLab.Core/                    # Core Business Logic
 │   ├── Services/
 │   ├── Models/
 │   ├── Interfaces/
-│   └── DevMaid.Core.csproj
+│   └── FurLab.Core.csproj
 │
-├── DevMaid.CLI/                     # CLI Application
+├── FurLab.CLI/                     # CLI Application
 │   ├── Program.cs
 │   ├── Commands/
 │   ├── CommandOptions/
-│   └── DevMaid.CLI.csproj
+│   └── FurLab.CLI.csproj
 │
-├── DevMaid.Api/                     # REST API / gRPC Service
+├── FurLab.Api/                     # REST API / gRPC Service
 │   ├── Controllers/
 │   ├── Services/
 │   ├── Middleware/
-│   ├── DevMaid.Api.csproj
+│   ├── FurLab.Api.csproj
 │   └── appsettings.json
 │
-├── DevMaid.Gui/                     # Electron + Angular Application
+├── FurLab.Gui/                     # Electron + Angular Application
 │   ├── angular-app/                 # Angular frontend
 │   │   ├── src/
 │   │   │   ├── app/
@@ -195,15 +195,15 @@ DevMaid/
 │   ├── package.json
 │   └── README.md
 │
-├── DevMaid.Tests/                   # Testes
+├── FurLab.Tests/                   # Testes
 │   ├── Core.Tests/
 │   ├── CLI.Tests/
 │   ├── API.Tests/
-│   └── DevMaid.Tests.csproj
+│   └── FurLab.Tests.csproj
 │
 ├── docs/                            # Documentação
 │   └── ...
-└── DevMaid.slnx                     # Solution file
+└── FurLab.slnx                     # Solution file
 ```
 
 ## 3. Estratégia de Refatoração
@@ -213,16 +213,16 @@ DevMaid/
 **Objetivo**: Separar a lógica de negócio da CLI
 
 **Tarefas**:
-1. Criar projeto `DevMaid.Core`
-2. Extrair Services do projeto atual para `DevMaid.Core`
+1. Criar projeto `FurLab.Core`
+2. Extrair Services do projeto atual para `FurLab.Core`
 3. Criar interfaces para todos os serviços
 4. Implementar serviço de logging abstrato (ILogger já existe)
-5. Mover DTOs para `DevMaid.Core.Models`
+5. Mover DTOs para `FurLab.Core.Models`
 6. Criar modelos de resposta padronizados
 
 **Novos Serviços Core**:
 ```csharp
-// DevMaid.Core/Services/IDatabaseService.cs
+// FurLab.Core/Services/IDatabaseService.cs
 public interface IDatabaseService
 {
     Task<DatabaseBackupResult> BackupAsync(DatabaseBackupOptions options, IProgress<OperationProgress>? progress = null);
@@ -230,13 +230,13 @@ public interface IDatabaseService
     Task<List<string>> ListDatabasesAsync(DatabaseConnectionOptions options);
 }
 
-// DevMaid.Core/Services/IFileService.cs
+// FurLab.Core/Services/IFileService.cs
 public interface IFileService
 {
     Task<FileCombineResult> CombineFilesAsync(FileCombineOptions options, IProgress<OperationProgress>? progress = null);
 }
 
-// DevMaid.Core/Services/IWingetService.cs
+// FurLab.Core/Services/IWingetService.cs
 public interface IWingetService
 {
     Task<WingetBackupResult> BackupPackagesAsync(WingetBackupOptions options, IProgress<OperationProgress>? progress = null);
@@ -246,7 +246,7 @@ public interface IWingetService
 
 **Modelos de Resposta**:
 ```csharp
-// DevMaid.Core/Models/OperationResult.cs
+// FurLab.Core/Models/OperationResult.cs
 public record OperationResult
 {
     public bool Success { get; init; }
@@ -270,15 +270,15 @@ public record OperationProgress
 **Objetivo**: Adaptar a CLI para usar a camada Core
 
 **Tarefas**:
-1. Criar projeto `DevMaid.CLI`
-2. Mover Commands e CommandOptions para `DevMaid.CLI`
+1. Criar projeto `FurLab.CLI`
+2. Mover Commands e CommandOptions para `FurLab.CLI`
 3. Adaptar Commands para usar serviços do Core
 4. Manter compatibilidade com comandos existentes
 5. Adicionar suporte a progresso visual na CLI
 
 **Exemplo de adaptação**:
 ```csharp
-// DevMaid.CLI/Commands/DatabaseCommand.cs
+// FurLab.CLI/Commands/DatabaseCommand.cs
 public static class DatabaseCommand
 {
     public static Command Build()
@@ -332,7 +332,7 @@ public static class DatabaseCommand
 **Objetivo**: Criar API REST para comunicação com a GUI
 
 **Tarefas**:
-1. Criar projeto `DevMaid.Api` (ASP.NET Core Web API)
+1. Criar projeto `FurLab.Api` (ASP.NET Core Web API)
 2. Implementar controllers para cada serviço
 3. Adicionar suporte a SignalR para atualizações em tempo real
 4. Implementar autenticação/autorização (se necessário)
@@ -341,7 +341,7 @@ public static class DatabaseCommand
 
 **Exemplo de Controller**:
 ```csharp
-// DevMaid.Api/Controllers/DatabaseController.cs
+// FurLab.Api/Controllers/DatabaseController.cs
 [ApiController]
 [Route("api/[controller]")]
 public class DatabaseController : ControllerBase
@@ -390,7 +390,7 @@ public class DatabaseController : ControllerBase
 
 **SignalR Hub para progresso**:
 ```csharp
-// DevMaid.Api/Hubs/OperationHub.cs
+// FurLab.Api/Hubs/OperationHub.cs
 public class OperationHub : Hub
 {
     public async Task JoinOperationGroup(string operationId)
@@ -669,7 +669,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 **Configuração de Build**:
 ```json
 {
-  "name": "devmaid-gui",
+  "name": "FurLab-gui",
   "version": "1.0.0",
   "main": "dist/electron/main.js",
   "scripts": {
@@ -682,8 +682,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     "dist": "electron-builder"
   },
   "build": {
-    "appId": "com.devmaid.gui",
-    "productName": "DevMaid",
+    "appId": "com.FurLab.gui",
+    "productName": "FurLab",
     "directories": {
       "output": "dist/electron-builder"
     },
@@ -720,7 +720,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 **Tarefas**:
 1. Modificar `Program.cs` para detectar se deve iniciar GUI
-2. Adicionar comando `devmaid gui` para iniciar interface gráfica desktop (Electron)
+2. Adicionar comando `FurLab gui` para iniciar interface gráfica desktop (Electron)
 3. Adicionar opção `--web` para iniciar interface no navegador (modo web)
 4. Configurar API para rodar em background quando GUI está ativa
 5. Implementar single instance para evitar múltiplas instâncias
@@ -748,7 +748,7 @@ internal static class Program
         bool useWebMode = args.Contains("--web");
         
         // Start API server in background
-        var apiTask = Task.Run(() => DevMaid.Api.Program.Main(args));
+        var apiTask = Task.Run(() => FurLab.Api.Program.Main(args));
         
         if (useWebMode)
         {
@@ -760,13 +760,13 @@ internal static class Program
                 UseShellExecute = true
             });
             
-            Console.WriteLine($"DevMaid GUI running in web mode at {browserUrl}");
+            Console.WriteLine($"FurLab GUI running in web mode at {browserUrl}");
             Console.WriteLine("Press Ctrl+C to stop...");
         }
         else
         {
             // Launch Electron GUI
-            var electronPath = Path.Combine(AppContext.BaseDirectory, "DevMaid.Gui.exe");
+            var electronPath = Path.Combine(AppContext.BaseDirectory, "FurLab.Gui.exe");
             var process = Process.Start(electronPath);
         }
         
@@ -781,7 +781,7 @@ internal static class Program
         // Existing CLI logic
         Logger.SetLogger(new ConsoleLogger(useColors: true));
         
-        var rootCommand = new RootCommand("DevMaid command line tools")
+        var rootCommand = new RootCommand("FurLab command line tools")
         {
             FileCommand.Build(),
             // ... other commands ...
@@ -820,7 +820,7 @@ internal static class Program
 
 **Solução**:
 ```csharp
-// DevMaid.Core/Services/ProcessExecutor.cs
+// FurLab.Core/Services/ProcessExecutor.cs
 public class ProcessExecutor : IProcessExecutor
 {
     public async Task<ProcessExecutionResult> ExecuteAsync(
@@ -903,20 +903,20 @@ public class ProcessExecutor : IProcessExecutor
 - GUI deve ter tela de configurações
 
 ```csharp
-// DevMaid.Api/Controllers/ConfigurationController.cs
+// FurLab.Api/Controllers/ConfigurationController.cs
 [ApiController]
 [Route("api/[controller]")]
 public class ConfigurationController : ControllerBase
 {
     [HttpGet]
-    public ActionResult<DevMaidConfiguration> GetConfiguration()
+    public ActionResult<FurLabConfiguration> GetConfiguration()
     {
         var config = ConfigurationService.GetConfiguration();
         return Ok(config);
     }
     
     [HttpPost]
-    public ActionResult UpdateConfiguration([FromBody] DevMaidConfiguration config)
+    public ActionResult UpdateConfiguration([FromBody] FurLabConfiguration config)
     {
         ConfigurationService.UpdateConfiguration(config);
         return Ok();
@@ -949,7 +949,7 @@ public class ConfigurationController : ControllerBase
 6. **Rate Limiting**: Implementar rate limiting na API
 
 ```csharp
-// DevMaid.Api/Startup.cs
+// FurLab.Api/Startup.cs
 public void ConfigureServices(IServiceCollection services)
 {
     services.AddControllers();
@@ -991,7 +991,7 @@ public void ConfigureServices(IServiceCollection services)
 3. **E2E Tests**: Testar fluxos completos na GUI (Cypress/Playwright)
 
 ```csharp
-// DevMaid.Tests/Core/DatabaseServiceTests.cs
+// FurLab.Tests/Core/DatabaseServiceTests.cs
 public class DatabaseServiceTests
 {
     [Fact]
@@ -1054,20 +1054,20 @@ describe('Database Backup E2E', () => {
 ## 5. Cronograma Estimado
 
 ### Sprint 1: Core Layer (2 semanas)
-- [ ] Criar projeto DevMaid.Core
+- [ ] Criar projeto FurLab.Core
 - [ ] Extrair e refatorar Services existentes
 - [ ] Criar interfaces para todos os serviços
 - [ ] Implementar modelos de resposta padronizados
 - [ ] Escrever unit tests para Core
 
 ### Sprint 2: CLI Refactoring (1 semana)
-- [ ] Criar projeto DevMaid.CLI
+- [ ] Criar projeto FurLab.CLI
 - [ ] Adaptar Commands para usar Core
 - [ ] Testar compatibilidade com comandos existentes
 - [ ] Adicionar suporte a progresso visual
 
 ### Sprint 3: API Development (2 semanas)
-- [ ] Criar projeto DevMaid.Api
+- [ ] Criar projeto FurLab.Api
 - [ ] Implementar controllers e endpoints
 - [ ] Configurar SignalR para progresso em tempo real
 - [ ] Adicionar autenticação/autorização
@@ -1151,7 +1151,7 @@ describe('Database Backup E2E', () => {
 
 ## 9. Conclusão
 
-Este plano de refatoração fornece uma abordagem estruturada para adicionar uma interface GUI moderna ao DevMaid, mantendo a funcionalidade CLI existente. A arquitetura proposta separa claramente as responsabilidades, facilita a manutenção e permite evolução futura.
+Este plano de refatoração fornece uma abordagem estruturada para adicionar uma interface GUI moderna ao FurLab, mantendo a funcionalidade CLI existente. A arquitetura proposta separa claramente as responsabilidades, facilita a manutenção e permite evolução futura.
 
 A implementação deve ser feita de forma iterativa, começando pela extração da camada Core e progredindo gradualmente para a GUI completa. Isso permite validação contínua e ajustes conforme necessário.
 

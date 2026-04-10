@@ -1,6 +1,6 @@
 ## Por que
 
-Desenvolvedores que usam `devmaid database pgpass` localmente precisam configurar autenticação PostgreSQL sem senha para múltiplas conexões. Atualmente, curingas (`*`) estão documentados no modelo mas bloqueados pela camada de validação. Isso força a criação de entradas redundantes como `localhost:5432:db1:postgres`, `localhost:5432:db2:postgres`, etc.
+Desenvolvedores que usam `FurLab database pgpass` localmente precisam configurar autenticação PostgreSQL sem senha para múltiplas conexões. Atualmente, curingas (`*`) estão documentados no modelo mas bloqueados pela camada de validação. Isso força a criação de entradas redundantes como `localhost:5432:db1:postgres`, `localhost:5432:db2:postgres`, etc.
 
 O pgpass.conf do PostgreSQL suporta nativamente `*` como curinga em qualquer campo (exceto a senha). Suportar isso melhora a experiência do desenvolvedor em ambientes locais, reduz a duplicidade de configuração e garante paridade completa com o formato nativo do pgpass.
 

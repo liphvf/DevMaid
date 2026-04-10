@@ -1,8 +1,8 @@
 ## 1. Estrutura do Projeto
 
-- [x] 1.1 Criar arquivo `DockerCommand.cs` em `DevMaid.CLI/Commands/`
+- [x] 1.1 Criar arquivo `DockerCommand.cs` em `FurLab.CLI/Commands/`
 - [x] 1.2 Criar classe `DockerPostgresCommand` (pode ser no mesmo arquivo ou separado)
-- [x] 1.3 Criar `DockerService.cs` em `DevMaid.CLI/Services/` para operações Docker
+- [x] 1.3 Criar `DockerService.cs` em `FurLab.CLI/Services/` para operações Docker
 
 ## 2. Implementação do DockerCommand
 
@@ -35,7 +35,7 @@
 ## 5. Integração
 
 - [x] 5.1 Registrar `DockerCommand.Build()` em `Program.cs`
-- [x] 5.2 Adicionar imports necessários (`DevMaid.CLI.Commands`, `DevMaid.CLI.Services`)
+- [x] 5.2 Adicionar imports necessários (`FurLab.CLI.Commands`, `FurLab.CLI.Services`)
 
 ## 6. Testes Manuais
 

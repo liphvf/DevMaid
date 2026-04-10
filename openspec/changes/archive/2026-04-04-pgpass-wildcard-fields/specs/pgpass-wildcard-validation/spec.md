@@ -54,20 +54,20 @@ Campos de senha NÃO DEVEM aceitar valores curinga. O requisito de senha permane
 
 ### Requisito: PgPassCommand aceita curingas nas opções
 
-O comando `devmaid database pgpass add` DEVE aceitar `*` como entrada válida para as opções `--host`, `--port` e `--username`.
+O comando `FurLab database pgpass add` DEVE aceitar `*` como entrada válida para as opções `--host`, `--port` e `--username`.
 
 #### Cenário: Adicionar entrada com curinga no host
-- **QUANDO** o usuário executa `devmaid database pgpass add meu_banco --host "*" --password senha`
+- **QUANDO** o usuário executa `FurLab database pgpass add meu_banco --host "*" --password senha`
 - **ENTÃO** a entrada é adicionada com `*:5432:meu_banco:postgres:senha`
 
 #### Cenário: Adicionar entrada com curinga na porta
-- **QUANDO** o usuário executa `devmaid database pgpass add meu_banco --port "*" --password senha`
+- **QUANDO** o usuário executa `FurLab database pgpass add meu_banco --port "*" --password senha`
 - **ENTÃO** a entrada é adicionada com `localhost:*:meu_banco:postgres:senha`
 
 #### Cenário: Adicionar entrada com curinga no usuário
-- **QUANDO** o usuário executa `devmaid database pgpass add meu_banco --username "*" --password senha`
+- **QUANDO** o usuário executa `FurLab database pgpass add meu_banco --username "*" --password senha`
 - **ENTÃO** a entrada é adicionada com `localhost:5432:meu_banco:*:senha`
 
 #### Cenário: Adicionar entrada com todos os curingas
-- **QUANDO** o usuário executa `devmaid database pgpass add "*" --host "*" --port "*" --username "*" --password senha`
+- **QUANDO** o usuário executa `FurLab database pgpass add "*" --host "*" --port "*" --username "*" --password senha`
 - **ENTÃO** a entrada é adicionada com `*:*:*:*:senha`

@@ -7,13 +7,13 @@ O comando `query` permite executar queries SQL e exportar os resultados para CSV
 ### Query em banco único
 
 ```bash
-devmaid query run --input <arquivo.sql> --output <arquivo.csv> [opções]
+FurLab query run --input <arquivo.sql> --output <arquivo.csv> [opções]
 ```
 
 ### Query em múltiplos bancos
 
 ```bash
-devmaid query run --all --input <arquivo.sql> --output <diretorio> [opções]
+FurLab query run --all --input <arquivo.sql> --output <diretorio> [opções]
 ```
 
 ## Opções
@@ -65,26 +65,26 @@ devmaid query run --all --input <arquivo.sql> --output <diretorio> [opções]
 ### Usando connection string completa
 
 ```bash
-devmaid query run --input query.sql --output results.csv --npgsql-connection-string "Host=localhost;Port=5432;Database=mydb;Username=user;Password=pass"
+FurLab query run --input query.sql --output results.csv --npgsql-connection-string "Host=localhost;Port=5432;Database=mydb;Username=user;Password=pass"
 ```
 
 ### Usando parâmetros individuais
 
 ```bash
-devmaid query run --input query.sql --output results.csv --host localhost --port 5432 --database mydb --username myuser
+FurLab query run --input query.sql --output results.csv --host localhost --port 5432 --database mydb --username myuser
 # Será solicitada a senha interativamente
 ```
 
 ### Com opções de SSL
 
 ```bash
-devmaid query run --input query.sql --output results.csv --host localhost --port 5432 --database mydb --username myuser --password mypass --ssl-mode Require
+FurLab query run --input query.sql --output results.csv --host localhost --port 5432 --database mydb --username myuser --password mypass --ssl-mode Require
 ```
 
 ### Com timeout personalizado
 
 ```bash
-devmaid query run --input query.sql --output results.csv --host localhost --port 5432 --database mydb --username myuser --password mypass --command-timeout 600
+FurLab query run --input query.sql --output results.csv --host localhost --port 5432 --database mydb --username myuser --password mypass --command-timeout 600
 ```
 
 ## Query Multi-Database
@@ -103,7 +103,7 @@ A funcionalidade `--all` permite executar a mesma query em múltiplos bancos de 
 Todos os resultados são combinados em um único arquivo `all_databases.csv` com uma coluna adicional `_database_name` indicando a origem de cada linha.
 
 ```bash
-devmaid query run --all --input query.sql --output ./results
+FurLab query run --all --input query.sql --output ./results
 ```
 
 **Saída:**
@@ -116,7 +116,7 @@ devmaid query run --all --input query.sql --output ./results
 Gera um arquivo CSV separado para cada banco de dados.
 
 ```bash
-devmaid query run --all --separate-files --input query.sql --output ./results
+FurLab query run --all --separate-files --input query.sql --output ./results
 ```
 
 **Saída:**
@@ -128,7 +128,7 @@ devmaid query run --all --separate-files --input query.sql --output ./results
 Use `--exclude` para pular bancos específicos, como bancos do sistema ou bancos temporários.
 
 ```bash
-devmaid query run --all --exclude postgres,template0,template1 --input query.sql --output ./results
+FurLab query run --all --exclude postgres,template0,template1 --input query.sql --output ./results
 ```
 
 ### Exemplos Completos
@@ -136,7 +136,7 @@ devmaid query run --all --exclude postgres,template0,template1 --input query.sql
 #### Auditoria de tamanho de tabelas em todos os bancos
 
 ```bash
-devmaid query run --all --exclude postgres,template0,template1 --input audit_tables.sql --output ./audit_results --separate-files
+FurLab query run --all --exclude postgres,template0,template1 --input audit_tables.sql --output ./audit_results --separate-files
 ```
 
 **Arquivo `audit_tables.sql`:**
@@ -156,7 +156,7 @@ ORDER BY
 #### Relatório consolidado de usuários
 
 ```bash
-devmaid query run --all --exclude postgres,template0,template1 --input users_report.sql --output ./reports
+FurLab query run --all --exclude postgres,template0,template1 --input users_report.sql --output ./reports
 ```
 
 **Arquivo `users_report.sql`:**
@@ -175,7 +175,7 @@ ORDER BY
 #### Contagem de registros por tabela em todos os bancos
 
 ```bash
-devmaid query run --all --exclude postgres,template0,template1 --input count_tables.sql --output ./counts --separate-files
+FurLab query run --all --exclude postgres,template0,template1 --input count_tables.sql --output ./counts --separate-files
 ```
 
 **Arquivo `count_tables.sql`:**
@@ -336,7 +336,7 @@ Para documentação completa sobre multi-server, veja [MULTI_SERVER.md](MULTI_SE
 #### Executar em todos os servidores configurados
 
 ```bash
-devmaid query run --servers --input query.sql --output ./results
+FurLab query run --servers --input query.sql --output ./results
 ```
 
 **Saída:**
@@ -353,16 +353,16 @@ results/
 
 ```bash
 # Apenas servidores de produção
-devmaid query run --servers --server-filter "prod-*" --input query.sql --output ./results
+FurLab query run --servers --server-filter "prod-*" --input query.sql --output ./results
 
 # Apenas servidores primários
-devmaid query run --servers --server-filter "*-primary" --input query.sql --output ./results
+FurLab query run --servers --server-filter "*-primary" --input query.sql --output ./results
 ```
 
 #### Combinar com --all (todos os bancos)
 
 ```bash
-devmaid query run --servers --all --exclude "postgres,template0,template1" \
+FurLab query run --servers --all --exclude "postgres,template0,template1" \
     --input audit.sql --output ./audit_results
 ```
 

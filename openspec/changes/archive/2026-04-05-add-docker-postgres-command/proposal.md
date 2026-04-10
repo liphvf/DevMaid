@@ -1,11 +1,11 @@
 ## Por que
 
-Configurar um container PostgreSQL local para desenvolvimento requer memorizar e digitar um comando `docker run` longo com múltiplos parâmetros. O comando `devmaid docker postgres` elimina essa fricção, permitindo subir um PostgreSQL pronto para uso com uma única instrução.
+Configurar um container PostgreSQL local para desenvolvimento requer memorizar e digitar um comando `docker run` longo com múltiplos parâmetros. O comando `FurLab docker postgres` elimina essa fricção, permitindo subir um PostgreSQL pronto para uso com uma única instrução.
 
 ## O que Muda
 
-- Novo comando `devmaid docker` como grupo pai para utilitários Docker.
-- Novo subcomando `devmaid docker postgres` que executa o container PostgreSQL pré-configurado:
+- Novo comando `FurLab docker` como grupo pai para utilitários Docker.
+- Novo subcomando `FurLab docker postgres` que executa o container PostgreSQL pré-configurado:
   - Imagem `postgres:alpine` (leve)
   - Nome do container: `postgres-ptbr`
   - Política de reinício: `always`
@@ -29,7 +29,7 @@ _(nenhuma)_
 
 ## Impacto
 
-- **Código novo**: `DevMaid.CLI/Commands/DockerCommand.cs` com subcomando `postgres`.
+- **Código novo**: `FurLab.CLI/Commands/DockerCommand.cs` com subcomando `postgres`.
 - **Registro**: `Program.cs` precisa registrar o novo `DockerCommand`.
 - **Dependência externa**: requer Docker instalado e em execução na máquina do usuário.
 - **Sem novas dependências de pacote**: usa `System.Diagnostics.Process` (já presente no projeto).
