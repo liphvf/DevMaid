@@ -18,7 +18,6 @@ A arquitetura é construída sobre System.CommandLine para parsing de argumentos
 │  └── Parsing de Argumentos                                     │
 ├─────────────────────────────────────────────────────────────────┤
 │  Camada de Comandos (Commands/)                                 │
-│  ├── TableParserCommand                                        │
 │  ├── FileCommand                                               │
 │  ├── ClaudeCodeCommand                                         │
 │  ├── OpenCodeCommand                                           │
@@ -52,7 +51,6 @@ A arquitetura é construída sobre System.CommandLine para parsing de argumentos
 
 Cada comando segue o padrão builder com um método estático `Build()` que retorna um objeto `Command`.
 
-#### TableParserCommand
 - Conecta ao banco de dados PostgreSQL usando Npgsql
 - Recupera metadados da tabela
 - Gera classe C# com propriedades baseadas nas definições de colunas
@@ -241,7 +239,6 @@ Expansão além do Windows:
 DevMaid/
 ├── DevMaid.CLI/               # Projeto principal (Linha de Comando)
 │   ├── Program.cs             # Ponto de entrada
-│   ├── Commands/              # Implementações de comandos (TableParser, Winget, Query, etc.)
 │   ├── CommandOptions/        # Objetos DTOs de Options dos Comandos
 │   └── Services/              # Logging, Utilitarios, Componentes da Aplicação, Listadores
 ├── DevMaid.Core/              # Bibliotecas Centrais e Utilitários de Domínio

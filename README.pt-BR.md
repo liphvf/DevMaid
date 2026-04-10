@@ -15,7 +15,6 @@ DevMaid é uma interface de linha de comando (CLI) multiplataforma construída c
 ## Problema que Resolve
 
 Desenvolvedores frequentemente executam tarefas repetitivas que podem ser automatizadas:
-- Converter esquemas de tabelas de banco de dados em classes C#
 - Combinar múltiplos arquivos em um só
 - Instalar e configurar ferramentas de IA para desenvolvimento
 - Fazer backup e restaurar pacotes do Windows
@@ -25,7 +24,6 @@ DevMaid consolida essas tarefas em uma única ferramenta CLI fácil de usar.
 ## Principais Funcionalidades
 
 - **Database Backup**: Faz backup de bancos de dados PostgreSQL usando pg_dump
-- **Table Parser**: Analisa tabelas de banco de dados PostgreSQL e gera classes de propriedades C#
 - **File (Combine)**: Combina múltiplos arquivos em um único
 - **Integração com Claude Code**: Instala e configura CLI do Claude Code
 - **Integração com OpenCode**: Instala e configura CLI do OpenCode
@@ -106,10 +104,8 @@ devmaid database backup meubanco --host localhost --username postgres
 }
 ```
 
-### Table Parser - Gerar Classe C# a Partir de Tabela de Banco de Dados
 
 ```bash
-devmaid table-parser -d meubanco -t usuarios -u postgres -H localhost
 ```
 
 ### Combinar Arquivos
@@ -141,7 +137,6 @@ devmaid winget restore -i "C:\backup\backup-winget.json"
 | Comando | Descrição |
 |---------|-----------|
 | `database backup` | Faz backup de banco de dados PostgreSQL |
-| `table-parser` | Analisa tabela de banco de dados e gera classe C# |
 | `file combine` | Combina múltiplos arquivos em um único |
 | `claude` | Integração com Claude Code |
 | `opencode` | Integração com CLI do OpenCode |

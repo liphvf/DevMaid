@@ -8,7 +8,6 @@ DevMaid é uma ferramenta CLI baseada em .NET projetada para automatizar tarefas
 
 ### Funcionalidades Principais
 
-1. **Table Parser**
 2. **Utilitários de Banco de Dados**
 3. **Utilitário de Arquivos (Combine)**
 4. **Integração com Claude Code**
@@ -20,7 +19,6 @@ DevMaid é uma ferramenta CLI baseada em .NET projetada para automatizar tarefas
 
 ---
 
-## Funcionalidade 1: Table Parser
 
 ### Objetivo
 
@@ -28,12 +26,10 @@ Analisar tabelas de banco de dados PostgreSQL e gerar automaticamente definiçõ
 
 ### Descrição Detalhada
 
-O Table Parser conecta-se a um banco de dados PostgreSQL, recupera metadados de uma tabela especificada e gera uma classe C# com propriedades correspondendo às colunas da tabela.
 
 ### Fluxo de Uso
 
 ```bash
-devmaid table-parser -d banco -t usuarios -u postgres -H localhost
 ```
 
 1. Usuário fornece parâmetros de conexão com banco de dados
@@ -443,7 +439,6 @@ devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
 **Cenário:** Desenvolvedor precisa criar classes C# para tabelas de banco de dados existentes.
 
 **Fluxo:**
-1. Executar `devmaid table-parser -d meubanco -t usuarios`
 2. Copiar classe gerada para o projeto
 3. Modificar conforme necessário
 
@@ -461,7 +456,6 @@ devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
 
 ### Prioridade 1 - Curto Prazo
 
-- [ ] Adicionar suporte para MySQL/SQL Server no Table Parser
 - [ ] Adicionar arquivo de configuração para opções padrão
 
 ### Prioridade 2 - Médio Prazo
@@ -486,7 +480,6 @@ devmaid windowsfeatures import "C:\backups\windowsfeatures.json"
 
 | Comando | Atalho | Descrição |
 |---------|--------|-----------|
-| `devmaid table-parser` | `tableparser` | Parse de tabela para classe C# |
 | `devmaid file` | - | Utilitários de arquivo |
 | `devmaid file combine` | - | Combinar arquivos em um |
 | `devmaid claude` | - | Comandos do Claude Code |

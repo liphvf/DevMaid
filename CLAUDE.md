@@ -41,7 +41,6 @@ DevMaid/
 ├── DevMaid.CLI/                   ← CLI executable (depends on DevMaid.Core)
 │   ├── Program.cs                 ← Host builder, DI setup, RootCommand registration
 │   ├── Commands/                  ← One static class per command, Build() factory method
-│   │   ├── TableParserCommand.cs
 │   │   ├── FileCommand.cs
 │   │   ├── ClaudeCodeCommand.cs
 │   │   ├── OpenCodeCommand.cs
@@ -119,7 +118,6 @@ devmaid database pgpass add <banco> [--host] [--port] [--username] [--password]
 devmaid database pgpass list
 devmaid database pgpass remove <banco> [--host] [--port] [--username]
 devmaid docker postgres
-devmaid table-parser -d <db> -t <table> -H <host> -u <user>
 devmaid file combine -i "<glob>" -o <output>
 devmaid query run -f <sql-file> -d <db> [--all] [--servers]
 devmaid clean [path]
