@@ -131,31 +131,96 @@ function Test-Dependencias {
 }
 
 # ─────────────────────────────────────────────────────────────
+# Busca informações da última release no GitHub
+# ─────────────────────────────────────────────────────────────
+
+function Get-LatestRelease {
+    Write-Info "Buscando última release em liphvf/FurLab via GitHub CLI ..."
+
+    $json = gh release view --repo liphvf/FurLab --json tagName,assets 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Aviso "Não foi possível buscar a última release."
+        Write-Info "Verifique se o repositório existe e o gh está autenticado."
+        Write-Info "Você precisará informar as informações manualmente."
+        $script:PackageId = $null
+        $script:PackageVersion = $null
+        $script:InstallerUrls = $null
+        return
+    }
+
+    $release = $json | ConvertFrom-Json
+
+    $script:PackageId = "FurLab.CLI"
+    $script:PackageVersion = $release.tagName.TrimStart('v')
+    $script:InstallerUrls = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($asset in $release.assets) {
+        if ($asset.downloadUrl -match '\.(exe|msi|msix|appx|zip)(\?|$)') {
+            $script:InstallerUrls.Add($asset.downloadUrl)
+        }
+    }
+
+    if ($script:InstallerUrls.Count -eq 0) {
+        Write-Aviso "Nenhum instalador encontrado na release $($release.tagName)."
+        Write-Info "Você precisará informar as URLs manualmente."
+    } else {
+        Write-Ok "Release $($release.tagName) encontrada com $($script:InstallerUrls.Count) instalador(es)."
+    }
+}
+
+# ─────────────────────────────────────────────────────────────
 # Coleta de informações do pacote
 # ─────────────────────────────────────────────────────────────
 
 function Get-InformacoesPacote {
     Write-Passo 2 "Informações do pacote"
 
-    Write-Info "O identificador segue o formato: Publicador.NomeDoPacote"
-    Write-Info "Exemplos: Microsoft.WindowsTerminal  |  Notepad++.Notepad++"
+    Get-LatestRelease
+
     Write-Host ""
+    Write-Info "Identificador do pacote: FurLab.CLI"
+    $script:PackageId = "FurLab.CLI"
 
-    $script:PackageId = Read-Input -Prompt "Identificador do pacote (PackageIdentifier)" -Required
-
-    # Valida formato básico Publisher.Package
-    while ($script:PackageId -notmatch '^[A-Za-z0-9][\w\-\.]{0,127}\.[A-Za-z0-9][\w\-\.]{0,127}$') {
-        Write-Aviso "Formato inválido. Use: Publicador.NomeDoPacote (apenas letras, números, - e .)"
-        $script:PackageId = Read-Input -Prompt "Identificador do pacote (PackageIdentifier)" -Required
+    if ($script:PackageVersion) {
+        $sugestao = $script:PackageVersion
+        Write-Host ""
+        Write-Info "Sugestão de versão (última release): $sugestao"
+        $versao = Read-Input -Prompt "Versão do pacote (ENTER para aceitar sugestão)" -Default $sugestao
+        $script:PackageVersion = $versao
+    } else {
+        $script:PackageVersion = Read-Input -Prompt "Versão do pacote (ex: 1.0.0)" -Required
     }
 
-    $script:PackageVersion = Read-Input -Prompt "Versão do pacote (ex: 1.0.0)" -Required
     while ($script:PackageVersion -notmatch '^\d+(\.\d+){0,3}(-[\w\.\-]+)?$') {
         Write-Aviso "Versão inválida. Use formato semântico: 1.0.0 ou 1.2.3.4"
         $script:PackageVersion = Read-Input -Prompt "Versão do pacote" -Required
     }
 
     Write-Host ""
+
+    if ($script:InstallerUrls -and $script:InstallerUrls.Count -gt 0) {
+        Write-Info "URLs de instaladores encontradas na release:"
+        foreach ($url in $script:InstallerUrls) {
+            Write-Host "  - $url" -ForegroundColor Gray
+        }
+        Write-Host ""
+        if (Confirmar "Usar estas URLs? [S/n]") {
+            return
+        }
+    }
+
+    Write-Host ""
+    Write-Info "Sugestão de URL para instalador (montada a partir da release):"
+    $sugestaoUrl = "https://github.com/liphvf/FurLab/releases/download/v$($script:PackageVersion)/fur.exe"
+    Write-Host "  $sugestaoUrl" -ForegroundColor Gray
+    Write-Host ""
+
+    if (Confirmar "Usar esta URL sugerida? [S/n]") {
+        $script:InstallerUrls = [System.Collections.Generic.List[string]]::new()
+        $script:InstallerUrls.Add($sugestaoUrl)
+        return
+    }
+
     Write-Info "Informe as URLs dos instaladores (exe, msi, msix, appx, zip)."
     Write-Info "Pressione ENTER em branco para finalizar a lista."
     Write-Host ""
