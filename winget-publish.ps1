@@ -1,0 +1,400 @@
+#Requires -Version 7.0
+<#
+.SYNOPSIS
+    Publica um novo pacote no winget usando wingetcreate.
+
+.DESCRIPTION
+    Guia o processo completo de publicação de um novo pacote no repositório
+    winget-pkgs via wingetcreate: valida dependências, coleta informações,
+    gera manifesto, valida e abre o Pull Request no GitHub.
+
+.EXAMPLE
+    ./winget-publish.ps1
+#>
+
+$ErrorActionPreference = "Stop"
+
+# ─────────────────────────────────────────────────────────────
+# Helpers de UI
+# ─────────────────────────────────────────────────────────────
+
+function Write-Header {
+    param([string]$Mensagem)
+    Write-Host ""
+    Write-Host ("=" * 60) -ForegroundColor Cyan
+    Write-Host "  $Mensagem" -ForegroundColor Cyan
+    Write-Host ("=" * 60) -ForegroundColor Cyan
+    Write-Host ""
+}
+
+function Write-Passo {
+    param([int]$Numero, [string]$Descricao)
+    Write-Host ""
+    Write-Host "[ Passo $Numero ] $Descricao" -ForegroundColor Yellow
+    Write-Host ("-" * 50) -ForegroundColor DarkGray
+}
+
+function Write-Ok    { param([string]$m) Write-Host "[OK]  $m" -ForegroundColor Green  }
+function Write-Erro  { param([string]$m) Write-Host "[ERRO] $m" -ForegroundColor Red    }
+function Write-Info  { param([string]$m) Write-Host "[INFO] $m" -ForegroundColor Cyan   }
+function Write-Aviso { param([string]$m) Write-Host "[AVISO] $m" -ForegroundColor Yellow }
+
+function Read-Input {
+    param(
+        [string]$Prompt,
+        [string]$Default = "",
+        [switch]$Required
+    )
+    do {
+        if ($Default) {
+            $userInput = Read-Host "$Prompt [$Default]"
+            if ([string]::IsNullOrWhiteSpace($userInput)) { $userInput = $Default }
+        } else {
+            $userInput = Read-Host $Prompt
+        }
+
+        if ($Required -and [string]::IsNullOrWhiteSpace($userInput)) {
+            Write-Aviso "Este campo é obrigatório."
+        }
+    } while ($Required -and [string]::IsNullOrWhiteSpace($userInput))
+
+    return $userInput.Trim()
+}
+
+function Confirmar {
+    param([string]$Pergunta, [bool]$PadraoSim = $true)
+    $opcoes = if ($PadraoSim) { "[S/n]" } else { "[s/N]" }
+    $resposta = Read-Host "$Pergunta $opcoes"
+    if ([string]::IsNullOrWhiteSpace($resposta)) { return $PadraoSim }
+    return $resposta -match '^[sS]'
+}
+
+# ─────────────────────────────────────────────────────────────
+# Verificação de dependências
+# ─────────────────────────────────────────────────────────────
+
+function Test-Dependencias {
+    Write-Passo 1 "Verificando dependências"
+
+    $ok = $true
+
+    # wingetcreate
+    if (Get-Command wingetcreate -ErrorAction SilentlyContinue) {
+        $versao = (wingetcreate --version 2>&1) | Select-String -Pattern '[\d\.]+'
+        Write-Ok "wingetcreate encontrado: $($versao.Matches[0].Value)"
+    } else {
+        Write-Erro "wingetcreate não encontrado."
+        Write-Info "Instale via: winget install Microsoft.WingetCreate"
+        $ok = $false
+    }
+
+    # gh (GitHub CLI) — necessário para abrir PR automaticamente
+    if (Get-Command gh -ErrorAction SilentlyContinue) {
+        $ghVer = (gh --version 2>&1 | Select-String 'gh version ([\d\.]+)').Matches[0].Groups[1].Value
+        Write-Ok "GitHub CLI (gh) encontrado: $ghVer"
+
+        # Verifica autenticação
+        $null = gh auth status 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Ok "GitHub CLI autenticado."
+        } else {
+            Write-Aviso "GitHub CLI não autenticado. Execute: gh auth login"
+            $ok = $false
+        }
+    } else {
+        Write-Erro "GitHub CLI (gh) não encontrado."
+        Write-Host ""
+        if (Confirmar "Deseja instalar o GitHub CLI agora via winget?") {
+            Write-Info "Executando: winget install GitHub.cli ..."
+            winget install --id GitHub.cli --silent --accept-package-agreements --accept-source-agreements
+            if ($LASTEXITCODE -eq 0) {
+                Write-Ok "GitHub CLI instalado com sucesso."
+                Write-Aviso "Reinicie o terminal e execute este script novamente para que o 'gh' seja reconhecido."
+            } else {
+                Write-Erro "Falha ao instalar o GitHub CLI (código $LASTEXITCODE)."
+                Write-Info "Instale manualmente: winget install GitHub.cli"
+            }
+        } else {
+            Write-Info "Instale manualmente: winget install GitHub.cli"
+        }
+        $ok = $false
+    }
+
+    if (-not $ok) {
+        Write-Host ""
+        Write-Erro "Resolva as dependências acima e execute o script novamente."
+        exit 3
+    }
+
+    Write-Host ""
+    Write-Ok "Todas as dependências estão disponíveis."
+}
+
+# ─────────────────────────────────────────────────────────────
+# Coleta de informações do pacote
+# ─────────────────────────────────────────────────────────────
+
+function Get-InformacoesPacote {
+    Write-Passo 2 "Informações do pacote"
+
+    Write-Info "O identificador segue o formato: Publicador.NomeDoPacote"
+    Write-Info "Exemplos: Microsoft.WindowsTerminal  |  Notepad++.Notepad++"
+    Write-Host ""
+
+    $script:PackageId = Read-Input -Prompt "Identificador do pacote (PackageIdentifier)" -Required
+
+    # Valida formato básico Publisher.Package
+    while ($script:PackageId -notmatch '^[A-Za-z0-9][\w\-\.]{0,127}\.[A-Za-z0-9][\w\-\.]{0,127}$') {
+        Write-Aviso "Formato inválido. Use: Publicador.NomeDoPacote (apenas letras, números, - e .)"
+        $script:PackageId = Read-Input -Prompt "Identificador do pacote (PackageIdentifier)" -Required
+    }
+
+    $script:PackageVersion = Read-Input -Prompt "Versão do pacote (ex: 1.0.0)" -Required
+    while ($script:PackageVersion -notmatch '^\d+(\.\d+){0,3}(-[\w\.\-]+)?$') {
+        Write-Aviso "Versão inválida. Use formato semântico: 1.0.0 ou 1.2.3.4"
+        $script:PackageVersion = Read-Input -Prompt "Versão do pacote" -Required
+    }
+
+    Write-Host ""
+    Write-Info "Informe as URLs dos instaladores (exe, msi, msix, appx, zip)."
+    Write-Info "Pressione ENTER em branco para finalizar a lista."
+    Write-Host ""
+
+    $script:InstallerUrls = [System.Collections.Generic.List[string]]::new()
+    $idx = 1
+    do {
+        $url = Read-Input -Prompt "URL do instalador $idx (ENTER para finalizar)"
+        if (-not [string]::IsNullOrWhiteSpace($url)) {
+            if ($url -notmatch '^https?://') {
+                Write-Aviso "A URL deve começar com http:// ou https://"
+            } else {
+                $script:InstallerUrls.Add($url)
+                $idx++
+            }
+        }
+    } while (-not [string]::IsNullOrWhiteSpace($url))
+
+    if ($script:InstallerUrls.Count -eq 0) {
+        Write-Erro "Pelo menos uma URL de instalador é obrigatória."
+        exit 1
+    }
+
+    Write-Ok "$($script:InstallerUrls.Count) URL(s) informada(s)."
+}
+
+# ─────────────────────────────────────────────────────────────
+# Token GitHub (para wingetcreate submit)
+# ─────────────────────────────────────────────────────────────
+
+function Get-GitHubToken {
+    Write-Passo 3 "Token do GitHub"
+
+    Write-Info "O wingetcreate precisa de um token GitHub (PAT) para abrir o PR."
+    Write-Info "Escopo necessário: 'public_repo'  (ou 'repo' para repos privados)"
+    Write-Info "Crie em: https://github.com/settings/tokens/new"
+    Write-Host ""
+
+    # Tenta ler token salvo pelo gh CLI
+    $ghToken = gh auth token 2>&1
+    if ($LASTEXITCODE -eq 0 -and $ghToken) {
+        Write-Ok "Token obtido automaticamente via GitHub CLI."
+        $script:GhToken = $ghToken
+        return
+    }
+
+    $script:GhToken = Read-Input -Prompt "Cole seu GitHub Personal Access Token" -Required
+}
+
+# ─────────────────────────────────────────────────────────────
+# Diretório de saída para o manifesto
+# ─────────────────────────────────────────────────────────────
+
+function Set-DiretorioSaida {
+    $script:OutputDir = Join-Path $PSScriptRoot "packaging\winget"
+
+    if (-not (Test-Path $script:OutputDir)) {
+        New-Item -ItemType Directory -Path $script:OutputDir -Force | Out-Null
+    }
+}
+
+# ─────────────────────────────────────────────────────────────
+# Revisão antes de prosseguir
+# ─────────────────────────────────────────────────────────────
+
+function Confirm-Revisao {
+    Write-Passo 4 "Revisão das informações"
+
+    Write-Host ""
+    Write-Host "  Identificador  : " -NoNewline; Write-Host $script:PackageId -ForegroundColor White
+    Write-Host "  Versão         : " -NoNewline; Write-Host $script:PackageVersion -ForegroundColor White
+    Write-Host "  URLs           :" -ForegroundColor White
+    foreach ($url in $script:InstallerUrls) {
+        Write-Host "    - $url" -ForegroundColor Gray
+    }
+    Write-Host "  Saída          : " -NoNewline; Write-Host $script:OutputDir -ForegroundColor White
+    Write-Host ""
+
+    if (-not (Confirmar "As informações estão corretas? Deseja continuar?")) {
+        Write-Host ""
+        Write-Aviso "Operação cancelada pelo usuário."
+        exit 130
+    }
+}
+
+# ─────────────────────────────────────────────────────────────
+# Execução do wingetcreate new
+# ─────────────────────────────────────────────────────────────
+
+function Invoke-WingetCreate {
+    Write-Passo 5 "Gerando manifesto com wingetcreate"
+
+    # Monta a lista de URLs para o comando
+    $urlArgs = $script:InstallerUrls -join " "
+
+    Write-Info "Executando: wingetcreate new $urlArgs ..."
+    Write-Host ""
+
+    # wingetcreate new baixa os instaladores, detecta hashes, arquitetura e tipo.
+    # -o define o diretório de saída do manifesto.
+    # -i desativa modo interativo para os campos que já passaremos via flags.
+    $cmdArgs = @(
+        "new"
+        "--id", $script:PackageId
+        "--version", $script:PackageVersion
+        "--out", $script:OutputDir
+        "--token", $script:GhToken
+    ) + $script:InstallerUrls
+
+    & wingetcreate @cmdArgs
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Erro "wingetcreate new falhou (código $LASTEXITCODE)."
+        Write-Info "Verifique as URLs e o token e tente novamente."
+        exit 1
+    }
+
+    Write-Host ""
+    Write-Ok "Manifesto gerado em: $($script:OutputDir)"
+}
+
+# ─────────────────────────────────────────────────────────────
+# Validação do manifesto
+# ─────────────────────────────────────────────────────────────
+
+function Invoke-Validacao {
+    Write-Passo 6 "Validando manifesto"
+
+    # Localiza a pasta gerada: OutputDir\<publisher>\<package>\<version>
+    $parts  = $script:PackageId -split '\.', 2
+    $pubDir = $parts[0]
+    $pkgDir = $parts[1]
+    $manifestPath = Join-Path $script:OutputDir $pubDir | Join-Path -ChildPath $pkgDir | Join-Path -ChildPath $script:PackageVersion
+
+    if (-not (Test-Path $manifestPath)) {
+        # Tenta encontrar qualquer subpasta com a versão
+        $encontrado = Get-ChildItem -Path $script:OutputDir -Recurse -Directory -Filter $script:PackageVersion -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($encontrado) {
+            $manifestPath = $encontrado.FullName
+        } else {
+            Write-Aviso "Não foi possível localizar o manifesto gerado para validação automática."
+            Write-Info "Execute manualmente: wingetcreate validate <caminho>"
+            return
+        }
+    }
+
+    Write-Info "Validando: $manifestPath"
+    & wingetcreate validate $manifestPath
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Erro "Validação falhou. Corrija os erros no manifesto e reenvie."
+        if (-not (Confirmar "Deseja continuar mesmo com erros de validação?" $false)) {
+            exit 1
+        }
+    } else {
+        Write-Ok "Manifesto válido."
+    }
+}
+
+# ─────────────────────────────────────────────────────────────
+# Submissão do PR
+# ─────────────────────────────────────────────────────────────
+
+function Invoke-Submit {
+    Write-Passo 7 "Submetendo Pull Request ao winget-pkgs"
+
+    Write-Host ""
+    Write-Info "O wingetcreate submit vai:"
+    Write-Host "  1. Fazer fork do microsoft/winget-pkgs (se necessário)" -ForegroundColor Gray
+    Write-Host "  2. Criar uma branch com o manifesto" -ForegroundColor Gray
+    Write-Host "  3. Abrir um Pull Request" -ForegroundColor Gray
+    Write-Host ""
+
+    if (-not (Confirmar "Deseja enviar o PR agora?")) {
+        Write-Aviso "Submissão cancelada. O manifesto está salvo em: $($script:OutputDir)"
+        Write-Info "Para enviar manualmente: wingetcreate submit --token <TOKEN> <caminho>"
+        exit 130
+    }
+
+    # Localiza manifesto gerado
+    $parts  = $script:PackageId -split '\.', 2
+    $pubDir = $parts[0]
+    $pkgDir = $parts[1]
+    $manifestPath = Join-Path $script:OutputDir $pubDir | Join-Path -ChildPath $pkgDir | Join-Path -ChildPath $script:PackageVersion
+
+    if (-not (Test-Path $manifestPath)) {
+        $encontrado = Get-ChildItem -Path $script:OutputDir -Recurse -Directory -Filter $script:PackageVersion -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($encontrado) { $manifestPath = $encontrado.FullName }
+    }
+
+    Write-Info "Executando wingetcreate submit ..."
+    & wingetcreate submit --token $script:GhToken $manifestPath
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Erro "Submissão falhou (código $LASTEXITCODE)."
+        Write-Info "Verifique o token e tente: wingetcreate submit --token <TOKEN> `"$manifestPath`""
+        exit 1
+    }
+
+    Write-Host ""
+    Write-Ok "Pull Request aberto com sucesso!"
+    Write-Info "Acompanhe em: https://github.com/microsoft/winget-pkgs/pulls"
+}
+
+# ─────────────────────────────────────────────────────────────
+# Sumário final
+# ─────────────────────────────────────────────────────────────
+
+function Write-Sumario {
+    Write-Host ""
+    Write-Host ("=" * 60) -ForegroundColor Green
+    Write-Host "  Publicacao concluida!" -ForegroundColor Green
+    Write-Host ("=" * 60) -ForegroundColor Green
+    Write-Host ""
+    Write-Host "  Pacote   : $($script:PackageId)" -ForegroundColor White
+    Write-Host "  Versao   : $($script:PackageVersion)" -ForegroundColor White
+    Write-Host "  Manifesto: $($script:OutputDir)" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  Proximos passos:" -ForegroundColor Cyan
+    Write-Host "  - Aguarde a revisao automatica (pipelines) do winget-pkgs."
+    Write-Host "  - Um mantenedor revisara e aprovara seu PR."
+    Write-Host "  - Apos merge, o pacote fica disponivel em horas via winget."
+    Write-Host ""
+}
+
+# ─────────────────────────────────────────────────────────────
+# Fluxo principal
+# ─────────────────────────────────────────────────────────────
+
+Write-Header "Publicacao de Pacote no Winget"
+Write-Info "Este script guia o processo completo via wingetcreate."
+Write-Info "Voce precisara de: URL(s) do instalador e um GitHub PAT (public_repo)."
+
+Test-Dependencias
+Get-InformacoesPacote
+Get-GitHubToken
+Set-DiretorioSaida
+Confirm-Revisao
+Invoke-WingetCreate
+Invoke-Validacao
+Invoke-Submit
+Write-Sumario
