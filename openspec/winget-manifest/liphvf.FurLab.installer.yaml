@@ -1,0 +1,10 @@
+PackageIdentifier: liphvf.FurLab
+PackageVersion: 1.1.30
+Installers:
+  - Architecture: x64
+    InstallerType: exe
+    InstallerUrl: https://github.com/liphvf/FurLab/releases/download/v1.1.30/FurLab.exe
+    InstallerSha256: PLACEHOLDER_SHA256
+    InstallerSwitches:
+      Silent: /S
+      SilentWithProgress: /S
