@@ -102,9 +102,9 @@ dotnet test --filter "ClassName=DatabaseCommandTests"
 ./format.bat       # Batch, sequential
 
 # Publish
-./publish.bat nuget   # Creates .nupkg in bin/Release/net10.0/
-./publish.bat exe     # Creates win-x64 single-file exe in bin/publish/exe/
-./publish.bat all     # Both
+./publish.ps1 nuget   # Creates .nupkg in bin/Release/net10.0/
+./publish.ps1 exe     # Creates win-x64 single-file exe in publish/exe/fur.exe
+./publish.ps1 all     # Both
 
 # Install as global tool (from source)
 dotnet tool install --add-source bin/Release/net10.0/ FurLab --global

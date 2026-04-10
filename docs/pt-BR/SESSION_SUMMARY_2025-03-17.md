@@ -287,7 +287,7 @@ FurLab/
 ├── appsettings.json
 ├── appsettings.example.json
 ├── dotnet-tools.json
-├── publish.bat
+├── publish.ps1
 └── version.json
 ```
 
