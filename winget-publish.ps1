@@ -373,6 +373,7 @@ function New-ManifestYaml {
     # DefaultLocale manifest
     $defaultLocalePath = Join-Path $versionDir "FurLab.CLI.locale.en-US.yaml"
     $defaultLocaleYaml = @"
+# yaml-language-server: `$schema=https://aka.ms/winget-manifest.defaultLocale.1.12.0.schema.json
 PackageIdentifier: $($script:PackageId)
 PackageVersion: $($script:PackageVersion)
 PackageLocale: en-US
@@ -389,6 +390,7 @@ ManifestVersion: 1.12.0
     # Version manifest
     $versionManifestPath = Join-Path $versionDir "FurLab.CLI.yaml"
     $versionYaml = @"
+# yaml-language-server: `$schema=https://aka.ms/winget-manifest.version.1.12.0.schema.json
 PackageIdentifier: $($script:PackageId)
 PackageVersion: $($script:PackageVersion)
 DefaultLocale: en-US
@@ -416,6 +418,7 @@ ManifestVersion: 1.12.0
     }
 
     $installerYaml = @"
+# yaml-language-server: `$schema=https://aka.ms/winget-manifest.installer.1.12.0.schema.json
 PackageIdentifier: $($script:PackageId)
 PackageVersion: $($script:PackageVersion)
 InstallerLocale: en-US
