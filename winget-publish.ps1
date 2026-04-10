@@ -307,39 +307,127 @@ function Confirm-Revisao {
 }
 
 # ─────────────────────────────────────────────────────────────
-# Execução do wingetcreate new
+# Geração manual do manifesto YAML
 # ─────────────────────────────────────────────────────────────
 
-function Invoke-WingetCreate {
-    Write-Passo 5 "Gerando manifesto com wingetcreate"
+function Get-InstallerSha256 {
+    param([string]$Url)
 
-    # Monta a lista de URLs para o comando
-    $urlArgs = $script:InstallerUrls -join " "
+    Write-Info "Baixando instalador para calcular SHA256: $Url"
 
-    Write-Info "Executando: wingetcreate new $urlArgs ..."
-    Write-Host ""
+    $tempFile = Join-Path $env:TEMP "winget-temp-$([guid]::NewGuid().ToString().Substring(0,8)).exe"
 
-    # wingetcreate new baixa os instaladores, detecta hashes, arquitetura e tipo.
-    # -o define o diretório de saída do manifesto.
-    # -i desativa modo interativo para os campos que já passaremos via flags.
-    $cmdArgs = @(
-        "new"
-        "--id", $script:PackageId
-        "--version", $script:PackageVersion
-        "--out", $script:OutputDir
-        "--token", $script:GhToken
-    ) + $script:InstallerUrls
-
-    & wingetcreate @cmdArgs
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Erro "wingetcreate new falhou (código $LASTEXITCODE)."
-        Write-Info "Verifique as URLs e o token e tente novamente."
+    try {
+        Invoke-WebRequest -Uri $Url -OutFile $tempFile -UseBasicParsing -ErrorAction Stop
+        $hash = (Get-FileHash -Path $tempFile -Algorithm SHA256).Hash.ToLower()
+        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+        return $hash
+    } catch {
+        Write-Aviso "Não foi possível baixar o instalador ($($_.Exception.Message))."
+        Write-Info "Calculando SHA256 localmente..."
+        $path = Read-Input -Prompt "Caminho completo do arquivo instalador" -Required
+        if (Test-Path $path) {
+            return (Get-FileHash -Path $path -Algorithm SHA256).Hash.ToLower()
+        }
+        Write-Erro "Arquivo não encontrado."
         exit 1
     }
+}
+
+function Get-InstallerType {
+    param([string]$Url)
+
+    $ext = [System.IO.Path]::GetExtension($Url.Split('?')[0]).ToLower()
+    switch ($ext) {
+        '.msi'  { return 'msi' }
+        '.msix' { return 'msix' }
+        '.appx' { return 'appx' }
+        '.exe'  { return 'exe' }
+        default { return 'exe' }
+    }
+}
+
+function Get-InstallerScope {
+    param([string]$InstallerType)
+    if ($InstallerType -eq 'msi') { return 'machine' }
+    return 'user'
+}
+
+function Get-InstallerArchitecture {
+    param([string]$Url)
+    $lower = $Url.ToLower()
+    if ($lower -match 'x64|amd64|win-x64') { return 'x64' }
+    if ($lower -match 'x86|win32|win-x86')  { return 'x86' }
+    if ($lower -match 'arm64')              { return 'arm64' }
+    return 'x64'
+}
+
+function New-ManifestYaml {
+    Write-Passo 5 "Gerando manifesto YAML"
+
+    $versionDir = Join-Path $script:OutputDir $script:PackageVersion
+    if (-not (Test-Path $versionDir)) {
+        New-Item -ItemType Directory -Path $versionDir -Force | Out-Null
+    }
+
+    # DefaultLocale manifest
+    $defaultLocalePath = Join-Path $versionDir "FurLab.CLI.locale.en-US.yaml"
+    $defaultLocaleYaml = @"
+PackageIdentifier: $($script:PackageId)
+PackageVersion: $($script:PackageVersion)
+PackageLocale: en-US
+Publisher: FurLab
+PackageName: FurLab CLI
+ShortDescription: Command-line utility for database backups, Docker management, and Windows features.
+License: GPL-3.0
+ManifestType: defaultLocale
+ManifestVersion: 1.12.0
+"@
+    Set-Content -Path $defaultLocalePath -Value $defaultLocaleYaml -Encoding UTF8
+    Write-Ok "Manifesto locale gerado: $defaultLocalePath"
+
+    # Version manifest
+    $versionManifestPath = Join-Path $versionDir "FurLab.CLI.yaml"
+    $versionYaml = @"
+PackageIdentifier: $($script:PackageId)
+PackageVersion: $($script:PackageVersion)
+DefaultLocale: en-US
+ManifestType: version
+ManifestVersion: 1.12.0
+"@
+    Set-Content -Path $versionManifestPath -Value $versionYaml -Encoding UTF8
+    Write-Ok "Manifesto version gerado: $versionManifestPath"
+
+    # Installer manifest
+    $installerPath = Join-Path $versionDir "FurLab.CLI.installer.yaml"
+    $installerEntries = [System.Collections.Generic.List[string]]::new()
+    $idx = 0
+
+    foreach ($url in $script:InstallerUrls) {
+        $idx++
+        $installerType = Get-InstallerType $url
+        $architecture = Get-InstallerArchitecture $url
+        $sha256 = Get-InstallerSha256 $url
+
+        $entry = "  - Architecture: ${architecture}`n    InstallerType: portable`n    InstallerUrl: ${url}`n    InstallerSha256: ${sha256}`n    Commands:`n    - fur"
+        $installerEntries.Add($entry)
+
+        Write-Ok "Installer ${idx}: ${architecture} / ${installerType} / SHA256: $($sha256.Substring(0,16))..."
+    }
+
+    $installerYaml = @"
+PackageIdentifier: $($script:PackageId)
+PackageVersion: $($script:PackageVersion)
+InstallerLocale: en-US
+Installers:
+$($installerEntries -join "`n")
+ManifestType: installer
+ManifestVersion: 1.12.0
+"@
+    Set-Content -Path $installerPath -Value $installerYaml -Encoding UTF8
 
     Write-Host ""
-    Write-Ok "Manifesto gerado em: $($script:OutputDir)"
+    Write-Ok "Manifestos gerados em: $versionDir"
 }
 
 # ─────────────────────────────────────────────────────────────
@@ -349,26 +437,16 @@ function Invoke-WingetCreate {
 function Invoke-Validacao {
     Write-Passo 6 "Validando manifesto"
 
-    # Localiza a pasta gerada: OutputDir\<publisher>\<package>\<version>
-    $parts  = $script:PackageId -split '\.', 2
-    $pubDir = $parts[0]
-    $pkgDir = $parts[1]
-    $manifestPath = Join-Path $script:OutputDir $pubDir | Join-Path -ChildPath $pkgDir | Join-Path -ChildPath $script:PackageVersion
+    $manifestPath = Join-Path $script:OutputDir $script:PackageVersion
 
     if (-not (Test-Path $manifestPath)) {
-        # Tenta encontrar qualquer subpasta com a versão
-        $encontrado = Get-ChildItem -Path $script:OutputDir -Recurse -Directory -Filter $script:PackageVersion -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($encontrado) {
-            $manifestPath = $encontrado.FullName
-        } else {
-            Write-Aviso "Não foi possível localizar o manifesto gerado para validação automática."
-            Write-Info "Execute manualmente: wingetcreate validate <caminho>"
-            return
-        }
+        Write-Aviso "Não foi possível localizar o manifesto gerado para validação automática."
+        Write-Info "Execute manualmente: winget validate <caminho>"
+        return
     }
 
     Write-Info "Validando: $manifestPath"
-    & wingetcreate validate $manifestPath
+    & winget validate $manifestPath
 
     if ($LASTEXITCODE -ne 0) {
         Write-Erro "Validação falhou. Corrija os erros no manifesto e reenvie."
@@ -401,14 +479,11 @@ function Invoke-Submit {
     }
 
     # Localiza manifesto gerado
-    $parts  = $script:PackageId -split '\.', 2
-    $pubDir = $parts[0]
-    $pkgDir = $parts[1]
-    $manifestPath = Join-Path $script:OutputDir $pubDir | Join-Path -ChildPath $pkgDir | Join-Path -ChildPath $script:PackageVersion
+    $manifestPath = Join-Path $script:OutputDir $script:PackageVersion
 
     if (-not (Test-Path $manifestPath)) {
-        $encontrado = Get-ChildItem -Path $script:OutputDir -Recurse -Directory -Filter $script:PackageVersion -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($encontrado) { $manifestPath = $encontrado.FullName }
+        Write-Erro "Manifesto não encontrado em: $manifestPath"
+        exit 1
     }
 
     Write-Info "Executando wingetcreate submit ..."
@@ -459,7 +534,7 @@ Get-InformacoesPacote
 Get-GitHubToken
 Set-DiretorioSaida
 Confirm-Revisao
-Invoke-WingetCreate
-Invoke-Validacao
+    New-ManifestYaml
+    Invoke-Validacao
 Invoke-Submit
 Write-Sumario
