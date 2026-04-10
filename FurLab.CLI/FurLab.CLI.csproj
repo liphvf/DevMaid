@@ -8,7 +8,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>furlab</ToolCommandName>
+    <ToolCommandName>fur</ToolCommandName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- NuGet package settings -->

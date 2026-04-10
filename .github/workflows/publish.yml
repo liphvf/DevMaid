@@ -28,16 +28,16 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build DevMaid.CLI/DevMaid.CLI.csproj -c Release --no-restore
+        run: dotnet build FurLab.CLI/FurLab.CLI.csproj -c Release --no-restore
 
       - name: Create NuGet package
-        run: dotnet pack DevMaid.CLI/DevMaid.CLI.csproj -c Release --no-build --no-restore
+        run: dotnet pack FurLab.CLI/FurLab.CLI.csproj -c Release --no-build --no-restore
 
       - name: Extract version
         id: version
         run: |
-          $nupkg = Get-ChildItem DevMaid.CLI/bin/Release/*.nupkg | Select-Object -First 1
-          $version = $nupkg.BaseName -replace '^DevMaid\.CLI\.', ''
+          $nupkg = Get-ChildItem FurLab.CLI/bin/Release/*.nupkg | Select-Object -First 1
+          $version = $nupkg.BaseName -replace '^FurLab\.CLI\.', ''
           echo "version=$version" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
@@ -48,7 +48,7 @@ jobs:
           user: ${{ secrets.NUGET_USER }}
 
       - name: Publish to NuGet.org
-        run: dotnet nuget push DevMaid.CLI/bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: dotnet nuget push FurLab.CLI/bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
 
       - name: Create GitHub Release
         if: github.event_name == 'workflow_dispatch'
