@@ -60,8 +60,6 @@ FurLab/
 ├── FurLab.Tests/                 ← MSTest project (references FurLab.CLI)
 │   └── Commands/                  ← One test class per command
 │
-├── FurLab.CodeAnalysis/          ← Standalone Roslyn analysis utility
-│
 ├── openspec/                      ← OpenSpec workflow (substituiu specs/ e .specify/)
 │   ├── config.yaml                ← Configuração do projeto (schema, idioma pt-BR)
 │   ├── specs/                     ← Especificações canônicas por feature
