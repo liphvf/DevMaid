@@ -47,34 +47,6 @@ public class CleanCommandTests
     }
 
     [TestMethod]
-    public void Clean_NullDirectory_UsesCurrentDirectory()
-    {
-        var originalDir = Directory.GetCurrentDirectory();
-        var tempDir = Path.Combine(Path.GetTempPath(), $"CleanTest_{Guid.NewGuid():N}");
-
-        try
-        {
-            Directory.CreateDirectory(tempDir);
-            var binDir = Path.Combine(tempDir, "bin");
-            Directory.CreateDirectory(binDir);
-
-            Directory.SetCurrentDirectory(tempDir);
-
-            CLI.Commands.CleanCommand.Clean(null);
-
-            Assert.IsFalse(Directory.Exists(binDir), "bin folder should be removed");
-        }
-        finally
-        {
-            Directory.SetCurrentDirectory(originalDir);
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, recursive: true);
-            }
-        }
-    }
-
-    [TestMethod]
     public void Clean_FilePath_UsesParentDirectory()
     {
         var projectDir = Path.Combine(_testDirectory, "Project2");

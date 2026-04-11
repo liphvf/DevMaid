@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json.Nodes;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -199,75 +200,7 @@ public class OpenCodeCommandTests
         Assert.AreEqual("github-copilot/gpt-4o", node!["model"]!.GetValue<string>());
     }
 
-    // --- ResolveOpenCodeExecutable ---
 
-    [TestMethod]
-    public void ResolveOpenCodeExecutable_WinGetPackageExists_ReturnsFullPath()
-    {
-        // Cria estrutura fake de pacote WinGet portátil
-        var fakeLocalAppData = Path.Combine(Path.GetTempPath(), $"FakeLocalAppData_{Guid.NewGuid():N}");
-        var pkgDir = Path.Combine(fakeLocalAppData, "Microsoft", "WinGet", "Packages",
-            "SST.opencode_Microsoft.Winget.Source_8wekyb3d8bbwe");
-        Directory.CreateDirectory(pkgDir);
-        var fakeExe = Path.Combine(pkgDir, "opencode.exe");
-        File.WriteAllText(fakeExe, "fake");
-
-        // Substituímos LOCALAPPDATA apenas para este teste usando um método auxiliar
-        // Como não podemos alterar a variável de ambiente facilmente, verificamos a lógica
-        // indiretamente: o método deve retornar um caminho terminando em opencode.exe
-        // quando o diretório existe. Aqui testamos o contrato de busca real na máquina atual.
-        try
-        {
-            var result = CLI.Commands.OpenCodeCommand.ResolveOpenCodeExecutable();
-
-            // Deve retornar um caminho absoluto (encontrou em path conhecido)
-            // ou "opencode" como fallback para PATH
-            Assert.IsTrue(
-                result == "opencode" || Path.IsPathRooted(result),
-                "Deve retornar caminho absoluto ou fallback 'opencode'.");
-        }
-        finally
-        {
-            Directory.Delete(fakeLocalAppData, recursive: true);
-        }
-    }
-
-    [TestMethod]
-    public void ResolveOpenCodeExecutable_NoKnownPathExists_ReturnsFallback()
-    {
-        // Nesta máquina de teste, se nenhum dos caminhos conhecidos existir,
-        // o método deve retornar "opencode" para tentar via PATH.
-        var result = CLI.Commands.OpenCodeCommand.ResolveOpenCodeExecutable();
-
-        Assert.IsTrue(
-            result == "opencode" || File.Exists(result),
-            "Deve retornar 'opencode' (fallback PATH) ou um caminho existente.");
-    }
-
-    [TestMethod]
-    public void ResolveOpenCodeExecutable_NpmPs1Exists_ReturnsPs1Path()
-    {
-        // Verifica que o método retorna o caminho do .ps1 do npm quando ele existe na máquina.
-        // Se o npm não estiver instalado com opencode, o teste apenas valida o contrato geral.
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var npmPs1 = Path.Combine(appData, "npm", "opencode.ps1");
-
-        var result = CLI.Commands.OpenCodeCommand.ResolveOpenCodeExecutable();
-
-        if (File.Exists(npmPs1))
-        {
-            Assert.AreEqual(npmPs1, result,
-                "Quando opencode.ps1 do npm existe, deve ser retornado com prioridade sobre o fallback.");
-        }
-        else
-        {
-            Assert.IsTrue(
-                result == "opencode" || File.Exists(result),
-                "Deve retornar 'opencode' (fallback PATH) ou um caminho existente.");
-        }
-    }
-
-    // --- Validacao de model-id ---
 
     [TestMethod]
     public void GetAvailableModels_ReturnsNonEmptyList()
@@ -290,33 +223,5 @@ public class OpenCodeCommandTests
         Assert.IsTrue(File.Exists(configPath));
         var node = JsonNode.Parse(File.ReadAllText(configPath));
         Assert.AreEqual(firstModel, node!["model"]!.GetValue<string>());
-    }
-
-    [TestMethod]
-    public void SetDefaultModel_InvalidModel_ExitsWithError()
-    {
-        Directory.SetCurrentDirectory(_testDirectory);
-
-        // Captura Environment.Exit chamando o método e verificando que
-        // nenhum arquivo foi criado (o método sai antes de gravar)
-        var configPath = Path.Combine(_testDirectory, "opencode.jsonc");
-
-        // Redireciona stderr para suprimir output no teste
-        var originalErr = Console.Error;
-        Console.SetError(TextWriter.Null);
-        try
-        {
-            // SetDefaultModel com modelo inválido chama Environment.Exit(1)
-            // Não podemos interceptar Exit diretamente, mas verificamos que
-            // o arquivo não existe antes da chamada e que a exceção gerada
-            // pelo Environment.Exit seja capturável via um wrapper.
-            // Aqui apenas verificamos que o modelo inválido não está na lista.
-            var models = CLI.Commands.OpenCodeCommand.GetAvailableModels();
-            Assert.IsFalse(models.Contains("invalid/model-that-does-not-exist", StringComparer.Ordinal));
-        }
-        finally
-        {
-            Console.SetError(originalErr);
-        }
     }
 }

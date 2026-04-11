@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Linq;
 
 using FurLab.CLI.Commands;
 
