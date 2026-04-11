@@ -42,16 +42,18 @@ public class OpenCodeCommandTests
         }
     }
 
-    [TestMethod]
-    public void Build_ReturnsCommandWithCorrectName()
+    [TestMethod(DisplayName = "Build deve retornar comando com nome 'opencode'")]
+    [Description("Verifica que o comando principal é construído com o nome correto.")]
+    public void Build_ComandoPrincipal_RetornaNomeOpencode()
     {
         var command = CLI.Commands.OpenCodeCommand.Build();
 
         Assert.AreEqual("opencode", command.Name);
     }
 
-    [TestMethod]
-    public void Build_ContainsSettingsSubcommand()
+    [TestMethod(DisplayName = "Build deve conter subcomando 'settings'")]
+    [Description("Verifica que o comando 'opencode settings' está registrado na árvore de comandos.")]
+    public void Build_ComandoPrincipal_ContemSubcomandoSettings()
     {
         var command = CLI.Commands.OpenCodeCommand.Build();
 
@@ -59,8 +61,9 @@ public class OpenCodeCommandTests
         Assert.IsNotNull(settingsCommand);
     }
 
-    [TestMethod]
-    public void Build_SettingsContainsMcpDatabaseCommand()
+    [TestMethod(DisplayName = "Settings deve conter subcomando 'mcp-database'")]
+    [Description("Verifica que 'opencode settings mcp-database' está registrado como subcomando de settings.")]
+    public void Build_SubcomandoSettings_ContemSubcomandoMcpDatabase()
     {
         var command = CLI.Commands.OpenCodeCommand.Build();
 
@@ -71,8 +74,9 @@ public class OpenCodeCommandTests
         Assert.IsNotNull(mcpDatabaseCommand);
     }
 
-    [TestMethod]
-    public void Build_SettingsContainsDefaultModelCommand()
+    [TestMethod(DisplayName = "Settings deve conter subcomando 'default-model'")]
+    [Description("Verifica que 'opencode settings default-model' está registrado como subcomando de settings.")]
+    public void Build_SubcomandoSettings_ContemSubcomandoDefaultModel()
     {
         var command = CLI.Commands.OpenCodeCommand.Build();
 
@@ -83,10 +87,11 @@ public class OpenCodeCommandTests
         Assert.IsNotNull(defaultModelCommand);
     }
 
-    // --- ResolveConfigPath (local scope) ---
+    // --- ResolveConfigPath (escopo local) ---
 
-    [TestMethod]
-    public void ResolveConfigPath_Local_JsoncExists_ReturnsJsonc()
+    [TestMethod(DisplayName = "ResolveConfigPath local com .jsonc existente deve retornar jsonc")]
+    [Description("Quando opencode.jsonc existe no diretório local, deve ser retornado com prioridade sobre .json.")]
+    public void ResolveConfigPath_EscopoLocal_ComJsoncExistente_RetornaJsonc()
     {
         Directory.SetCurrentDirectory(_testDirectory);
         var jsonc = Path.Combine(_testDirectory, "opencode.jsonc");
@@ -97,8 +102,9 @@ public class OpenCodeCommandTests
         Assert.AreEqual(jsonc, result);
     }
 
-    [TestMethod]
-    public void ResolveConfigPath_Local_OnlyJsonExists_ReturnsJson()
+    [TestMethod(DisplayName = "ResolveConfigPath local apenas com .json deve retornar json")]
+    [Description("Quando apenas opencode.json existe (sem jsonc), deve retornar o json.")]
+    public void ResolveConfigPath_EscopoLocal_ApenasComJson_RetornaJson()
     {
         Directory.SetCurrentDirectory(_testDirectory);
         var json = Path.Combine(_testDirectory, "opencode.json");
@@ -109,8 +115,9 @@ public class OpenCodeCommandTests
         Assert.AreEqual(json, result);
     }
 
-    [TestMethod]
-    public void ResolveConfigPath_Local_NeitherExists_ReturnsJsonc()
+    [TestMethod(DisplayName = "ResolveConfigPath local sem arquivos deve retornar jsonc como padrão")]
+    [Description("Quando nenhum arquivo de configuração existe localmente, o padrão deve ser opencode.jsonc.")]
+    public void ResolveConfigPath_EscopoLocal_SemArquivos_RetornaJsoncPadrao()
     {
         Directory.SetCurrentDirectory(_testDirectory);
 
@@ -119,8 +126,9 @@ public class OpenCodeCommandTests
         Assert.IsTrue(result.EndsWith("opencode.jsonc", StringComparison.OrdinalIgnoreCase));
     }
 
-    [TestMethod]
-    public void ResolveConfigPath_Local_BothExist_PrefersJsonc()
+    [TestMethod(DisplayName = "ResolveConfigPath local com ambos existentes deve preferir jsonc")]
+    [Description("Quando .json e .jsonc coexistem, jsonc tem prioridade.")]
+    public void ResolveConfigPath_EscopoLocal_ComAmbosExistentes_PrefereJsonc()
     {
         Directory.SetCurrentDirectory(_testDirectory);
         File.WriteAllText(Path.Combine(_testDirectory, "opencode.jsonc"), "{}");
@@ -131,8 +139,9 @@ public class OpenCodeCommandTests
         Assert.IsTrue(result.EndsWith("opencode.jsonc", StringComparison.OrdinalIgnoreCase));
     }
 
-    [TestMethod]
-    public void ResolveConfigPath_Global_ReturnsPathInsideOpenCodeConfigDir()
+    [TestMethod(DisplayName = "ResolveConfigPath global deve retornar caminho dentro de .config/opencode")]
+    [Description("No escopo global, o arquivo de configuração deve residir em %USERPROFILE%/.config/opencode/.")]
+    public void ResolveConfigPath_EscopoGlobal_RetornaCaminhoConfigDir()
     {
         var result = CLI.Commands.OpenCodeCommand.ResolveConfigPath(global: true);
 
@@ -146,10 +155,11 @@ public class OpenCodeCommandTests
             result.EndsWith("opencode.json", StringComparison.OrdinalIgnoreCase));
     }
 
-    // --- LoadConfigFile: tolerancia a comentarios ---
+    // --- SetDefaultModel: tolerância a comentários ---
 
-    [TestMethod]
-    public void SetDefaultModel_JsoncWithComments_DoesNotThrow()
+    [TestMethod(DisplayName = "SetDefaultModel com jsonc contendo comentários não deve lançar exceção")]
+    [Description("Arquivos .jsonc com comentários de linha e bloco devem ser lidos e atualizados corretamente.")]
+    public void SetDefaultModel_JsoncComComentarios_NaoLancaExcecao()
     {
         Directory.SetCurrentDirectory(_testDirectory);
         var jsonc = Path.Combine(_testDirectory, "opencode.jsonc");
@@ -162,7 +172,6 @@ public class OpenCodeCommandTests
             }
             """);
 
-        // Deve ler sem lançar exceção e atualizar o campo model
         CLI.Commands.OpenCodeCommand.SetDefaultModel("github-copilot/gpt-4o", global: false);
 
         var content = File.ReadAllText(jsonc);
@@ -170,23 +179,21 @@ public class OpenCodeCommandTests
         Assert.AreEqual("github-copilot/gpt-4o", node!["model"]!.GetValue<string>());
     }
 
-    // --- Comportamento quando opencode nao esta no PATH ---
+    // --- Comportamento quando opencode não está no PATH ---
 
-    [TestMethod]
-    public void SetDefaultModel_OpenCodeUnavailable_WithExplicitModelId_WritesToFile()
+    [TestMethod(DisplayName = "SetDefaultModel com opencode indisponível e modelo explícito deve gravar no arquivo")]
+    [Description("Mesmo sem o executável 'opencode' no PATH, o modelo informado deve ser gravado no arquivo de configuração.")]
+    public void SetDefaultModel_OpenCodeIndisponivel_ComModeloExplicito_GravaNoArquivo()
     {
-        // Simula opencode ausente no PATH
         CLI.Commands.OpenCodeCommand.ModelsProvider = () =>
             throw new InvalidOperationException("Nao foi possivel executar 'opencode'.");
 
         Directory.SetCurrentDirectory(_testDirectory);
 
-        // Redireciona stdout para suprimir o aviso do AnsiConsole durante o teste
         var originalOut = Console.Out;
         Console.SetOut(TextWriter.Null);
         try
         {
-            // Deve gravar o modelo sem lançar exceção, mesmo sem opencode no PATH
             CLI.Commands.OpenCodeCommand.SetDefaultModel("github-copilot/gpt-4o", global: false);
         }
         finally
@@ -200,16 +207,18 @@ public class OpenCodeCommandTests
         Assert.AreEqual("github-copilot/gpt-4o", node!["model"]!.GetValue<string>());
     }
 
-    [TestMethod]
-    public void GetAvailableModels_ReturnsNonEmptyList()
+    [TestMethod(DisplayName = "GetAvailableModels deve retornar lista não vazia")]
+    [Description("Verifica que pelo menos um modelo está disponível quando o opencode está instalado.")]
+    public void GetAvailableModels_QuandoOpencodeDisponivel_RetornaListaNaoVazia()
     {
         var models = CLI.Commands.OpenCodeCommand.GetAvailableModels();
 
         Assert.IsTrue(models.Count > 0, "A lista de modelos nao deve ser vazia.");
     }
 
-    [TestMethod]
-    public void SetDefaultModel_ValidModel_WritesToFile()
+    [TestMethod(DisplayName = "SetDefaultModel com modelo válido deve gravar no arquivo de configuração")]
+    [Description("Ao informar um modelo válido, o arquivo opencode.jsonc local deve ser criado com o model correto.")]
+    public void SetDefaultModel_ModeloValido_GravaNoArquivoDeConfiguracao()
     {
         Directory.SetCurrentDirectory(_testDirectory);
         var models = CLI.Commands.OpenCodeCommand.GetAvailableModels();

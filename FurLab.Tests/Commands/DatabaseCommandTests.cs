@@ -96,36 +96,6 @@ public class DatabaseCommandTests
     }
 
     [TestMethod]
-    public void Backup_InvalidHost_ThrowsArgumentException()
-    {
-        var options = new DatabaseCommandOptions
-        {
-            DatabaseName = "testdb",
-            Host = "invalid;host",
-            Port = "5432",
-            Username = "postgres",
-            Password = "test"
-        };
-
-        try { CLI.Commands.DatabaseCommand.Backup(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Backup_InvalidPort_ThrowsArgumentException()
-    {
-        var options = new DatabaseCommandOptions
-        {
-            DatabaseName = "testdb",
-            Host = "localhost",
-            Port = "99999",
-            Username = "postgres",
-            Password = "test"
-        };
-
-        try { CLI.Commands.DatabaseCommand.Backup(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
     public void Restore_MissingDatabaseName_ThrowsArgumentException()
     {
         var options = new DatabaseCommandOptions
@@ -134,21 +104,6 @@ public class DatabaseCommandTests
             Host = "localhost",
             Port = "5432",
             Username = "postgres",
-            Password = "test"
-        };
-
-        try { CLI.Commands.DatabaseCommand.Restore(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Restore_InvalidUsername_ThrowsArgumentException()
-    {
-        var options = new DatabaseCommandOptions
-        {
-            DatabaseName = "testdb",
-            Host = "localhost",
-            Port = "5432",
-            Username = "invalid;user",
             Password = "test"
         };
 

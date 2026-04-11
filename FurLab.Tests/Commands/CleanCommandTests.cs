@@ -26,8 +26,9 @@ public class CleanCommandTests
         }
     }
 
-    [TestMethod]
-    public void Clean_ValidDirectory_RemovesBinAndObjFolders()
+    [TestMethod(DisplayName = "Clean com diretório válido deve remover pastas bin e obj")]
+    [Description("Verifica que o comando Clean remove recursivamente as pastas bin e obj do diretório do projeto.")]
+    public void Clean_DiretorioValido_RemoveBinEObj()
     {
         var projectDir = Path.Combine(_testDirectory, "Project1");
         var binDir = Path.Combine(projectDir, "bin");
@@ -46,8 +47,9 @@ public class CleanCommandTests
         Assert.IsTrue(Directory.Exists(projectDir), "project folder should remain");
     }
 
-    [TestMethod]
-    public void Clean_FilePath_UsesParentDirectory()
+    [TestMethod(DisplayName = "Clean com caminho de arquivo deve usar diretório pai")]
+    [Description("Quando um caminho de arquivo .csproj é informado, o Clean deve operar no diretório pai do arquivo.")]
+    public void Clean_CaminhoArquivo_UsaDiretorioPai()
     {
         var projectDir = Path.Combine(_testDirectory, "Project2");
         var binDir = Path.Combine(projectDir, "bin");
@@ -61,16 +63,18 @@ public class CleanCommandTests
         Assert.IsFalse(Directory.Exists(binDir), "bin folder should be removed");
     }
 
-    [TestMethod]
-    public void Clean_NonExistentDirectory_ThrowsDirectoryNotFoundException()
+    [TestMethod(DisplayName = "Clean com diretório inexistente deve lançar DirectoryNotFoundException")]
+    [Description("Verifica que a limpeza falha corretamente quando o diretório alvo não existe.")]
+    public void Clean_DiretorioInexistente_LancaDirectoryNotFoundException()
     {
         var nonExistentDir = Path.Combine(_testDirectory, "NonExistent");
 
         try { CLI.Commands.CleanCommand.Clean(nonExistentDir); Assert.Fail(); } catch (DirectoryNotFoundException) { }
     }
 
-    [TestMethod]
-    public void Clean_NestedDirectories_RemovesAllBinAndObj()
+    [TestMethod(DisplayName = "Clean com diretórios aninhados deve remover todos os bin e obj")]
+    [Description("Verifica que a limpeza recursiva remove pastas bin e obj de todos os projetos dentro da solution.")]
+    public void Clean_DiretoriosAninhados_RemoveTodosBinEObj()
     {
         var rootDir = Path.Combine(_testDirectory, "Solution");
         var project1Dir = Path.Combine(rootDir, "Project1", "bin");
@@ -88,8 +92,9 @@ public class CleanCommandTests
         Assert.IsTrue(Directory.Exists(srcDir), "src folder should remain");
     }
 
-    [TestMethod]
-    public void Clean_DirectoryWithOnlyBinAndObj_RemovesBoth()
+    [TestMethod(DisplayName = "Clean com diretório contendo apenas bin e obj deve remover ambos")]
+    [Description("Verifica que quando o projeto contém apenas pastas bin e obj, ambas são removidas.")]
+    public void Clean_DiretorioApenasBinEObj_RemoveAmbos()
     {
         var projectDir = Path.Combine(_testDirectory, "EmptyProject");
         var binDir = Path.Combine(projectDir, "bin");
@@ -104,8 +109,9 @@ public class CleanCommandTests
         Assert.IsFalse(Directory.Exists(objDir));
     }
 
-    [TestMethod]
-    public void Build_ReturnsCommandWithCorrectNameAndDescription()
+    [TestMethod(DisplayName = "Build deve retornar comando com nome 'clean'")]
+    [Description("Verifica que o comando principal é construído com o nome e descrição corretos.")]
+    public void Build_ComandoPrincipal_RetornaNomeEDescricaoCorretos()
     {
         var command = CLI.Commands.CleanCommand.Build();
 
@@ -113,8 +119,9 @@ public class CleanCommandTests
         Assert.AreEqual("Remove bin and obj folders from solution.", command.Description);
     }
 
-    [TestMethod]
-    public void Build_CommandHasDirectoryArgument()
+    [TestMethod(DisplayName = "Build deve conter exatamente um argumento 'directory'")]
+    [Description("Verifica que o comando clean possui um único argumento obrigatório chamado 'directory'.")]
+    public void Build_ComandoPrincipal_ContemArgumentoDirectory()
     {
         var command = CLI.Commands.CleanCommand.Build();
 

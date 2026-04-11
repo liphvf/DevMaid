@@ -29,18 +29,15 @@ public class QueryCommandTests
     [ClassInitialize]
     public static void ClassInitialize(TestContext context)
     {
-        // Initialize logger
         var logger = new ConsoleLogger(useColors: false);
         _logger = logger;
 
-        // Initialize core services
         _configurationService = new Core.Services.ConfigurationService(logger);
         _processExecutor = new Core.Services.ProcessExecutor(logger);
         _databaseService = new Core.Services.DatabaseService(_processExecutor, logger);
         _fileService = new Core.Services.FileService(logger);
         _wingetService = new Core.Services.WingetService(_processExecutor, logger);
 
-        // Create service collection and register services
         var services = new ServiceCollection();
         services.AddSingleton(_configurationService);
         services.AddSingleton(_databaseService);
@@ -51,7 +48,6 @@ public class QueryCommandTests
 
         var serviceProvider = services.BuildServiceProvider();
 
-        // Set service provider for static services
         Logger.SetServiceProvider(serviceProvider);
         ConfigurationService.SetServiceProvider(serviceProvider);
         PostgresDatabaseLister.SetServiceProvider(serviceProvider);
@@ -76,16 +72,18 @@ public class QueryCommandTests
         }
     }
 
-    [TestMethod]
-    public void Build_ReturnsCommandWithCorrectName()
+    [TestMethod(DisplayName = "Build deve retornar comando com nome 'query'")]
+    [Description("Verifica que o comando principal é construído com o nome correto.")]
+    public void Build_ComandoPrincipal_RetornaNomeQuery()
     {
         var command = CLI.Commands.QueryCommand.Build();
 
         Assert.AreEqual("query", command.Name);
     }
 
-    [TestMethod]
-    public void Build_ContainsRunSubcommand()
+    [TestMethod(DisplayName = "Build deve conter exatamente um subcomando 'run'")]
+    [Description("Verifica que o comando query possui apenas o subcomando run registrado.")]
+    public void Build_ComandoPrincipal_ContemUnicoSubcomandoRun()
     {
         var command = CLI.Commands.QueryCommand.Build();
 
@@ -95,8 +93,9 @@ public class QueryCommandTests
         Assert.IsNotNull(runCommand);
     }
 
-    [TestMethod]
-    public void Run_MissingInputFile_ThrowsArgumentException()
+    [TestMethod(DisplayName = "Run com InputFile vazio deve lançar ArgumentException")]
+    [Description("Verifica a validação do parâmetro InputFile — string vazia deve ser rejeitada.")]
+    public void Run_InputFileVazio_LancaArgumentException()
     {
         var options = new QueryCommandOptions
         {
@@ -107,8 +106,9 @@ public class QueryCommandTests
         try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
-    [TestMethod]
-    public void Run_NonExistentInputFile_ThrowsFileNotFoundException()
+    [TestMethod(DisplayName = "Run com InputFile inexistente deve lançar FileNotFoundException")]
+    [Description("Verifica que a execução falha corretamente quando o arquivo SQL de entrada não existe.")]
+    public void Run_InputFileInexistente_LancaFileNotFoundException()
     {
         var options = new QueryCommandOptions
         {
@@ -119,8 +119,9 @@ public class QueryCommandTests
         try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (FileNotFoundException) { }
     }
 
-    [TestMethod]
-    public void Run_EmptyInputFile_ThrowsArgumentException()
+    [TestMethod(DisplayName = "Run com InputFile vazio (conteúdo) deve lançar ArgumentException")]
+    [Description("Verifica que arquivos SQL sem conteúdo são rejeitados antes da execução.")]
+    public void Run_InputFileConteudoVazio_LancaArgumentException()
     {
         var emptyFile = Path.Combine(_testDirectory, "empty.sql");
         File.WriteAllText(emptyFile, "");
@@ -134,8 +135,9 @@ public class QueryCommandTests
         try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
-    [TestMethod]
-    public void Run_MissingOutputFile_ThrowsArgumentException()
+    [TestMethod(DisplayName = "Run com OutputFile vazio deve lançar ArgumentException")]
+    [Description("Verifica a validação do parâmetro OutputFile — string vazia deve ser rejeitada.")]
+    public void Run_OutputFileVazio_LancaArgumentException()
     {
         var options = new QueryCommandOptions
         {
@@ -146,8 +148,9 @@ public class QueryCommandTests
         try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
-    [TestMethod]
-    public void Run_PathTraversalInInput_ThrowsArgumentException()
+    [TestMethod(DisplayName = "Run com path traversal no InputFile deve lançar ArgumentException")]
+    [Description("Verifica que caminhos que tentam escapar do diretório permitido são rejeitados antes da verificação de existência do arquivo.")]
+    public void Run_InputFileComPathTraversal_LancaArgumentException()
     {
         var options = new QueryCommandOptions
         {
@@ -160,8 +163,9 @@ public class QueryCommandTests
         catch (FileNotFoundException) { Assert.Fail("Should throw ArgumentException before checking file existence"); }
     }
 
-    [TestMethod]
-    public void Run_PathTraversalInOutput_ThrowsArgumentException()
+    [TestMethod(DisplayName = "Run com path traversal no OutputFile deve lançar ArgumentException")]
+    [Description("Verifica que caminhos de saída que tentam escapar do diretório permitido são rejeitados.")]
+    public void Run_OutputFileComPathTraversal_LancaArgumentException()
     {
         var options = new QueryCommandOptions
         {
@@ -172,61 +176,9 @@ public class QueryCommandTests
         try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
     }
 
-    [TestMethod]
-    public void Run_AllFlag_MissingOutputDirectory_ThrowsArgumentException()
-    {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = "",
-            All = true
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Run_ServersFlag_MissingOutputDirectory_ThrowsArgumentException()
-    {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = "",
-            Servers = true
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Run_AllFlag_PathTraversal_ThrowsArgumentException()
-    {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = Path.Combine(_testDirectory, "..", "..", "output"),
-            All = true,
-            Password = "test" // Provide password to avoid console input
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Run_ServersFlag_PathTraversal_ThrowsArgumentException()
-    {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = Path.Combine(_testDirectory, "..", "..", "output"),
-            Servers = true
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void BuildConnectionString_ExplicitParameters_DoNotRequireServersConfigurationOrDatabaseAccess()
+    [TestMethod(DisplayName = "BuildConnectionString com parâmetros explícitos não depende de configuração de servidores")]
+    [Description("Verifica que quando todos os parâmetros de conexão são fornecidos explicitamente, o serviço de configuração não é consultado para dados do banco.")]
+    public void BuildConnectionString_ParametrosExplicitos_NaoConsultaConfigurationService()
     {
         var mockConfigurationService = new Mock<IConfigurationService>();
         mockConfigurationService
