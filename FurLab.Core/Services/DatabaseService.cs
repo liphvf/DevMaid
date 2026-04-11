@@ -3,6 +3,7 @@ using System.Text;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Logging;
 using FurLab.Core.Models;
+using FurLab.Core.Regexs;
 
 namespace FurLab.Core.Services;
 
@@ -424,6 +425,11 @@ public class DatabaseService(IProcessExecutor processExecutor, ILogger logger) :
         string databaseName,
         CancellationToken cancellationToken)
     {
+        if (!PostgreSqlIdentifiers.ValidIdentifier().IsMatch(databaseName))
+        {
+            throw new ArgumentException($"Invalid database name: '{databaseName}'. Database names must start with a letter or underscore and contain only letters, digits, and underscores.");
+        }
+
         var psqlPath = PostgresBinaryLocator.FindPsql() ?? throw new InvalidOperationException("psql executable not found. Please ensure PostgreSQL is installed.");
 
         // Check if database exists
