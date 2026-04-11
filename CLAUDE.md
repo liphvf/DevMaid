@@ -136,6 +136,7 @@ FurLab windowsfeatures list
 ## Code Style
 
 - **Language**: C# 13, `<Nullable>enable</Nullable>`, `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`
+- **Primary constructors**: Use primary constructors in classes and records whenever possible (e.g., `public class Foo(ILogger logger) { }`) to reduce boilerplate and improve readability
 - **Naming**: PascalCase for types/methods/properties; camelCase for locals and parameters
 - **Command classes**: Always `static`, expose `static Build(): Command` factory — never inherit
 - **Service classes**: Always implement a `IXxxService` interface in `FurLab.Core/Interfaces/`; concrete implementation in `FurLab.Core/Services/`
