@@ -144,6 +144,12 @@ FurLab windowsfeatures list
 - **Result pattern**: Return `OperationResult` / `OperationResult<T>` records — use `SuccessResult(...)` / `FailureResult(...)` factory methods
 - **External processes**: Always `UseShellExecute = false`, capture stdout/stderr via redirect — never shell out to `cmd.exe` or `powershell.exe`
 - **Test naming**: `<MethodName>_<StateUnderTest>_<ExpectedBehavior>` (e.g., `BackupAsync_ComOpcoesValidas_DeveCriarArquivoDump`)
+- **Unit test attributes**: Use `[TestMethod(DisplayName = "<short description>")]` and `[Description("<detailed description>")]` on all test methods for better reporting:
+  ```csharp
+  [TestMethod(DisplayName = "Backup with valid options should succeed")]
+  [Description("Verifies that when pg_dump is available and valid options are provided, the backup operation completes without throwing exceptions.")]
+  public void Backup_ValidOptions_DoesNotThrow()
+  ```
 - **XML doc comments**: Required on all public members (enforced by `GenerateDocumentationFile true`)
 - **Configuration**: Read from `%LocalAppData%\FurLab\appsettings.json`; never hard-code connection strings; use `SecurityUtils.IsValidPath()` and `SecurityUtils.IsValidPostgreSQLIdentifier()` before using any user-supplied input; `SecurityUtils.IsValidHost()` and `SecurityUtils.IsValidPort()` para conexões; `*` é aceito como curinga em host/port/username no pgpass
 - **Async**: All service methods that touch I/O or external processes must be `async Task<T>` and accept `CancellationToken`

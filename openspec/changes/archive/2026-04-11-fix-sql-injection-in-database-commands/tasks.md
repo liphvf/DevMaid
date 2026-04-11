@@ -16,5 +16,5 @@
 
 - [x] 3.1 Compilar o projeto (`dotnet build`) - **Sucesso: 0 Warnings, 0 Errors**
 - [x] 3.2 Executar testes existentes (`dotnet test`) - **Sucesso: 117 Passed, 2 Skipped**
-- [ ] 3.3 Testar manualmente com nome inválido (ex: `test'db`) deve lançar exceção
-- [ ] 3.4 Testar manualmente com nome válido (ex: `test_db`) deve funcionar normalmente
+- [x] 3.3 Testar manualmente com nome inválido (ex: `test'db`) deve lançar exceção
+- [x] 3.4 Testar manualmente com nome válido (ex: `test_db`) deve funcionar normalmente
