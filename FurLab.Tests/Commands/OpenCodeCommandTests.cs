@@ -200,8 +200,6 @@ public class OpenCodeCommandTests
         Assert.AreEqual("github-copilot/gpt-4o", node!["model"]!.GetValue<string>());
     }
 
-
-
     [TestMethod]
     public void GetAvailableModels_ReturnsNonEmptyList()
     {
