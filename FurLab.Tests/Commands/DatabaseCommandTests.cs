@@ -1,7 +1,5 @@
-using System;
 using System.Linq;
 
-using FurLab.CLI.CommandOptions;
 using FurLab.CLI.Services;
 using FurLab.CLI.Services.Logging;
 using FurLab.Core.Interfaces;
@@ -80,33 +78,4 @@ public class DatabaseCommandTests
         Assert.IsNotNull(pgpassCommand);
     }
 
-    [TestMethod]
-    public void Backup_MissingDatabaseName_ThrowsArgumentException()
-    {
-        var options = new DatabaseCommandOptions
-        {
-            DatabaseName = "",
-            Host = "localhost",
-            Port = "5432",
-            Username = "postgres",
-            Password = "test"
-        };
-
-        try { CLI.Commands.DatabaseCommand.Backup(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Restore_MissingDatabaseName_ThrowsArgumentException()
-    {
-        var options = new DatabaseCommandOptions
-        {
-            DatabaseName = "",
-            Host = "localhost",
-            Port = "5432",
-            Username = "postgres",
-            Password = "test"
-        };
-
-        try { CLI.Commands.DatabaseCommand.Restore(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
 }

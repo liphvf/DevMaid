@@ -55,7 +55,6 @@ public static class FileCommand
     /// Combines all files matching the input pattern into a single output file.
     /// </summary>
     /// <param name="options">The file command options specifying input pattern and output path.</param>
-    /// <exception cref="ArgumentException">Thrown when the input pattern is missing or invalid.</exception>
     public static void Combine(FileCommandOptions options)
     {
         if (string.IsNullOrWhiteSpace(options.Input))
