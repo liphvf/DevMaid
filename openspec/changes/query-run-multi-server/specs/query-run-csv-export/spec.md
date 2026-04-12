@@ -1,35 +1,32 @@
 ## MODIFIED Requirements
 
 ### Requirement: Formato do CSV de output
-O sistema DEVE gerar CSV consolidado com colunas de metadados adicionais para rastreamento de execução em múltiplos servidores.
+O sistema DEVE gerar CSV com colunas de identificação (Server, Database) e colunas de resultado da query. Metadados de execução (ExecutedAt, Status, RowCount, Error) são logados apenas no terminal.
 
 #### Cenário: CSV com execução bem-sucedida
 - **QUANDO** query executa com sucesso em um servidor/database
-- **ENTÃO** CSV inclui linha com colunas: Server, Database, ExecutedAt, Status, RowCount, Error, <colunas de resultado da query>
-- **E** Status = "Success"
-- **E** RowCount = número de rows retornadas
-- **E** Error = vazio
-- **E** ExecutedAt = timestamp ISO 8601 da execução
+- **ENTÃO** CSV inclui colunas: Server, Database, <colunas de resultado da query>
+- **E** cada linha de resultado da query é precedida por Server e Database
+- **E** falhas NÃO geram linhas no CSV (apenas log no terminal)
 
-#### Cenário: CSV com execução falha
-- **QUANDO** query falha em um servidor/database
-- **ENTÃO** CSV inclui linha com colunas: Server, Database, ExecutedAt, Status, RowCount, Error
-- **E** Status = "Error"
-- **E** RowCount = vazio
-- **E** Error = mensagem de erro
-- **E** ExecutedAt = timestamp ISO 8601 da tentativa
+#### Cenário: Log de execução no terminal
+- **QUANDO** query executa em um servidor/database (sucesso ou falha)
+- **ENTÃO** sistema loga no terminal: `<server>/<database> — Success/Error — <rows ou erro> (<timestamp>)`
+- **E** sucesso é exibido em verde
+- **E** erro é exibido em vermelho
 
 #### Cenário: Múltiplos servidores no mesmo CSV
 - **QUANDO** query executa em múltiplos servidores/databases
-- **ENTÃO** CSV contém uma linha por database executada
+- **ENTÃO** CSV contém uma linha por resultado de query
 - **E** cada linha identifica qual servidor e database produziu aquele resultado
 - **E** colunas de resultado da query são as mesmas para todas as linhas
+- **E** tabela resumo no terminal mostra: Server, Database, Status, Rows, ExecutedAt, Error
 
 #### Cenário: CSV com --separate-files
 - **QUANDO** usuário executa com flag `--separate-files`
-- **ENTÃO** sistema gera um arquivo CSV por database
-- **E** cada arquivo tem nome: `<server>_<database>_<timestamp>.csv`
-- **E** cada arquivo mantém o mesmo formato de colunas
+- **ENTÃO** sistema gera um arquivo CSV por servidor
+- **E** cada arquivo tem nome: `<server>_<timestamp>.csv`
+- **E** cada arquivo inclui colunas Server, Database, <colunas da query>
 
 ### Requirement: Output path default
 O sistema DEVE usar `outputDirectory` das configurações defaults como path base para arquivos CSV quando `-o` não é especificado.

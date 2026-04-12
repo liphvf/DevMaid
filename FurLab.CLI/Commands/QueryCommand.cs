@@ -397,14 +397,13 @@ public static class QueryCommand
         }
 
         var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture);
-        var outputFile = options.SeparateFiles ? outputDirectory : Path.Combine(outputDirectory, $"consolidated_{timestamp}.csv");
 
-        Console.WriteLine("Executing query...");
-        Console.WriteLine($"Source: {querySource}");
-        Console.WriteLine($"Type: {queryTypeDescription}");
-        Console.WriteLine($"Servers: {string.Join(", ", selectedServers.Select(s => s.Name))}");
-        Console.WriteLine($"Output: {outputDirectory}");
-        Console.WriteLine();
+        AnsiConsole.MarkupLine("[bold]Executing query...[/]");
+        AnsiConsole.MarkupLine($"Source: [cyan]{Markup.Escape(querySource)}[/]");
+        AnsiConsole.MarkupLine($"Type: [cyan]{Markup.Escape(queryTypeDescription)}[/]");
+        AnsiConsole.MarkupLine($"Servers: [cyan]{Markup.Escape(string.Join(", ", selectedServers.Select(s => s.Name)))}[/]");
+        AnsiConsole.MarkupLine($"Output: [cyan]{Markup.Escape(outputDirectory)}[/]");
+        AnsiConsole.WriteLine();
 
         var allResults = new List<CsvRow>();
         var lockObj = new object();
@@ -419,18 +418,11 @@ public static class QueryCommand
 
         await Parallel.ForEachAsync(selectedServers, parallelOptions, async (server, ct) =>
         {
-            Console.WriteLine($"========================================");
-            Console.WriteLine($"Processing server: {server.Name}");
-            Console.WriteLine($"Host: {server.Host}:{server.Port}");
-            Console.WriteLine($"========================================");
-            Console.WriteLine();
-
             var databases = GetDatabasesForServer(server);
 
             if (databases.Count == 0)
             {
-                Console.WriteLine($"  No databases found for server '{server.Name}'.");
-                Console.WriteLine();
+                AnsiConsole.MarkupLine($"[yellow]No databases found for server '{Markup.Escape(server.Name)}'.[/]");
                 return;
             }
 
@@ -446,73 +438,95 @@ public static class QueryCommand
 
             await Parallel.ForEachAsync(databases, serverParallelOptions, async (database, dbCt) =>
             {
-                Console.WriteLine($"  Processing database '{database}'...");
-
                 try
                 {
                     var connectionString = BuildConnectionStringForServer(server, database);
+                    var executedAt = DateTime.UtcNow;
                     var (columnNames, data) = await ExecuteQueryWithRetryAsync(connectionString, sqlQuery, server.CommandTimeout, dbCt);
 
-                    if (options.SeparateFiles)
+                    lock (lockObj)
                     {
-                        var serverDir = Path.Combine(outputDirectory, server.Name);
-                        if (!Directory.Exists(serverDir))
-                        {
-                            Directory.CreateDirectory(serverDir);
-                        }
-
-                        var dbOutputFile = Path.Combine(serverDir, $"{database}_{timestamp}.csv");
-                        WriteSingleCsv(dbOutputFile, columnNames, data);
-                        Console.WriteLine($"    ✓ Results exported to: {dbOutputFile} ({data.Count} rows)");
-                    }
-                    else
-                    {
-                        lock (lockObj)
-                        {
-                            allResults.Add(new CsvRow(server.Name, database, DateTime.UtcNow, "Success", data.Count, string.Empty, columnNames, data));
-                        }
+                        allResults.Add(new CsvRow(server.Name, database, executedAt, "Success", data.Count, string.Empty, columnNames, data));
                     }
 
                     Interlocked.Add(ref serverRowCount, data.Count);
                     Interlocked.Increment(ref serverSuccessCount);
                     Interlocked.Add(ref totalRowCount, data.Count);
+
+                    AnsiConsole.MarkupLine($"  [green]✓ {Markup.Escape(server.Name)}/{Markup.Escape(database)}[/] — [green]Success[/] — {data.Count} rows ({executedAt:HH:mm:ss})");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"    ✗ Failed: {ex.Message}");
+                    var executedAt = DateTime.UtcNow;
                     lock (lockObj)
                     {
-                        allResults.Add(new CsvRow(server.Name, database, DateTime.UtcNow, "Error", 0, ex.Message, [], []));
+                        allResults.Add(new CsvRow(server.Name, database, executedAt, "Error", 0, ex.Message, [], []));
                     }
                     Interlocked.Increment(ref serverFailureCount);
                     Interlocked.Increment(ref failureCount);
+
+                    AnsiConsole.MarkupLine($"  [red]✗ {Markup.Escape(server.Name)}/{Markup.Escape(database)}[/] — [red]Error[/] — {Markup.Escape(ex.Message)} ({executedAt:HH:mm:ss})");
                 }
             });
 
             Interlocked.Add(ref successCount, serverSuccessCount);
 
-            Console.WriteLine();
-            Console.WriteLine($"Server '{server.Name}' summary:");
-            Console.WriteLine($"  Successful: {serverSuccessCount}");
-            Console.WriteLine($"  Failed: {serverFailureCount}");
-            Console.WriteLine($"  Total rows: {serverRowCount}");
-            Console.WriteLine();
+            AnsiConsole.MarkupLine($"Server [bold]{Markup.Escape(server.Name)}[/]: [green]{serverSuccessCount} ok[/], [red]{serverFailureCount} failed[/], {serverRowCount} rows");
+            AnsiConsole.WriteLine();
         });
 
-        if (!options.SeparateFiles && allResults.Count > 0)
+        var successResults = allResults.Where(r => r.Status == "Success").ToList();
+
+        if (options.SeparateFiles)
         {
-            WriteConsolidatedCsvWithMetadata(outputFile, allResults);
-            Console.WriteLine($"✓ Results exported to: {outputFile}");
+            foreach (var server in selectedServers)
+            {
+                var serverResults = successResults.Where(r => r.Server == server.Name).ToList();
+                if (serverResults.Count == 0) continue;
+
+                var serverOutputFile = Path.Combine(outputDirectory, $"{server.Name}_{timestamp}.csv");
+                WriteServerCsv(serverOutputFile, server.Name, serverResults);
+                AnsiConsole.MarkupLine($"[green]✓[/] Server [bold]{Markup.Escape(server.Name)}[/] exported to: {Markup.Escape(serverOutputFile)}");
+            }
+        }
+        else if (successResults.Count > 0)
+        {
+            var outputFile = Path.Combine(outputDirectory, $"consolidated_{timestamp}.csv");
+            WriteConsolidatedCsv(outputFile, successResults);
+            AnsiConsole.MarkupLine($"[green]✓[/] Results exported to: {Markup.Escape(outputFile)}");
         }
 
-        Console.WriteLine("========================================");
-        Console.WriteLine("Execution Summary:");
-        Console.WriteLine($"  Servers processed: {selectedServers.Count}");
-        Console.WriteLine($"  Successful databases: {successCount}");
-        Console.WriteLine($"  Failed databases: {failureCount}");
-        Console.WriteLine($"  Total rows: {totalRowCount}");
-        Console.WriteLine($"  Output: {outputDirectory}");
-        Console.WriteLine("========================================");
+        AnsiConsole.WriteLine();
+
+        var table = new Table();
+        table.AddColumn("Server");
+        table.AddColumn("Database");
+        table.AddColumn("Status");
+        table.AddColumn("Rows");
+        table.AddColumn("ExecutedAt");
+        table.AddColumn("Error");
+
+        foreach (var result in allResults.OrderBy(r => r.Server).ThenBy(r => r.Database))
+        {
+            var status = result.Status == "Success"
+                ? "[green]✓ Success[/]"
+                : "[red]✗ Error[/]";
+            var rowCount = result.Status == "Success" ? result.RowCount.ToString() : "-";
+            var error = string.IsNullOrEmpty(result.Error) ? "" : Markup.Escape(result.Error);
+
+            table.AddRow(
+                Markup.Escape(result.Server),
+                Markup.Escape(result.Database),
+                status,
+                rowCount,
+                result.ExecutedAt.ToString("HH:mm:ss"),
+                error);
+        }
+
+        AnsiConsole.Write(table);
+
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine($"Servers: [bold]{selectedServers.Count}[/] | [green]Success: {successCount}[/] | [red]Failed: {failureCount}[/] | Total rows: {totalRowCount}");
     }
 
     /// <summary>
@@ -708,83 +722,84 @@ public static class QueryCommand
         return SslMode.Prefer;
     }
 
-    /// <summary>
-    /// Writes a single CSV file with column headers and data.
-    /// </summary>
-    private static void WriteSingleCsv(string outputPath, List<string> columnNames, List<Dictionary<string, string>> data)
+    private static void WriteConsolidatedCsv(string outputPath, List<CsvRow> successResults)
     {
         using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
         using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
 
-        foreach (var columnName in columnNames)
-        {
-            csv.WriteField(columnName);
-        }
-        csv.NextRecord();
-
-        foreach (var row in data)
-        {
-            foreach (var columnName in columnNames)
-            {
-                var value = row.ContainsKey(columnName) ? row[columnName] : string.Empty;
-                csv.WriteField(value);
-            }
-            csv.NextRecord();
-        }
-    }
-
-    /// <summary>
-    /// Writes consolidated CSV with metadata columns.
-    /// </summary>
-    private static void WriteConsolidatedCsvWithMetadata(string outputPath, List<CsvRow> allResults)
-    {
-        using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
-        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
-
-        var allColumnNames = new HashSet<string>();
-        foreach (var result in allResults.Where(r => r.Status == "Success"))
+        var allColumnNames = new List<string>();
+        var seenColumns = new HashSet<string>();
+        foreach (var result in successResults)
         {
             foreach (var columnName in result.ColumnNames)
             {
-                allColumnNames.Add(columnName);
+                if (seenColumns.Add(columnName))
+                {
+                    allColumnNames.Add(columnName);
+                }
             }
         }
 
-        var columns = new List<string> { "Server", "Database", "ExecutedAt", "Status", "RowCount", "Error" };
-        columns.AddRange(allColumnNames);
-
-        foreach (var columnName in columns)
+        csv.WriteField("Server");
+        csv.WriteField("Database");
+        foreach (var columnName in allColumnNames)
         {
             csv.WriteField(columnName);
         }
         csv.NextRecord();
 
-        foreach (var result in allResults)
+        foreach (var result in successResults)
         {
-            csv.WriteField(result.Server);
-            csv.WriteField(result.Database);
-            csv.WriteField(result.ExecutedAt.ToString("o"));
-            csv.WriteField(result.Status);
-            csv.WriteField(result.RowCount.ToString());
-            csv.WriteField(result.Error);
-
-            if (result.Status == "Success" && result.Data.Count > 0)
+            foreach (var dataRow in result.Data)
             {
-                foreach (var dataRow in result.Data)
+                csv.WriteField(result.Server);
+                csv.WriteField(result.Database);
+                foreach (var columnName in allColumnNames)
                 {
-                    foreach (var columnName in allColumnNames)
-                    {
-                        var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
-                        csv.WriteField(value);
-                    }
-                    csv.NextRecord();
+                    var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
+                    csv.WriteField(value);
+                }
+                csv.NextRecord();
+            }
+        }
+    }
+
+    private static void WriteServerCsv(string outputPath, string serverName, List<CsvRow> serverResults)
+    {
+        using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
+        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
+
+        var allColumnNames = new List<string>();
+        var seenColumns = new HashSet<string>();
+        foreach (var result in serverResults)
+        {
+            foreach (var columnName in result.ColumnNames)
+            {
+                if (seenColumns.Add(columnName))
+                {
+                    allColumnNames.Add(columnName);
                 }
             }
-            else
+        }
+
+        csv.WriteField("Server");
+        csv.WriteField("Database");
+        foreach (var columnName in allColumnNames)
+        {
+            csv.WriteField(columnName);
+        }
+        csv.NextRecord();
+
+        foreach (var result in serverResults)
+        {
+            foreach (var dataRow in result.Data)
             {
-                foreach (var _ in allColumnNames)
+                csv.WriteField(serverName);
+                csv.WriteField(result.Database);
+                foreach (var columnName in allColumnNames)
                 {
-                    csv.WriteField(string.Empty);
+                    var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
+                    csv.WriteField(value);
                 }
                 csv.NextRecord();
             }
