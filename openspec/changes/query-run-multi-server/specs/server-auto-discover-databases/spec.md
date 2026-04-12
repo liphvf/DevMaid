@@ -51,9 +51,10 @@ O sistema DEVE validar que cada database descoberta é acessível antes de execu
 #### Cenário: Database acessível
 - **QUANDO** sistema tenta conectar a uma database descoberta
 - **ENTÃO** se conexão funciona, executa query do usuário
-- **E** inclui resultado no CSV consolidado
+- **E** inclui resultado no CSV consolidado (colunas Server, Database, <query cols>)
 
 #### Cenário: Database inacessível
 - **QUANDO** sistema tenta conectar a uma database descoberta
-- **ENTÃO** se conexão falha, registra erro no CSV
+- **ENTÃO** se conexão falha, registra warning no terminal
 - **E** continua com próxima database
+- **E** database inacessível NÃO gera linha no CSV

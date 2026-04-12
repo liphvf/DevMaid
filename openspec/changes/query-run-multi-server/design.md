@@ -24,7 +24,8 @@ FurLab é uma CLI tool .NET 10 para gerenciamento de PostgreSQL, com comandos pa
 - Execução paralela configurável com tolerância a falhas parcial
 - Detecção e confirmação de queries destrutivas antes da execução
 - Configuração por usuário em `%LocalAppData%\FurLab\furlab.jsonc`
-- CSV consolidado com metadados de execução (server, database, timestamp, status, row count, erro)
+- CSV consolidado com identificação de servidor/database (colunas Server, Database + colunas da query)
+- Metadados de execução (ExecutedAt, Status, RowCount, Error) logados no terminal, não no CSV
 - Auto-descoberta de databases por servidor com patterns de exclusão configuráveis
 
 **Non-Goals:**
@@ -86,15 +87,17 @@ FurLab é uma CLI tool .NET 10 para gerenciamento de PostgreSQL, com comandos pa
 
 ### 5. Tolerância a falhas parcial
 
-**Decisão:** Se um servidor/database falha, logar erro e continuar com os próximos. CSV final inclui linhas de erro.
+**Decisão:** Se um servidor/database falha, logar erro no terminal e continuar com os próximos. Falhas não geram linhas no CSV.
 
-**Razão:** Um servidor offline não deve bloquear queries em outros. Usuário vê resultado parcial com erros claramente identificados.
+**Razão:** Um servidor offline não deve bloquear queries em outros. CSV fica limpo com apenas dados de queries bem-sucedidas. Erros ficam visíveis no terminal com tabela resumo.
 
-### 6. CSV consolidado com metadados
+### 6. CSV com identificação de servidor/database
 
-**Decisão:** Formato: `Server,Database,ExecutedAt,Status,RowCount,Error,<result columns...>`
+**Decisão:** Formato: `Server, Database, <result columns...>`
 
-**Razão:** Permite análise pós-execução de qual servidor/database teve sucesso ou falha. Timestamp ajuda em auditoria.
+**Razão:** CSV contém apenas dados úteis para análise. Metadados de execução (ExecutedAt, Status, RowCount, Error) são exibidos no terminal via tabela Spectre.Console, que é o lugar natural para informações de diagnóstico. CSV misto com metadados criava estrutura inconsistente quando múltiplas linhas de resultado pertenciam ao mesmo servidor/database.
+
+**Nota sobre `--separate-files`:** Gera 1 arquivo por servidor (`<server>_<timestamp>.csv`) ao invés de 1 por database. Cada arquivo inclui colunas Server e Database para consistência.
 
 ### 7. Auto-descoberta de databases
 
@@ -126,6 +129,6 @@ FurLab é uma CLI tool .NET 10 para gerenciamento de PostgreSQL, com comandos pa
 
 1. **Dry-run com EXPLAIN:** Não é necessário row count preciso. O EXPLAIN mostra o plano de execução estimado, que é suficiente para o usuário entender o impacto antes de confirmar. Implementar `SELECT count(*)` prévio adicionaria complexidade desnecessária para queries complexas.
 
-2. **Output de erro no CSV:** Uma linha por database que falhou. Isso permite rastrear exatamente qual database em qual servidor teve problema, facilitando debugging e análise pós-execução.
+2. **Output de erro no CSV:** Falhas não geram linhas no CSV. Erros são exibidos no terminal via log por database (com `✗`) e tabela resumo final (Server, Database, Status, Rows, ExecutedAt, Error). Isso mantém o CSV limpo para dados e concentra diagnóstico no terminal.
 
 3. **Validação de input no `add -i`:** Validação de host/porta ocorre apenas no `test`, não no `add`. Isso permite salvar configurações mesmo quando o servidor está temporariamente indisponível, e separa claramente a responsabilidade de "salvar configuração" de "verificar conectividade".

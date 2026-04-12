@@ -12,23 +12,24 @@ O sistema DEVE executar queries em múltiplos servidores/databases em paralelo u
 - **ENTÃO** sistema usa o valor configurado como limite de paralelismo para aquele servidor
 
 ### Requirement: Tolerância a falhas parcial
-O sistema DEVE continuar a execução nos servidores/databases restantes quando um falha, registrando o erro no CSV de output.
+O sistema DEVE continuar a execução nos servidores/databases restantes quando um falha, registrando o erro no terminal.
 
 #### Cenário: Um servidor falha durante execução
 - **QUANDO** um servidor retorna erro de conexão durante a execução
-- **ENTÃO** sistema registra erro no CSV com Status=Error e coluna Error preenchida
+- **ENTÃO** sistema registra erro no terminal com `✗ server/db — Error — <mensagem> (<timestamp>)`
+- **E** erro é exibido na tabela resumo final com Status=Error e coluna Error preenchida
 - **E** sistema continua executando nos servidores restantes
-- **E** sistema exibe mensagem de erro no console após conclusão
+- **E** erro NÃO gera linha no CSV (apenas resultados de sucesso vão para o CSV)
 
 #### Cenário: Múltiplos servidores falham
 - **QUANDO** múltiplos servidores retornam erros durante a execução
-- **ENTÃO** sistema registra cada erro individualmente no CSV
+- **ENTÃO** sistema registra cada erro individualmente no terminal
 - **E** sistema continua com os servidores que estão funcionando
-- **E** sistema exibe resumo de falhas no console
+- **E** sistema exibe resumo de falhas na tabela resumo final
 
 #### Cenário: Todos os servidores falham
-- **QUANDO** todos os servidores selecionados retornam erro
-- **ENTÃO** sistema registra todos os erros no CSV
+- **QUANDO** todos os servidores selecionados retornam erro durante a execução
+- **ENTÃO** sistema exibe tabela resumo com todos os erros no terminal
 - **E** sistema exibe mensagem: "Nenhum servidor respondeu com sucesso. Verifique as conexões."
 - **E** sistema encerra com exit code 1
 

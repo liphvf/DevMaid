@@ -142,7 +142,7 @@ public static class QueryCommand
 
         var separateFilesOption = new Option<bool>("--separate-files")
         {
-            Description = "Generate separate CSV files for each database instead of a single consolidated file."
+            Description = "Generate a separate CSV file for each server instead of a single consolidated file."
         };
 
         var excludeOption = new Option<string?>("--exclude")
@@ -527,6 +527,12 @@ public static class QueryCommand
 
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine($"Servers: [bold]{selectedServers.Count}[/] | [green]Success: {successCount}[/] | [red]Failed: {failureCount}[/] | Total rows: {totalRowCount}");
+
+        if (successCount == 0 && failureCount > 0)
+        {
+            AnsiConsole.MarkupLine("[red]Nenhum servidor respondeu com sucesso. Verifique as conexões.[/]");
+            Environment.Exit(1);
+        }
     }
 
     /// <summary>

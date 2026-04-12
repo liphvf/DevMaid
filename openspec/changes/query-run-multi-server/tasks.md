@@ -65,14 +65,16 @@
 - [x] 7.5 Implementar coleta de resultados e erros para CSV consolidado
 - [x] 7.6 Implementar resumo de execução pós-processamento (sucessos, falhas, erros)
 
-## 8. CSV consolidado com metadados
+## 8. CSV com identificação de servidor
 
-- [x] 8.1 Atualizar formato de CSV para incluir colunas: Server, Database, ExecutedAt, Status, RowCount, Error
-- [x] 8.2 Implementar geração de timestamp ISO 8601 para ExecutedAt
-- [x] 8.3 Implementar linhas de erro no CSV (Status=Error, RowCount vazio, Error preenchido)
+- [x] 8.1 Atualizar formato de CSV para colunas: Server, Database, <colunas da query> (sem metadados de execução)
+- [x] 8.2 Mover metadados de execução (ExecutedAt, Status, RowCount, Error) para log no terminal
+- [x] 8.3 Falhas não geram linhas no CSV — apenas log no terminal com `✗` e tabela resumo
 - [x] 8.4 Implementar output path default usando `outputDirectory` das configurações
-- [x] 8.5 Manter suporte a `--separate-files` (um CSV por database com nome `<server>_<database>_<timestamp>.csv`)
+- [x] 8.5 `--separate-files` gera 1 CSV por servidor (nome `<server>_<timestamp>.csv`) com colunas Server, Database, <query cols>
 - [x] 8.6 Implementar criação de diretórios pai se não existirem
+- [x] 8.7 Adicionar log de execução por database no terminal (`✓/✗ server/db — Status — rows/error (timestamp)`)
+- [x] 8.8 Adicionar tabela Spectre.Console no resumo final (Server, Database, Status, Rows, ExecutedAt, Error)
 
 ## 9. Integração e refatoração do QueryCommand.Run
 
@@ -90,7 +92,7 @@
 - [ ] 10.4 Criar testes de integração para `query run` com múltiplos servidores
 - [ ] 10.5 Testar execução paralela com limite configurável
 - [ ] 10.6 Testar tolerância a falhas parcial (um servidor falha, outros continuam)
-- [ ] 10.7 Testar formato de CSV consolidado com metadados
+- [ ] 10.7 Testar formato de CSV consolidado (Server, Database, <query cols>) e CSV por servidor (--separate-files)
 - [ ] 10.8 Testar migração de `appsettings.json` para `furlab.jsonc`
 
 ## 11. Documentação
