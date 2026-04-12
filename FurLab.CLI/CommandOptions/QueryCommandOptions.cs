@@ -9,6 +9,9 @@ public class QueryCommandOptions
     /// <summary>Gets or sets the path to the SQL input file.</summary>
     public string InputFile { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the inline SQL query (alternative to InputFile).</summary>
+    public string InlineQuery { get; set; } = string.Empty;
+
     /// <summary>Gets or sets the path to the CSV output file or directory.</summary>
     public string OutputFile { get; set; } = string.Empty;
 
@@ -21,13 +24,6 @@ public class QueryCommandOptions
 
     /// <summary>Gets or sets a comma-separated list of database names to exclude.</summary>
     public string? Exclude { get; set; }
-
-    // Multi-server options
-    /// <summary>Gets or sets a value indicating whether to execute on all configured servers.</summary>
-    public bool Servers { get; set; }
-
-    /// <summary>Gets or sets a filter pattern for server names.</summary>
-    public string? ServerFilter { get; set; }
 
     // Connection string alternatives
     /// <summary>Gets or sets a complete Npgsql connection string.</summary>
@@ -73,4 +69,7 @@ public class QueryCommandOptions
 
     /// <summary>Gets or sets the connection lifetime in seconds.</summary>
     public int? ConnectionLifetime { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether to skip confirmation for destructive queries.</summary>
+    public bool NoConfirm { get; set; }
 }

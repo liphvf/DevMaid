@@ -1,5 +1,6 @@
 using FurLab.Core.HealthChecks;
 using FurLab.Core.Interfaces;
+using FurLab.Core.Logging;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -33,6 +34,14 @@ public static class ServiceCollectionExtensions
         _ = services.AddSingleton<IDatabaseService, DatabaseService>();
         _ = services.AddSingleton<IFileService, FileService>();
         _ = services.AddSingleton<IPgPassService, PgPassService>();
+
+        services.AddSingleton<Logging.ILogger>(sp =>
+        {
+            var msLogger = sp.GetRequiredService<ILogger<UserConfigService>>();
+            return new MicrosoftExtensionsLoggerAdapter(msLogger);
+        });
+
+        _ = services.AddSingleton<IUserConfigService, UserConfigService>();
 
         return services;
     }

@@ -57,16 +57,16 @@ public static class OpenCodeCommand
     {
         var modelIdArgument = new Argument<string?>("model-id")
         {
-            Description = "ID do modelo a definir como padrao. Se omitido, exibe menu interativo.",
+            Description = "Model ID to set as default. If omitted, displays interactive menu.",
             Arity = ArgumentArity.ZeroOrOne
         };
 
         var globalFlag = new Option<bool>("--global")
         {
-            Description = "Altera a configuracao global (~/.config/opencode/opencode.jsonc) em vez da local."
+            Description = "Changes the global configuration (~/.config/opencode/opencode.jsonc) instead of local."
         };
 
-        var defaultModelCommand = new Command("default-model", "Define o modelo padrao do OpenCode")
+        var defaultModelCommand = new Command("default-model", "Set the default OpenCode model")
         {
             modelIdArgument,
             globalFlag
@@ -99,8 +99,8 @@ public static class OpenCodeCommand
                 var availableModels = GetAvailableModels();
                 if (!availableModels.Contains(modelId, StringComparer.Ordinal))
                 {
-                    Console.Error.WriteLine($"Modelo '{modelId}' nao encontrado.");
-                    Console.Error.WriteLine("Modelos disponiveis:");
+                    Console.Error.WriteLine($"Model '{modelId}' not found.");
+                    Console.Error.WriteLine("Available models:");
                     foreach (var m in availableModels)
                     {
                         Console.Error.WriteLine($"  {m}");
@@ -115,7 +115,7 @@ public static class OpenCodeCommand
                 // opencode not available in PATH (e.g. Desktop installer without PATH entry).
                 // Skip validation and trust the provided model ID.
                 AnsiConsole.MarkupLine(
-                    "[yellow]Aviso:[/] Nao foi possivel validar o modelo (opencode nao encontrado no PATH). Definindo sem validacao.");
+                    "[yellow]Warning:[/] Could not validate model (opencode not found in PATH). Setting without validation.");
             }
 
             selectedModel = modelId;
@@ -130,9 +130,9 @@ public static class OpenCodeCommand
             }
             catch (InvalidOperationException ex)
             {
-                AnsiConsole.MarkupLine($"[red]Erro:[/] {ex.Message}");
+                AnsiConsole.MarkupLine($"[red]Error:[/] {ex.Message}");
                 AnsiConsole.MarkupLine(
-                    "[yellow]Dica:[/] Forneça o ID do modelo diretamente: FurLab opencode settings default-model [grey]<model-id>[/]");
+                    "[yellow]Tip:[/] Provide the model ID directly: FurLab opencode settings default-model [grey]<model-id>[/]");
                 Environment.Exit(1);
                 return;
             }
@@ -148,14 +148,14 @@ public static class OpenCodeCommand
 
         var configPath = ResolveConfigPath(global);
         var configDir = Path.GetDirectoryName(configPath)
-            ?? throw new InvalidOperationException($"Nao foi possivel determinar o diretorio do arquivo de configuracao: {configPath}");
+            ?? throw new InvalidOperationException($"Could not determine configuration file directory: {configPath}");
         Directory.CreateDirectory(configDir);
 
         var config = LoadConfigFile(configPath);
         config["model"] = selectedModel;
         SaveConfigFile(configPath, config);
 
-        AnsiConsole.MarkupLine($"[green]Modelo '{selectedModel}' definido em: {configPath}[/]");
+        AnsiConsole.MarkupLine($"[green]Model '{selectedModel}' set at: {configPath}[/]");
     }
 
     /// <summary>
@@ -258,11 +258,11 @@ public static class OpenCodeCommand
         {
             throw new InvalidOperationException(
                 """
-                Nao foi possivel encontrar o executavel do OpenCode.
-                Tente uma das opcoes abaixo:
-                  1. Instalar o CLI via WinGet:  winget install SST.opencode
-                  2. Adicionar o diretorio de instalacao ao PATH manualmente.
-                  3. Fornecer o model-id diretamente:  FurLab opencode settings default-model <model-id>
+                Could not find the OpenCode executable.
+                Try one of the options below:
+                  1. Install the CLI via WinGet:  winget install SST.opencode
+                  2. Add the installation directory to PATH manually.
+                  3. Provide the model-id directly:  FurLab opencode settings default-model <model-id>
                 """, ex);
         }
     }
@@ -278,9 +278,9 @@ public static class OpenCodeCommand
         {
             return AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
-                    .Title("Selecione o modelo padrao:")
+                    .Title("Select the default model:")
                     .PageSize(15)
-                    .MoreChoicesText("[grey](Mova para cima e para baixo para ver mais modelos)[/]")
+                    .MoreChoicesText("[grey](Move up and down to see more models)[/]")
                     .AddChoices(models));
         }
         catch (OperationCanceledException)
@@ -297,7 +297,7 @@ public static class OpenCodeCommand
         var configPath = Path.Combine(GlobalConfigDir, "config.json");
 
         var configDir = Path.GetDirectoryName(configPath)
-            ?? throw new InvalidOperationException($"Nao foi possivel determinar o diretorio do arquivo de configuracao: {configPath}");
+            ?? throw new InvalidOperationException($"Could not determine configuration file directory: {configPath}");
         Directory.CreateDirectory(configDir);
 
         var config = LoadConfigFile(configPath);
@@ -316,7 +316,7 @@ public static class OpenCodeCommand
         };
 
         SaveConfigFile(configPath, config);
-        Console.WriteLine($"Arquivo de configuracao atualizado: {configPath}");
+        Console.WriteLine($"Configuration file updated: {configPath}");
     }
 
     private static JsonObject LoadConfigFile(string path)
@@ -342,7 +342,7 @@ public static class OpenCodeCommand
             return objectNode;
         }
 
-        throw new InvalidDataException($"O arquivo '{path}' nao contem um JSON objeto valido.");
+        throw new InvalidDataException($"The file '{path}' does not contain a valid JSON object.");
     }
 
     private static void SaveConfigFile(string path, JsonObject config)

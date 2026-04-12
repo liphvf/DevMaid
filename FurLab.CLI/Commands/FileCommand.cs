@@ -3,6 +3,8 @@ using System.Text;
 
 using FurLab.CLI.CommandOptions;
 
+using Spectre.Console;
+
 namespace FurLab.CLI.Commands;
 
 /// <summary>
@@ -58,13 +60,17 @@ public static class FileCommand
     {
         if (string.IsNullOrWhiteSpace(options.Input))
         {
-            throw new ArgumentException("Input pattern is required.");
+            AnsiConsole.MarkupLine("[red]Error:[/] Input pattern is required. Use -i/--input to specify a file pattern.");
+            Environment.Exit(2);
+            return;
         }
 
         var pattern = Path.GetFileName(options.Input);
         if (string.IsNullOrWhiteSpace(pattern))
         {
-            throw new ArgumentException("Input pattern is invalid.");
+            AnsiConsole.MarkupLine("[red]Error:[/] Input pattern is invalid.");
+            Environment.Exit(2);
+            return;
         }
 
         var directory = Path.GetDirectoryName(options.Input);
@@ -76,7 +82,9 @@ public static class FileCommand
         // Validate directory path to prevent path traversal before normalizing
         if (!SecurityUtils.IsValidPath(directory))
         {
-            throw new ArgumentException($"Invalid directory path: '{directory}'. Path traversal not allowed.");
+            AnsiConsole.MarkupLine($"[red]Error:[/] Invalid directory path: '{directory}'. Path traversal not allowed.");
+            Environment.Exit(2);
+            return;
         }
 
         var fullDirectoryPath = Path.GetFullPath(directory);
@@ -93,7 +101,9 @@ public static class FileCommand
         var fullOutputPath = Path.GetFullPath(outputPath);
         if (!SecurityUtils.IsValidPath(fullOutputPath, fullDirectoryPath))
         {
-            throw new ArgumentException($"Output path is outside the input directory: '{outputPath}'");
+            AnsiConsole.MarkupLine($"[red]Error:[/] Output path is outside the input directory: '{outputPath}'");
+            Environment.Exit(2);
+            return;
         }
 
         var allFileText = new StringBuilder();
@@ -104,7 +114,9 @@ public static class FileCommand
 
         if (!inputFilePaths.Any())
         {
-            throw new Exception("Files not Found");
+            AnsiConsole.MarkupLine($"[red]Error:[/] No files found matching pattern '{pattern}' in directory '{fullDirectoryPath}'.");
+            Environment.Exit(2);
+            return;
         }
 
         foreach (var inputFilePath in inputFilePaths)

@@ -1,13 +1,15 @@
 using System.CommandLine;
-using System.Data;
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 
 using FurLab.CLI.CommandOptions;
 using FurLab.CLI.Services;
+using FurLab.Core.Models;
 
 using Npgsql;
+using Polly;
+using Polly.Retry;
+using Spectre.Console;
 
 namespace FurLab.CLI.Commands;
 
@@ -16,6 +18,23 @@ namespace FurLab.CLI.Commands;
 /// </summary>
 public static class QueryCommand
 {
+    private static readonly ResiliencePipeline ResiliencePipeline = new ResiliencePipelineBuilder()
+        .AddRetry(new RetryStrategyOptions
+        {
+            MaxRetryAttempts = 3,
+            DelayGenerator = static args =>
+            {
+                var delay = TimeSpan.FromMilliseconds(Math.Pow(2, args.AttemptNumber) * 500);
+                return new ValueTask<TimeSpan?>(delay);
+            },
+            ShouldHandle = static args =>
+            {
+                var handled = args.Outcome.Exception is NpgsqlException or TimeoutException or OperationCanceledException;
+                return new ValueTask<bool>(handled);
+            }
+        })
+        .Build();
+
     /// <summary>
     /// Builds the query command structure.
     /// </summary>
@@ -27,12 +46,17 @@ public static class QueryCommand
         var runCommand = new Command("run", "Run a SQL query and export the results to CSV.");
 
         // Input/Output options
-        var inputOption = new Option<string>("--input", "-i")
+        var inputOption = new Option<string?>("--input", "-i")
         {
             Description = "Path to the SQL input file."
         };
 
-        var outputOption = new Option<string>("--output", "-o")
+        var commandOption = new Option<string?>("--command", "-c")
+        {
+            Description = "Inline SQL query to execute (alternative to --input)."
+        };
+
+        var outputOption = new Option<string?>("--output", "-o")
         {
             Description = "Path to the CSV output file (or directory when using --all)."
         };
@@ -126,19 +150,15 @@ public static class QueryCommand
             Description = "Comma-separated list of database names to exclude (e.g., postgres,template0,template1)."
         };
 
-        // Multi-server options
-        var serversOption = new Option<bool>("--servers", "-s")
+        // Confirmation option
+        var noConfirmOption = new Option<bool>("--no-confirm")
         {
-            Description = "Execute the query on all servers configured in appsettings.json."
-        };
-
-        var serverFilterOption = new Option<string?>("--server-filter")
-        {
-            Description = "Filter servers by name pattern (supports * wildcard). Example: 'prod-*' or '*-primary'."
+            Description = "Skip confirmation prompt for destructive queries (useful for scripts/CI)."
         };
 
         // Add all options to the command
         runCommand.Add(inputOption);
+        runCommand.Add(commandOption);
         runCommand.Add(outputOption);
         runCommand.Add(npgsqlConnectionStringOption);
         runCommand.Add(hostOption);
@@ -157,14 +177,14 @@ public static class QueryCommand
         runCommand.Add(allOption);
         runCommand.Add(separateFilesOption);
         runCommand.Add(excludeOption);
-        runCommand.Add(serversOption);
-        runCommand.Add(serverFilterOption);
+        runCommand.Add(noConfirmOption);
 
         runCommand.SetAction(parseResult =>
         {
             var options = new QueryCommandOptions
             {
                 InputFile = parseResult.GetValue(inputOption) ?? string.Empty,
+                InlineQuery = parseResult.GetValue(commandOption) ?? string.Empty,
                 OutputFile = parseResult.GetValue(outputOption) ?? string.Empty,
                 NpgsqlConnectionString = parseResult.GetValue(npgsqlConnectionStringOption),
                 Host = parseResult.GetValue(hostOption),
@@ -183,8 +203,7 @@ public static class QueryCommand
                 All = parseResult.GetValue(allOption),
                 SeparateFiles = parseResult.GetValue(separateFilesOption),
                 Exclude = parseResult.GetValue(excludeOption),
-                Servers = parseResult.GetValue(serversOption),
-                ServerFilter = parseResult.GetValue(serverFilterOption)
+                NoConfirm = parseResult.GetValue(noConfirmOption)
             };
 
             Run(options);
@@ -203,275 +222,325 @@ public static class QueryCommand
     /// <exception cref="FileNotFoundException">Thrown when the SQL input file does not exist.</exception>
     public static void Run(QueryCommandOptions options)
     {
-        // Validate input file
-        if (string.IsNullOrWhiteSpace(options.InputFile))
+        // Validate mutual exclusivity between -c and -i
+        if (!string.IsNullOrWhiteSpace(options.InlineQuery) && !string.IsNullOrWhiteSpace(options.InputFile))
         {
-            throw new ArgumentException("Input file path is required.");
+            AnsiConsole.MarkupLine("[red]Error:[/] Options -c/--command and -i/--input are mutually exclusive. Use only one.");
+            Environment.Exit(2);
+            return;
         }
 
-        // Validate for path traversal before normalizing the path
-        if (!SecurityUtils.IsValidPath(options.InputFile))
+        // Get SQL query from inline command or input file
+        string sqlQuery;
+        string querySource;
+        if (!string.IsNullOrWhiteSpace(options.InlineQuery))
         {
-            throw new ArgumentException($"Invalid input path: '{options.InputFile}'. Path traversal not allowed.");
+            sqlQuery = UnescapeInlineQuery(options.InlineQuery);
+            querySource = "inline query";
+        }
+        else if (!string.IsNullOrWhiteSpace(options.InputFile))
+        {
+            if (!SecurityUtils.IsValidPath(options.InputFile))
+            {
+                AnsiConsole.MarkupLine($"[red]Error:[/] Invalid input path: '{options.InputFile}'. Path traversal not allowed.");
+                Environment.Exit(2);
+                return;
+            }
+
+            var inputFullPath = Path.GetFullPath(options.InputFile);
+            if (!File.Exists(inputFullPath))
+            {
+                AnsiConsole.MarkupLine($"[red]Error:[/] SQL input file not found: {inputFullPath}");
+                Environment.Exit(2);
+                return;
+            }
+
+            sqlQuery = File.ReadAllText(inputFullPath, Encoding.UTF8);
+            querySource = inputFullPath;
+        }
+        else
+        {
+            AnsiConsole.MarkupLine("[red]Error:[/] Either -c/--command or -i/--input is required.");
+            AnsiConsole.MarkupLine("[dim]Use -c for an inline query or -i for a SQL file.[/]");
+            Environment.Exit(2);
+            return;
         }
 
-        var inputFullPath = Path.GetFullPath(options.InputFile);
-        if (!File.Exists(inputFullPath))
-        {
-            throw new FileNotFoundException($"SQL input file not found: {inputFullPath}");
-        }
-
-        // Read SQL query
-        var sqlQuery = File.ReadAllText(inputFullPath, Encoding.UTF8);
         if (string.IsNullOrWhiteSpace(sqlQuery))
         {
-            throw new ArgumentException("SQL input file is empty.");
-        }
-
-        // Check if --servers flag is set
-        if (options.Servers)
-        {
-            RunOnAllServers(options, sqlQuery);
+            AnsiConsole.MarkupLine("[red]Error:[/] SQL query is empty.");
+            Environment.Exit(2);
             return;
         }
 
-        // Check if --all flag is set
-        if (options.All)
+        // Get configured servers
+        var servers = UserConfigService.GetServers();
+        if (servers.Count == 0)
         {
-            RunOnAllDatabases(options, sqlQuery);
+            AnsiConsole.MarkupLine("[red]No servers configured.[/]");
+            AnsiConsole.MarkupLine("[yellow]Run 'settings db-servers add' to add a server first.[/]");
+            Environment.Exit(2);
             return;
         }
 
-        // Validate output file for single database mode
-        if (string.IsNullOrWhiteSpace(options.OutputFile))
+        // Show server selection prompt (all pre-selected)
+        var selectedServers = SelectServers(servers);
+        if (selectedServers.Count == 0)
         {
-            throw new ArgumentException("Output file path is required when not using --all.");
+            AnsiConsole.MarkupLine("[yellow]No servers selected. Exiting.[/]");
+            Environment.Exit(1);
+            return;
         }
 
-        var outputFullPath = Path.GetFullPath(options.OutputFile);
-        if (!SecurityUtils.IsValidPath(outputFullPath))
+        // Analyze query for destructive operations
+        var queryType = SqlQueryAnalyzer.AnalyzeQuery(sqlQuery);
+        var queryTypeDescription = SqlQueryAnalyzer.GetQueryTypeDescription(sqlQuery);
+
+        if (queryType == QueryType.Destructive && !options.NoConfirm)
         {
-            throw new ArgumentException($"Invalid output path: '{options.OutputFile}'. Path traversal not allowed.");
+            var defaults = UserConfigService.GetDefaults();
+            if (defaults.RequireConfirmation)
+            {
+                var databaseCount = selectedServers.Sum(s => s.FetchAllDatabases ? 1 : Math.Max(s.Databases.Count, 1));
+                if (!ConfirmDestructiveQuery(queryTypeDescription, selectedServers, databaseCount, sqlQuery))
+                {
+                    AnsiConsole.MarkupLine("[yellow]Query execution cancelled by user.[/]");
+                    Environment.Exit(0);
+                    return;
+                }
+            }
         }
 
-        // Create output directory if needed
-        var outputDirectory = Path.GetDirectoryName(outputFullPath);
-        if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory))
-        {
-            Directory.CreateDirectory(outputDirectory);
-        }
-
-        // Build connection string
-        var connectionString = BuildConnectionString(options);
-
-        Console.WriteLine("Executing query...");
-        Console.WriteLine($"Input: {inputFullPath}");
-        Console.WriteLine($"Output: {outputFullPath}");
-        Console.WriteLine();
-
-        // Execute query and export to CSV
-        try
-        {
-            ExecuteQueryAndExportToCsv(connectionString, sqlQuery, outputFullPath, options.CommandTimeout);
-            Console.WriteLine();
-            Console.WriteLine("✓ Query executed successfully!");
-            Console.WriteLine($"✓ Results exported to: {outputFullPath}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine();
-            Console.WriteLine($"✗ Error executing query: {ex.Message}");
-            throw;
-        }
+        // Execute query on selected servers
+        ExecuteOnSelectedServers(selectedServers, sqlQuery, options, querySource, queryTypeDescription).GetAwaiter().GetResult();
     }
 
-    private static void RunOnAllDatabases(QueryCommandOptions options, string sqlQuery)
+    /// <summary>
+    /// Unescapes inline query string for Windows command line.
+    /// </summary>
+    private static string UnescapeInlineQuery(string query)
     {
-        // Validate output path for multi-database mode
-        if (string.IsNullOrWhiteSpace(options.OutputFile))
+        if ((query.StartsWith('"') && query.EndsWith('"')) ||
+            (query.StartsWith('\'') && query.EndsWith('\'')))
         {
-            throw new ArgumentException("Output directory path is required when using --all.");
+            query = query.Substring(1, query.Length - 2);
         }
 
-        // Validate for path traversal before normalizing the path
-        if (!SecurityUtils.IsValidPath(options.OutputFile))
+        query = query.Replace("\\\"", "\"").Replace("\\'", "'");
+
+        return query;
+    }
+
+    /// <summary>
+    /// Shows interactive server selection prompt with all servers pre-selected.
+    /// </summary>
+    private static List<ServerConfigEntry> SelectServers(IReadOnlyList<ServerConfigEntry> servers)
+    {
+        if (servers.Count == 1)
         {
-            throw new ArgumentException($"Invalid output path: '{options.OutputFile}'. Path traversal not allowed.");
+            return [servers[0]];
         }
 
-        var outputDirectory = Path.GetFullPath(options.OutputFile);
+        var prompt = new MultiSelectionPrompt<string>()
+            .Title("Select servers to execute query on:")
+            .PageSize(10)
+            .MoreChoicesText("[grey](Move up and down to reveal more servers)[/]")
+            .InstructionsText("[grey](Press <space> to toggle, <enter> to accept)[/]")
+            .AddChoices(servers.Select(s => s.Name));
 
-        // Create output directory if it doesn't exist
+        // Pre-select all servers by default
+        foreach (var server in servers)
+        {
+            prompt.Select(server.Name);
+        }
+
+        var selected = AnsiConsole.Prompt(prompt);
+        return servers.Where(s => selected.Contains(s.Name)).ToList();
+    }
+
+    /// <summary>
+    /// Shows confirmation prompt for destructive queries.
+    /// </summary>
+    private static bool ConfirmDestructiveQuery(string queryType, List<ServerConfigEntry> selectedServers, int databaseCount, string sqlQuery)
+    {
+        var preview = sqlQuery.Length > 200 ? sqlQuery.Substring(0, 200) + "..." : sqlQuery;
+
+        var table = new Table();
+        table.AddColumn("Property");
+        table.AddColumn("Value");
+        table.AddRow("Query Type", $"[red]{queryType}[/]");
+        table.AddRow("Servers Affected", $"[yellow]{selectedServers.Count}[/]");
+        table.AddRow("Databases Affected", $"[yellow]~{databaseCount}[/]");
+        table.AddRow("Preview", $"[grey]{Markup.Escape(preview)}[/]");
+
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine("[bold red]WARNING: DESTRUCTIVE QUERY DETECTED[/]");
+        AnsiConsole.Write(table);
+        AnsiConsole.WriteLine();
+
+        return AnsiConsole.Confirm("Proceed with execution?");
+    }
+
+    /// <summary>
+    /// Executes query on selected servers with parallel execution and consolidated CSV output.
+    /// </summary>
+    private static async Task ExecuteOnSelectedServers(List<ServerConfigEntry> selectedServers, string sqlQuery, QueryCommandOptions options, string querySource, string queryTypeDescription)
+    {
+        var defaults = UserConfigService.GetDefaults();
+        var outputDirectory = string.IsNullOrWhiteSpace(options.OutputFile)
+            ? defaults.OutputDirectory
+            : Path.GetFullPath(options.OutputFile);
+
         if (!Directory.Exists(outputDirectory))
         {
             Directory.CreateDirectory(outputDirectory);
         }
 
-        // Get connection parameters
-        var (host, port, username, password) = GetConnectionParameters(options);
+        var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture);
+        var outputFile = options.SeparateFiles ? outputDirectory : Path.Combine(outputDirectory, $"consolidated_{timestamp}.csv");
 
-        Console.WriteLine("Listing all databases...");
-        Console.WriteLine($"Host: {host}:{port}");
-        Console.WriteLine($"Username: {username}");
+        Console.WriteLine("Executing query...");
+        Console.WriteLine($"Source: {querySource}");
+        Console.WriteLine($"Type: {queryTypeDescription}");
+        Console.WriteLine($"Servers: {string.Join(", ", selectedServers.Select(s => s.Name))}");
+        Console.WriteLine($"Output: {outputDirectory}");
         Console.WriteLine();
 
-        // Get list of all databases
-        var databases = ListAllDatabases(host, port, username, password);
-
-        // Parse exclude list
-        var excludedDatabases = new HashSet<string>();
-        if (!string.IsNullOrWhiteSpace(options.Exclude))
-        {
-            var excludeList = options.Exclude.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            foreach (var db in excludeList)
-            {
-                excludedDatabases.Add(db);
-            }
-        }
-
-        // Filter out excluded databases
-        var filteredDatabases = databases.FindAll(db => !excludedDatabases.Contains(db));
-
-        if (filteredDatabases.Count == 0)
-        {
-            Console.WriteLine("No databases found after filtering.");
-            return;
-        }
-
-        Console.WriteLine($"Found {filteredDatabases.Count} databases to process:");
-        foreach (var db in filteredDatabases)
-        {
-            var marker = excludedDatabases.Contains(db) ? " (excluded)" : "";
-            Console.WriteLine($"  - {db}{marker}");
-        }
-        Console.WriteLine();
-
-        Console.WriteLine($"Output directory: {Path.GetFullPath(outputDirectory)}");
-        Console.WriteLine($"Output mode: {(options.SeparateFiles ? "Separate files per database" : "Consolidated file")}");
-        Console.WriteLine();
-
-        // Execute query on all databases
-        if (options.SeparateFiles)
-        {
-            ExecuteOnAllDatabasesSeparateFiles(host, port, username, password, filteredDatabases, sqlQuery, outputDirectory, options);
-        }
-        else
-        {
-            ExecuteOnAllDatabasesConsolidated(host, port, username, password, filteredDatabases, sqlQuery, outputDirectory, options);
-        }
-    }
-
-    private static void ExecuteOnAllDatabasesConsolidated(string host, string port, string username, string password, List<string> databases, string sqlQuery, string outputDirectory, QueryCommandOptions options)
-    {
-        var outputFilePath = Path.Combine(outputDirectory, "all_databases.csv");
-        var successCount = 0;
-        var failureCount = 0;
-        var totalRowCount = 0;
-        var allResults = new List<(string DatabaseName, List<string> ColumnNames, List<Dictionary<string, string>> Data)>();
-
-        Console.WriteLine("Executing query on all databases (consolidated mode)...");
-        Console.WriteLine();
-
-        foreach (var database in databases)
-        {
-            Console.WriteLine($"Processing database '{database}'...");
-
-            try
-            {
-                var connectionString = BuildConnectionStringForDatabase(host, port, username, password, database, options);
-                var (columnNames, data) = ExecuteQuery(connectionString, sqlQuery, options.CommandTimeout);
-
-                allResults.Add((database, columnNames, data));
-                totalRowCount += data.Count;
-                successCount++;
-
-                Console.WriteLine($"  ✓ Retrieved {data.Count} rows");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  ✗ Failed: {ex.Message}");
-                failureCount++;
-            }
-
-            Console.WriteLine();
-        }
-
-        // Write consolidated results to CSV
-        if (allResults.Count > 0)
-        {
-            Console.WriteLine("Writing consolidated results...");
-            WriteConsolidatedCsv(outputFilePath, allResults);
-            Console.WriteLine($"✓ Results exported to: {outputFilePath}");
-        }
-
-        // Summary
-        Console.WriteLine();
-        Console.WriteLine("========================================");
-        Console.WriteLine("Execution Summary:");
-        Console.WriteLine($"  Successful: {successCount}");
-        Console.WriteLine($"  Failed: {failureCount}");
-        Console.WriteLine($"  Total rows: {totalRowCount}");
-        Console.WriteLine($"  Output file: {Path.GetFullPath(outputFilePath)}");
-        Console.WriteLine("========================================");
-    }
-
-    private static void ExecuteOnAllDatabasesSeparateFiles(string host, string port, string username, string password, List<string> databases, string sqlQuery, string outputDirectory, QueryCommandOptions options)
-    {
+        var allResults = new List<CsvRow>();
+        var lockObj = new object();
         var successCount = 0;
         var failureCount = 0;
         var totalRowCount = 0;
 
-        Console.WriteLine("Executing query on all databases (separate files mode)...");
-        Console.WriteLine();
-
-        foreach (var database in databases)
+        var parallelOptions = new ParallelOptions
         {
-            var outputFilePath = Path.Combine(outputDirectory, $"{database}.csv");
+            MaxDegreeOfParallelism = defaults.MaxParallelism
+        };
 
-            Console.WriteLine($"Processing database '{database}'...");
+        await Parallel.ForEachAsync(selectedServers, parallelOptions, async (server, ct) =>
+        {
+            Console.WriteLine($"========================================");
+            Console.WriteLine($"Processing server: {server.Name}");
+            Console.WriteLine($"Host: {server.Host}:{server.Port}");
+            Console.WriteLine($"========================================");
+            Console.WriteLine();
 
-            try
+            var databases = GetDatabasesForServer(server);
+
+            if (databases.Count == 0)
             {
-                var connectionString = BuildConnectionStringForDatabase(host, port, username, password, database, options);
-                var rowCount = ExecuteQueryAndExportToCsv(connectionString, sqlQuery, outputFilePath, options.CommandTimeout);
-
-                totalRowCount += rowCount;
-                successCount++;
-
-                Console.WriteLine($"  ✓ Results exported to: {database}.csv ({rowCount} rows)");
+                Console.WriteLine($"  No databases found for server '{server.Name}'.");
+                Console.WriteLine();
+                return;
             }
-            catch (Exception ex)
+
+            var serverParallelOptions = new ParallelOptions
             {
-                Console.WriteLine($"  ✗ Failed: {ex.Message}");
-                failureCount++;
-            }
+                MaxDegreeOfParallelism = server.MaxParallelism,
+                CancellationToken = ct
+            };
+
+            var serverSuccessCount = 0;
+            var serverFailureCount = 0;
+            var serverRowCount = 0;
+
+            await Parallel.ForEachAsync(databases, serverParallelOptions, async (database, dbCt) =>
+            {
+                Console.WriteLine($"  Processing database '{database}'...");
+
+                try
+                {
+                    var connectionString = BuildConnectionStringForServer(server, database);
+                    var (columnNames, data) = await ExecuteQueryWithRetryAsync(connectionString, sqlQuery, server.CommandTimeout, dbCt);
+
+                    if (options.SeparateFiles)
+                    {
+                        var serverDir = Path.Combine(outputDirectory, server.Name);
+                        if (!Directory.Exists(serverDir))
+                        {
+                            Directory.CreateDirectory(serverDir);
+                        }
+
+                        var dbOutputFile = Path.Combine(serverDir, $"{database}_{timestamp}.csv");
+                        WriteSingleCsv(dbOutputFile, columnNames, data);
+                        Console.WriteLine($"    ✓ Results exported to: {dbOutputFile} ({data.Count} rows)");
+                    }
+                    else
+                    {
+                        lock (lockObj)
+                        {
+                            allResults.Add(new CsvRow(server.Name, database, DateTime.UtcNow, "Success", data.Count, string.Empty, columnNames, data));
+                        }
+                    }
+
+                    Interlocked.Add(ref serverRowCount, data.Count);
+                    Interlocked.Increment(ref serverSuccessCount);
+                    Interlocked.Add(ref totalRowCount, data.Count);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"    ✗ Failed: {ex.Message}");
+                    lock (lockObj)
+                    {
+                        allResults.Add(new CsvRow(server.Name, database, DateTime.UtcNow, "Error", 0, ex.Message, [], []));
+                    }
+                    Interlocked.Increment(ref serverFailureCount);
+                    Interlocked.Increment(ref failureCount);
+                }
+            });
+
+            Interlocked.Add(ref successCount, serverSuccessCount);
 
             Console.WriteLine();
+            Console.WriteLine($"Server '{server.Name}' summary:");
+            Console.WriteLine($"  Successful: {serverSuccessCount}");
+            Console.WriteLine($"  Failed: {serverFailureCount}");
+            Console.WriteLine($"  Total rows: {serverRowCount}");
+            Console.WriteLine();
+        });
+
+        if (!options.SeparateFiles && allResults.Count > 0)
+        {
+            WriteConsolidatedCsvWithMetadata(outputFile, allResults);
+            Console.WriteLine($"✓ Results exported to: {outputFile}");
         }
 
-        // Summary
         Console.WriteLine("========================================");
         Console.WriteLine("Execution Summary:");
-        Console.WriteLine($"  Successful: {successCount}");
-        Console.WriteLine($"  Failed: {failureCount}");
+        Console.WriteLine($"  Servers processed: {selectedServers.Count}");
+        Console.WriteLine($"  Successful databases: {successCount}");
+        Console.WriteLine($"  Failed databases: {failureCount}");
         Console.WriteLine($"  Total rows: {totalRowCount}");
-        Console.WriteLine($"  Output directory: {Path.GetFullPath(outputDirectory)}");
+        Console.WriteLine($"  Output: {outputDirectory}");
         Console.WriteLine("========================================");
     }
 
-    private static (List<string> ColumnNames, List<Dictionary<string, string>> Data) ExecuteQuery(string connectionString, string sqlQuery, int? commandTimeout)
+    /// <summary>
+    /// Executes a query with Polly retry logic for transient failures.
+    /// </summary>
+    private static async Task<(List<string> ColumnNames, List<Dictionary<string, string>> Data)> ExecuteQueryWithRetryAsync(string connectionString, string sqlQuery, int commandTimeout, CancellationToken ct)
     {
-        using var connection = new NpgsqlConnection(connectionString);
-        connection.Open();
-
-        using var command = new NpgsqlCommand(sqlQuery, connection);
-
-        if (commandTimeout.HasValue)
+        return await ResiliencePipeline.ExecuteAsync(async (innerCt) =>
         {
-            command.CommandTimeout = commandTimeout.Value;
-        }
+            innerCt.ThrowIfCancellationRequested();
+            return await ExecuteQueryAsync(connectionString, sqlQuery, commandTimeout, innerCt);
+        }, ct);
+    }
 
-        using var reader = command.ExecuteReader();
+    /// <summary>
+    /// Executes a query and returns column names and data rows.
+    /// </summary>
+    private static async Task<(List<string> ColumnNames, List<Dictionary<string, string>> Data)> ExecuteQueryAsync(string connectionString, string sqlQuery, int commandTimeout, CancellationToken ct)
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(ct);
+
+        await using var command = new NpgsqlCommand(sqlQuery, connection)
+        {
+            CommandTimeout = commandTimeout
+        };
+
+        await using var reader = await command.ExecuteReaderAsync(ct);
 
         var columnNames = new List<string>();
         for (var i = 0; i < reader.FieldCount; i++)
@@ -480,8 +549,7 @@ public static class QueryCommand
         }
 
         var data = new List<Dictionary<string, string>>();
-
-        while (reader.Read())
+        while (await reader.ReadAsync(ct))
         {
             var row = new Dictionary<string, string>();
             for (var i = 0; i < reader.FieldCount; i++)
@@ -495,498 +563,137 @@ public static class QueryCommand
         return (columnNames, data);
     }
 
-    private static void WriteConsolidatedCsv(string outputPath, List<(string DatabaseName, List<string> ColumnNames, List<Dictionary<string, string>> Data)> allResults)
+    /// <summary>
+    /// Gets list of databases for a server (either explicit or auto-discovered).
+    /// Validates access to each database before returning.
+    /// </summary>
+    private static List<string> GetDatabasesForServer(ServerConfigEntry server)
     {
-        using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
-        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
-
-        // Get all unique column names across all databases
-        var allColumnNames = new HashSet<string>();
-        foreach (var result in allResults)
+        if (!server.FetchAllDatabases && server.Databases.Count > 0)
         {
-            foreach (var columnName in result.ColumnNames)
+            return ValidateDatabaseAccess(server, server.Databases);
+        }
+
+        if (server.FetchAllDatabases)
+        {
+            try
             {
-                allColumnNames.Add(columnName);
+                var discoveredDatabases = ListDatabasesAsync(server).GetAwaiter().GetResult();
+                return ValidateDatabaseAccess(server, discoveredDatabases);
             }
-        }
-
-        // Add database name column
-        var columns = new List<string> { "_database_name" };
-        columns.AddRange(allColumnNames);
-
-        // Write header
-        foreach (var columnName in columns)
-        {
-            csv.WriteField(columnName);
-        }
-        csv.NextRecord();
-
-        // Write data
-        foreach (var result in allResults)
-        {
-            foreach (var row in result.Data)
+            catch (Exception ex)
             {
-                csv.WriteField(result.DatabaseName);
-
-                foreach (var columnName in allColumnNames)
+                AnsiConsole.MarkupLine($"[yellow]Warning: Auto-discovery failed for '{server.Name}': {ex.Message}[/]");
+                if (server.Databases.Count > 0)
                 {
-                    var value = row.ContainsKey(columnName) ? row[columnName] : string.Empty;
-                    csv.WriteField(value);
+                    AnsiConsole.MarkupLine("[yellow]Falling back to configured databases.[/]");
+                    return ValidateDatabaseAccess(server, server.Databases);
                 }
-
-                csv.NextRecord();
+                return [];
             }
         }
+
+        var defaultDb = server.Databases.FirstOrDefault() ?? string.Empty;
+        if (string.IsNullOrEmpty(defaultDb))
+        {
+            return [];
+        }
+
+        return ValidateDatabaseAccess(server, [defaultDb]);
     }
 
-    private static (string Host, string Port, string Username, string Password) GetConnectionParameters(QueryCommandOptions options)
+    /// <summary>
+    /// Validates access to each database by attempting a simple connection test.
+    /// Returns only databases that are accessible.
+    /// </summary>
+    private static List<string> ValidateDatabaseAccess(ServerConfigEntry server, List<string> databases)
     {
-        // Load default values from configuration
-        var dbConfig = ConfigurationService.GetDatabaseConfig();
-        var defaultHost = dbConfig.Host ?? "localhost";
-        var defaultPort = dbConfig.Port ?? "5432";
-        var defaultUsername = dbConfig.Username;
-        var defaultPassword = dbConfig.Password;
+        var accessibleDatabases = new List<string>();
 
-        // Use provided values or fall back to defaults
-        var host = options.Host ?? defaultHost;
-        var port = options.Port ?? defaultPort;
-        var username = options.Username ?? defaultUsername;
-        var password = options.Password ?? defaultPassword;
-
-        // Validate required parameters
-        if (string.IsNullOrWhiteSpace(host))
+        foreach (var database in databases)
         {
-            throw new ArgumentException("Host is required when not using --npgsql-connection-string.");
+            if (string.IsNullOrWhiteSpace(database))
+            {
+                continue;
+            }
+
+            try
+            {
+                var connectionString = BuildConnectionStringForServer(server, database);
+                using var connection = new NpgsqlConnection(connectionString);
+                connection.Open();
+
+                // Simple validation query
+                using var command = new NpgsqlCommand("SELECT 1", connection);
+                command.ExecuteScalar();
+
+                accessibleDatabases.Add(database);
+            }
+            catch (Exception ex)
+            {
+                AnsiConsole.MarkupLine($"[yellow]Warning: Cannot access database '{database}' on server '{server.Name}': {ex.Message}[/]");
+            }
         }
 
-        if (!SecurityUtils.IsValidHost(host))
-        {
-            throw new ArgumentException($"Invalid host: '{host}'");
-        }
-
-        if (!SecurityUtils.IsValidPort(port))
-        {
-            throw new ArgumentException($"Invalid port: '{port}'. Port must be between 1 and 65535.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(username) && !SecurityUtils.IsValidUsername(username))
-        {
-            throw new ArgumentException($"Invalid username: '{username}'");
-        }
-
-        // Prompt for password if not provided
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            Console.Write("Enter password: ");
-            password = ReadPassword();
-            Console.WriteLine();
-        }
-
-        return (host, port, username ?? string.Empty, password ?? string.Empty);
+        return accessibleDatabases;
     }
 
-    private static string BuildConnectionStringForDatabase(string host, string port, string username, string password, string database, QueryCommandOptions options)
+    /// <summary>
+    /// Lists all databases on a server using Npgsql.
+    /// </summary>
+    private static async Task<List<string>> ListDatabasesAsync(ServerConfigEntry server)
+    {
+        var connectionString = BuildConnectionStringForServer(server, "postgres");
+        var databases = new List<string>();
+
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            "SELECT datname FROM pg_database WHERE datistemplate = false AND datallowconn = true",
+            connection);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var dbName = reader.GetString(0);
+            if (!server.ExcludePatterns.Any(pattern => MatchesPattern(dbName, pattern)))
+            {
+                databases.Add(dbName);
+            }
+        }
+
+        return databases;
+    }
+
+    /// <summary>
+    /// Checks if a database name matches a wildcard pattern.
+    /// </summary>
+    private static bool MatchesPattern(string dbName, string pattern)
+    {
+        var regexPattern = "^" + System.Text.RegularExpressions.Regex.Escape(pattern).Replace("\\*", ".*") + "$";
+        return System.Text.RegularExpressions.Regex.IsMatch(dbName, regexPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    /// <summary>
+    /// Builds connection string for a specific server and database.
+    /// </summary>
+    private static string BuildConnectionStringForServer(ServerConfigEntry server, string database)
     {
         var builder = new NpgsqlConnectionStringBuilder
         {
-            Host = host,
-            Port = int.Parse(port),
+            Host = server.Host,
+            Port = server.Port,
             Database = database,
-            Username = username,
-            Password = password
+            Username = server.Username,
+            Password = server.Password,
+            SslMode = ParseSslMode(server.SslMode),
+            Timeout = server.Timeout,
+            CommandTimeout = server.CommandTimeout,
+            Pooling = true,
+            MinPoolSize = 1,
+            MaxPoolSize = 100
         };
-
-        // Add optional connection parameters
-        if (!string.IsNullOrWhiteSpace(options.SslMode))
-        {
-            builder.SslMode = ParseSslMode(options.SslMode);
-        }
-
-        if (options.Timeout.HasValue)
-        {
-            builder.Timeout = options.Timeout.Value;
-        }
-
-        if (options.CommandTimeout.HasValue)
-        {
-            builder.CommandTimeout = options.CommandTimeout.Value;
-        }
-
-        if (options.Pooling.HasValue)
-        {
-            builder.Pooling = options.Pooling.Value;
-        }
-
-        if (options.MinPoolSize.HasValue)
-        {
-            builder.MinPoolSize = options.MinPoolSize.Value;
-        }
-
-        if (options.MaxPoolSize.HasValue)
-        {
-            builder.MaxPoolSize = options.MaxPoolSize.Value;
-        }
-
-        if (options.Keepalive.HasValue)
-        {
-            builder.KeepAlive = options.Keepalive.Value;
-        }
-
-        if (options.ConnectionLifetime.HasValue)
-        {
-            builder.ConnectionLifetime = options.ConnectionLifetime.Value;
-        }
-
-        return builder.ConnectionString;
-    }
-
-    private static List<string> ListAllDatabases(string host, string port, string username, string password)
-    {
-        var psqlPath = FindPsql();
-        if (psqlPath == null)
-        {
-            throw new Exception("psql not found. Please ensure PostgreSQL is installed and psql is in your PATH.");
-        }
-
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = psqlPath,
-            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        startInfo.Environment["PGPASSWORD"] = password;
-
-        try
-        {
-            using var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                throw new Exception("Failed to start psql process.");
-            }
-
-            var output = process.StandardOutput.ReadToEnd();
-            var error = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                throw new Exception($"psql failed with exit code {process.ExitCode}. Error: {error}");
-            }
-
-            // Parse output to get database names
-            var databases = new List<string>();
-            var lines = output.Split('\n');
-
-            foreach (var line in lines)
-            {
-                var trimmedLine = line.Trim();
-                // Skip header lines and empty lines
-                if (string.IsNullOrWhiteSpace(trimmedLine) ||
-                    trimmedLine.StartsWith("datname") ||
-                    trimmedLine.StartsWith("---") ||
-                    trimmedLine.StartsWith("("))
-                {
-                    continue;
-                }
-
-                // Remove trailing | and whitespace
-                if (trimmedLine.EndsWith("|"))
-                {
-                    trimmedLine = trimmedLine.Substring(0, trimmedLine.Length - 1).Trim();
-                }
-
-                if (!string.IsNullOrWhiteSpace(trimmedLine))
-                {
-                    databases.Add(trimmedLine);
-                }
-            }
-
-            return databases;
-        }
-        finally
-        {
-            startInfo.Environment["PGPASSWORD"] = string.Empty;
-        }
-    }
-
-    private static string? FindPsql()
-    {
-        // Try to find psql in PATH
-        var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
-
-        foreach (var path in paths)
-        {
-            var psqlPath = Path.Combine(path, "psql.exe");
-            if (File.Exists(psqlPath))
-            {
-                return psqlPath;
-            }
-
-            psqlPath = Path.Combine(path, "psql");
-            if (File.Exists(psqlPath))
-            {
-                return psqlPath;
-            }
-        }
-
-        // Try common PostgreSQL installation paths on Windows
-        var commonPaths = new[]
-        {
-            @"C:\Program Files\PostgreSQL\*\bin\psql.exe",
-            @"C:\PostgreSQL\*\bin\psql.exe"
-        };
-
-        foreach (var pattern in commonPaths)
-        {
-            var directory = Path.GetDirectoryName(pattern);
-            if (directory != null && Directory.Exists(directory))
-            {
-                var files = Directory.GetFiles(directory, "psql.exe", SearchOption.AllDirectories);
-                if (files.Length > 0)
-                {
-                    return files[0];
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static string BuildConnectionString(QueryCommandOptions options)
-    {
-        // If complete connection string is provided, use it
-        if (!string.IsNullOrWhiteSpace(options.NpgsqlConnectionString))
-        {
-            Console.WriteLine("Using provided Npgsql connection string.");
-            var cleanedConnectionString = CleanConnectionString(options.NpgsqlConnectionString);
-            return cleanedConnectionString;
-        }
-
-        if (HasExplicitConnectionParameters(options))
-        {
-            var directConnection = ResolveExplicitConnection(options);
-            LogConnectionContext(directConnection);
-            return BuildConnectionStringForResolvedConnection(directConnection, options);
-        }
-
-        var serverConnection = ResolvePrimaryServerConnection(options);
-        LogConnectionContext(serverConnection);
-        return BuildConnectionStringForResolvedConnection(serverConnection, options);
-    }
-
-    private static bool HasExplicitConnectionParameters(QueryCommandOptions options)
-    {
-        return !string.IsNullOrWhiteSpace(options.Host)
-            || !string.IsNullOrWhiteSpace(options.Port)
-            || !string.IsNullOrWhiteSpace(options.Database)
-            || !string.IsNullOrWhiteSpace(options.Username)
-            || !string.IsNullOrWhiteSpace(options.Password);
-    }
-
-    private static ResolvedQueryConnection ResolveExplicitConnection(QueryCommandOptions options)
-    {
-        var dbConfig = ConfigurationService.GetDatabaseConfig();
-
-        return CreateResolvedConnection(
-            host: options.Host ?? dbConfig.Host ?? "localhost",
-            port: options.Port ?? dbConfig.Port ?? "5432",
-            database: options.Database,
-            username: options.Username ?? dbConfig.Username,
-            password: options.Password ?? dbConfig.Password,
-            sslMode: options.SslMode,
-            timeout: options.Timeout,
-            commandTimeout: options.CommandTimeout,
-            pooling: options.Pooling,
-            minPoolSize: options.MinPoolSize,
-            maxPoolSize: options.MaxPoolSize,
-            keepalive: options.Keepalive,
-            connectionLifetime: options.ConnectionLifetime,
-            missingDatabaseMessage: "Database name is required when using direct connection parameters. Specify --database or use the Servers configuration.");
-    }
-
-    private static ResolvedQueryConnection ResolvePrimaryServerConnection(QueryCommandOptions options)
-    {
-        var primaryServerName = ConfigurationService.Configuration["Servers:PrimaryServer"];
-        if (string.IsNullOrWhiteSpace(primaryServerName))
-        {
-            throw new ArgumentException("PrimaryServer is not configured in appsettings.json. Please set 'Servers:PrimaryServer'.");
-        }
-
-        var servers = LoadServersConfiguration(checkEnabled: false);
-        if (servers == null || servers.Count == 0)
-        {
-            throw new ArgumentException("No servers configured in appsettings.json. Please add servers configuration under 'Servers:ServersList'.");
-        }
-
-        var primaryServer = servers.FirstOrDefault(s => s.Name.Equals(primaryServerName, StringComparison.OrdinalIgnoreCase));
-        if (primaryServer == null)
-        {
-            throw new ArgumentException($"Primary server '{primaryServerName}' not found in ServersList. Available servers: {string.Join(", ", servers.Select(s => s.Name))}");
-        }
-
-        return CreateResolvedConnection(
-            host: primaryServer.Host,
-            port: primaryServer.Port,
-            database: primaryServer.Database,
-            username: primaryServer.Username,
-            password: primaryServer.Password,
-            sslMode: options.SslMode ?? primaryServer.SslMode,
-            timeout: options.Timeout ?? primaryServer.Timeout,
-            commandTimeout: options.CommandTimeout ?? primaryServer.CommandTimeout,
-            pooling: options.Pooling ?? primaryServer.Pooling,
-            minPoolSize: options.MinPoolSize ?? primaryServer.MinPoolSize,
-            maxPoolSize: options.MaxPoolSize ?? primaryServer.MaxPoolSize,
-            keepalive: options.Keepalive ?? primaryServer.Keepalive,
-            connectionLifetime: options.ConnectionLifetime ?? primaryServer.ConnectionLifetime,
-            primaryServerName: primaryServerName,
-            missingDatabaseMessage: "Database name is required. Either specify --database, configure Database in the server config, or use --all.");
-    }
-
-    private static ResolvedQueryConnection CreateResolvedConnection(
-        string? host,
-        string? port,
-        string? database,
-        string? username,
-        string? password,
-        string? sslMode,
-        int? timeout,
-        int? commandTimeout,
-        bool? pooling,
-        int? minPoolSize,
-        int? maxPoolSize,
-        int? keepalive,
-        int? connectionLifetime,
-        string missingDatabaseMessage,
-        string? primaryServerName = null)
-    {
-        ValidateConnectionParameters(host, port, username, database, missingDatabaseMessage);
-        var resolvedPassword = PromptForPasswordIfMissing(password);
-
-        return new ResolvedQueryConnection(
-            host ?? string.Empty,
-            port ?? string.Empty,
-            database ?? string.Empty,
-            username ?? string.Empty,
-            resolvedPassword,
-            sslMode,
-            timeout,
-            commandTimeout,
-            pooling,
-            minPoolSize,
-            maxPoolSize,
-            keepalive,
-            connectionLifetime,
-            primaryServerName);
-    }
-
-    private static void ValidateConnectionParameters(string? host, string? port, string? username, string? database, string missingDatabaseMessage)
-    {
-        if (string.IsNullOrWhiteSpace(host))
-        {
-            throw new ArgumentException("Host is required when not using --npgsql-connection-string.");
-        }
-
-        if (!SecurityUtils.IsValidHost(host))
-        {
-            throw new ArgumentException($"Invalid host: '{host}'");
-        }
-
-        if (string.IsNullOrWhiteSpace(port) || !SecurityUtils.IsValidPort(port))
-        {
-            throw new ArgumentException($"Invalid port: '{port}'. Port must be between 1 and 65535.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(username) && !SecurityUtils.IsValidUsername(username))
-        {
-            throw new ArgumentException($"Invalid username: '{username}'");
-        }
-
-        if (string.IsNullOrWhiteSpace(database))
-        {
-            throw new ArgumentException(missingDatabaseMessage);
-        }
-    }
-
-    private static string PromptForPasswordIfMissing(string? password)
-    {
-        if (!string.IsNullOrWhiteSpace(password))
-        {
-            return password;
-        }
-
-        Console.Write("Enter password: ");
-        var enteredPassword = ReadPassword();
-        Console.WriteLine();
-        return enteredPassword;
-    }
-
-    private static void LogConnectionContext(ResolvedQueryConnection connection)
-    {
-        Console.WriteLine($"Connection: {connection.Host}:{connection.Port}/{connection.Database}");
-        Console.WriteLine($"Username: {connection.Username}");
-
-        if (!string.IsNullOrWhiteSpace(connection.PrimaryServerName))
-        {
-            Console.WriteLine($"Primary Server: {connection.PrimaryServerName}");
-        }
-    }
-
-    private static string BuildConnectionStringForResolvedConnection(ResolvedQueryConnection connection, QueryCommandOptions options)
-    {
-        var builder = new NpgsqlConnectionStringBuilder
-        {
-            Host = connection.Host,
-            Port = int.Parse(connection.Port),
-            Database = connection.Database,
-            Username = connection.Username,
-            Password = connection.Password
-        };
-
-        if (!string.IsNullOrWhiteSpace(connection.SslMode))
-        {
-            builder.SslMode = ParseSslMode(connection.SslMode);
-        }
-
-        if (connection.Timeout.HasValue)
-        {
-            builder.Timeout = connection.Timeout.Value;
-        }
-
-        if (connection.CommandTimeout.HasValue)
-        {
-            builder.CommandTimeout = connection.CommandTimeout.Value;
-        }
-
-        if (connection.Pooling.HasValue)
-        {
-            builder.Pooling = connection.Pooling.Value;
-        }
-
-        if (connection.MinPoolSize.HasValue)
-        {
-            builder.MinPoolSize = connection.MinPoolSize.Value;
-        }
-
-        if (connection.MaxPoolSize.HasValue)
-        {
-            builder.MaxPoolSize = connection.MaxPoolSize.Value;
-        }
-
-        if (connection.Keepalive.HasValue)
-        {
-            builder.KeepAlive = connection.Keepalive.Value;
-        }
-
-        if (connection.ConnectionLifetime.HasValue)
-        {
-            builder.ConnectionLifetime = connection.ConnectionLifetime.Value;
-        }
 
         return builder.ConnectionString;
     }
@@ -998,416 +705,89 @@ public static class QueryCommand
             return result;
         }
 
-        throw new ArgumentException($"Invalid SSL mode: '{sslMode}'. Valid values are: Disable, Allow, Prefer, Require, VerifyCA, VerifyFull.");
+        return SslMode.Prefer;
     }
 
-    private static string CleanConnectionString(string connectionString)
+    /// <summary>
+    /// Writes a single CSV file with column headers and data.
+    /// </summary>
+    private static void WriteSingleCsv(string outputPath, List<string> columnNames, List<Dictionary<string, string>> data)
     {
-        // Remove surrounding quotes if present
-        if (connectionString.StartsWith('"') && connectionString.EndsWith('"'))
-        {
-            return connectionString.Substring(1, connectionString.Length - 2);
-        }
-
-        if (connectionString.StartsWith('\'') && connectionString.EndsWith('\''))
-        {
-            return connectionString.Substring(1, connectionString.Length - 2);
-        }
-
-        return connectionString;
-    }
-
-    private static int ExecuteQueryAndExportToCsv(string connectionString, string sqlQuery, string outputPath, int? commandTimeout)
-    {
-        using var connection = new NpgsqlConnection(connectionString);
-        connection.Open();
-
-        using var command = new NpgsqlCommand(sqlQuery, connection);
-
-        if (commandTimeout.HasValue)
-        {
-            command.CommandTimeout = commandTimeout.Value;
-        }
-
-        using var reader = command.ExecuteReader();
-
-        // Get column names
-        var columnNames = new List<string>();
-        for (var i = 0; i < reader.FieldCount; i++)
-        {
-            columnNames.Add(reader.GetName(i));
-        }
-
-        // Write to CSV
         using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
         using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
 
-        // Write header
         foreach (var columnName in columnNames)
         {
             csv.WriteField(columnName);
         }
         csv.NextRecord();
 
-        // Write data
-        var rowCount = 0;
-        while (reader.Read())
+        foreach (var row in data)
         {
-            for (var i = 0; i < reader.FieldCount; i++)
+            foreach (var columnName in columnNames)
             {
-                var value = reader.IsDBNull(i) ? string.Empty : reader.GetValue(i)?.ToString() ?? string.Empty;
+                var value = row.ContainsKey(columnName) ? row[columnName] : string.Empty;
                 csv.WriteField(value);
             }
             csv.NextRecord();
-            rowCount++;
-
-            // Show progress every 1000 rows
-            if (rowCount % 1000 == 0)
-            {
-                Console.Write($"\rRows processed: {rowCount}");
-            }
         }
-
-        if (rowCount > 0)
-        {
-            Console.Write($"\rRows processed: {rowCount}");
-        }
-
-        return rowCount;
     }
 
-    private static string ReadPassword()
+    /// <summary>
+    /// Writes consolidated CSV with metadata columns.
+    /// </summary>
+    private static void WriteConsolidatedCsvWithMetadata(string outputPath, List<CsvRow> allResults)
     {
-        var password = string.Empty;
-        var consoleKeyInfo = Console.ReadKey(true);
+        using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
+        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
 
-        while (consoleKeyInfo.Key != ConsoleKey.Enter)
+        var allColumnNames = new HashSet<string>();
+        foreach (var result in allResults.Where(r => r.Status == "Success"))
         {
-            if (consoleKeyInfo.Key == ConsoleKey.Backspace)
+            foreach (var columnName in result.ColumnNames)
             {
-                if (password.Length > 0)
-                {
-                    password = password.Substring(0, password.Length - 1);
-                }
+                allColumnNames.Add(columnName);
             }
-            else if (!char.IsControl(consoleKeyInfo.KeyChar))
+        }
+
+        var columns = new List<string> { "Server", "Database", "ExecutedAt", "Status", "RowCount", "Error" };
+        columns.AddRange(allColumnNames);
+
+        foreach (var columnName in columns)
+        {
+            csv.WriteField(columnName);
+        }
+        csv.NextRecord();
+
+        foreach (var result in allResults)
+        {
+            csv.WriteField(result.Server);
+            csv.WriteField(result.Database);
+            csv.WriteField(result.ExecutedAt.ToString("o"));
+            csv.WriteField(result.Status);
+            csv.WriteField(result.RowCount.ToString());
+            csv.WriteField(result.Error);
+
+            if (result.Status == "Success" && result.Data.Count > 0)
             {
-                password += consoleKeyInfo.KeyChar;
-            }
-
-            consoleKeyInfo = Console.ReadKey(true);
-        }
-
-        return password;
-    }
-
-    private static void RunOnAllServers(QueryCommandOptions options, string sqlQuery)
-    {
-        // Validate output directory for multi-server mode
-        if (string.IsNullOrWhiteSpace(options.OutputFile))
-        {
-            throw new ArgumentException("Output directory path is required when using --servers.");
-        }
-
-        if (!SecurityUtils.IsValidPath(options.OutputFile))
-        {
-            throw new ArgumentException($"Invalid output path: '{options.OutputFile}'. Path traversal not allowed.");
-        }
-
-        var outputDirectory = Path.GetFullPath(options.OutputFile);
-
-        // Create output directory if it doesn't exist
-        if (!Directory.Exists(outputDirectory))
-        {
-            Directory.CreateDirectory(outputDirectory);
-        }
-
-        // Load servers configuration from appsettings.json
-        var servers = LoadServersConfiguration();
-
-        if (servers == null || servers.Count == 0)
-        {
-            throw new ArgumentException("No servers configured in appsettings.json. Please add servers configuration under 'Servers:ServersList'.");
-        }
-
-        // Filter servers by pattern if provided
-        var filteredServers = FilterServers(servers, options.ServerFilter);
-
-        if (filteredServers.Count == 0)
-        {
-            throw new ArgumentException($"No servers found matching filter pattern: '{options.ServerFilter}'");
-        }
-
-        Console.WriteLine($"Found {filteredServers.Count} servers to process:");
-        foreach (var server in filteredServers)
-        {
-            Console.WriteLine($"  - {server.Name} ({server.Host}:{server.Port})");
-        }
-        Console.WriteLine();
-        Console.WriteLine($"Output directory: {Path.GetFullPath(outputDirectory)}");
-        Console.WriteLine();
-
-        // Execute query on all servers
-        var successCount = 0;
-        var failureCount = 0;
-        var totalRowCount = 0;
-
-        foreach (var server in filteredServers)
-        {
-            var serverOutputDir = Path.Combine(outputDirectory, server.Name);
-
-            Console.WriteLine($"========================================");
-            Console.WriteLine($"Processing server: {server.Name}");
-            Console.WriteLine($"Host: {server.Host}:{server.Port}");
-            Console.WriteLine($"========================================");
-            Console.WriteLine();
-
-            try
-            {
-                // Determine databases to query
-                List<string> databasesToQuery;
-
-                if (server.Databases != null && server.Databases.Count > 0)
+                foreach (var dataRow in result.Data)
                 {
-                    // Use specific databases from server config
-                    databasesToQuery = server.Databases;
-                    Console.WriteLine($"Using configured databases: {string.Join(", ", databasesToQuery)}");
-                }
-                else if (options.All)
-                {
-                    // Query all databases on the server
-                    Console.WriteLine("Querying all databases on server...");
-                    databasesToQuery = ListAllDatabases(server.Host, server.Port, server.Username, server.Password);
-
-                    // Apply exclude filter if provided
-                    if (!string.IsNullOrWhiteSpace(options.Exclude))
+                    foreach (var columnName in allColumnNames)
                     {
-                        var excludedDatabases = new HashSet<string>(options.Exclude.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-                        databasesToQuery = databasesToQuery.FindAll(db => !excludedDatabases.Contains(db));
+                        var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
+                        csv.WriteField(value);
                     }
+                    csv.NextRecord();
                 }
-                else
-                {
-                    // Use default database from server config
-                    if (string.IsNullOrWhiteSpace(server.Database))
-                    {
-                        throw new ArgumentException($"No database specified for server '{server.Name}'. Either configure Database in the server config, use --all, or specify databases in the Databases list");
-                    }
-                    databasesToQuery = new List<string> { server.Database };
-                    Console.WriteLine($"Using default database: {server.Database}");
-                }
-
-                Console.WriteLine();
-
-                // Create server output directory
-                if (!Directory.Exists(serverOutputDir))
-                {
-                    Directory.CreateDirectory(serverOutputDir);
-                }
-
-                // Execute query on each database
-                var serverSuccessCount = 0;
-                var serverFailureCount = 0;
-                var serverRowCount = 0;
-
-                foreach (var database in databasesToQuery)
-                {
-                    var outputFilePath = Path.Combine(serverOutputDir, $"{database}.csv");
-
-                    Console.WriteLine($"  Processing database '{database}'...");
-
-                    try
-                    {
-                        // Build connection string for this database
-                        var connectionString = BuildConnectionStringForServer(server, database, options);
-
-                        // Execute query and export to CSV
-                        var rowCount = ExecuteQueryAndExportToCsv(connectionString, sqlQuery, outputFilePath, server.CommandTimeout ?? options.CommandTimeout);
-
-                        serverRowCount += rowCount;
-                        serverSuccessCount++;
-
-                        Console.WriteLine($"    ✓ Results exported to: {database}.csv ({rowCount} rows)");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"    ✗ Failed: {ex.Message}");
-                        serverFailureCount++;
-                    }
-                }
-
-                totalRowCount += serverRowCount;
-                successCount += serverSuccessCount;
-                failureCount += serverFailureCount;
-
-                Console.WriteLine();
-                Console.WriteLine($"Server '{server.Name}' summary:");
-                Console.WriteLine($"  Successful: {serverSuccessCount}");
-                Console.WriteLine($"  Failed: {serverFailureCount}");
-                Console.WriteLine($"  Total rows: {serverRowCount}");
-                Console.WriteLine();
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine();
-                Console.WriteLine($"✗ Server '{server.Name}' failed: {ex.Message}");
-                failureCount++;
-                Console.WriteLine();
-            }
-        }
-
-        // Overall summary
-        Console.WriteLine("========================================");
-        Console.WriteLine("Overall Execution Summary:");
-        Console.WriteLine($"  Servers processed: {filteredServers.Count}");
-        Console.WriteLine($"  Successful databases: {successCount}");
-        Console.WriteLine($"  Failed databases: {failureCount}");
-        Console.WriteLine($"  Total rows: {totalRowCount}");
-        Console.WriteLine($"  Output directory: {Path.GetFullPath(outputDirectory)}");
-        Console.WriteLine("========================================");
-    }
-
-    private static List<ServerConfig>? LoadServersConfiguration(bool checkEnabled = true)
-    {
-        try
-        {
-            // Check if servers configuration is enabled (only when explicitly requested)
-            if (checkEnabled)
-            {
-                var enabledValue = ConfigurationService.Configuration["Servers:Enabled"];
-                if (enabledValue == null || !bool.TryParse(enabledValue, out var enabled) || !enabled)
+                foreach (var _ in allColumnNames)
                 {
-                    throw new ArgumentException("Multi-server configuration is not enabled. Set 'Servers:Enabled' to true in appsettings.json");
+                    csv.WriteField(string.Empty);
                 }
+                csv.NextRecord();
             }
-
-            // Load servers list
-            var serversSection = ConfigurationService.Configuration["Servers:ServersList"];
-            if (string.IsNullOrWhiteSpace(serversSection))
-            {
-                return null;
-            }
-
-            // Parse JSON configuration
-            var serversJson = $"{{\"Servers\":{serversSection}}}";
-            var config = System.Text.Json.JsonSerializer.Deserialize<ServersConfig>(serversJson);
-
-            return config?.Servers;
-        }
-        catch (Exception ex)
-        {
-            throw new ArgumentException($"Failed to load servers configuration from appsettings.json: {ex.Message}");
         }
     }
-
-    private static List<ServerConfig> FilterServers(List<ServerConfig> servers, string? filter)
-    {
-        if (string.IsNullOrWhiteSpace(filter))
-        {
-            return servers;
-        }
-
-        var filtered = new List<ServerConfig>();
-        var pattern = filter.Replace("*", ".*");
-
-        foreach (var server in servers)
-        {
-            if (System.Text.RegularExpressions.Regex.IsMatch(server.Name, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase))
-            {
-                filtered.Add(server);
-            }
-        }
-
-        return filtered;
-    }
-
-    private static string BuildConnectionStringForServer(ServerConfig server, string database, QueryCommandOptions options)
-    {
-        var builder = new NpgsqlConnectionStringBuilder
-        {
-            Host = server.Host,
-            Port = int.Parse(server.Port),
-            Database = database,
-            Username = server.Username,
-            Password = server.Password
-        };
-
-        // Use server-specific options or fall back to command options
-        var sslMode = server.SslMode ?? options.SslMode;
-        var timeout = server.Timeout ?? options.Timeout;
-        var commandTimeout = server.CommandTimeout ?? options.CommandTimeout;
-        var pooling = server.Pooling ?? options.Pooling;
-        var minPoolSize = server.MinPoolSize ?? options.MinPoolSize;
-        var maxPoolSize = server.MaxPoolSize ?? options.MaxPoolSize;
-        var keepalive = server.Keepalive ?? options.Keepalive;
-        var connectionLifetime = server.ConnectionLifetime ?? options.ConnectionLifetime;
-
-        if (!string.IsNullOrWhiteSpace(sslMode))
-        {
-            builder.SslMode = ParseSslMode(sslMode);
-        }
-
-        if (timeout.HasValue)
-        {
-            builder.Timeout = timeout.Value;
-        }
-
-        if (commandTimeout.HasValue)
-        {
-            builder.CommandTimeout = commandTimeout.Value;
-        }
-
-        if (pooling.HasValue)
-        {
-            builder.Pooling = pooling.Value;
-        }
-
-        if (minPoolSize.HasValue)
-        {
-            builder.MinPoolSize = minPoolSize.Value;
-        }
-
-        if (maxPoolSize.HasValue)
-        {
-            builder.MaxPoolSize = maxPoolSize.Value;
-        }
-
-        if (keepalive.HasValue)
-        {
-            builder.KeepAlive = keepalive.Value;
-        }
-
-        if (connectionLifetime.HasValue)
-        {
-            builder.ConnectionLifetime = connectionLifetime.Value;
-        }
-
-        return builder.ConnectionString;
-    }
-
-    private sealed record ResolvedQueryConnection(
-        string Host,
-        string Port,
-        string Database,
-        string Username,
-        string Password,
-        string? SslMode,
-        int? Timeout,
-        int? CommandTimeout,
-        bool? Pooling,
-        int? MinPoolSize,
-        int? MaxPoolSize,
-        int? Keepalive,
-        int? ConnectionLifetime,
-        string? PrimaryServerName);
-}
-
-// Helper class for deserializing servers configuration
-/// <summary>
-/// Represents the top-level servers configuration for deserialization.
-/// </summary>
-public class ServersConfig
-{
-    /// <summary>Gets or sets the list of server configurations.</summary>
-    public List<ServerConfig> Servers { get; set; } = new();
 }
