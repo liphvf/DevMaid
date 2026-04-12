@@ -122,8 +122,10 @@ FurLab é uma CLI tool .NET 10 para gerenciamento de PostgreSQL, com comandos pa
 
 **Rollback:** Manter `appsettings.json` intacto durante transição. Usuário pode reverter removendo `furlab.jsonc`.
 
-## Open Questions
+## Decisões de Design (Open Questions Resolvidas)
 
-1. **Dry-run com EXPLAIN:** EXPLAIN para DELETE/UPDATE nem sempre retorna row count preciso. Vale a pena implementar um `SELECT count(*)` prévio com a mesma WHERE clause? (Complexidade significativa para queries complexas)
-2. **Output de erro no CSV:** Uma linha por database que falhou ou uma linha por servidor? (Atualmente: uma linha por database)
-3. **Validação de input no `add -i`:** Validar host/porta antes de salvar ou só no `test`? (Atualmente: só no test)
+1. **Dry-run com EXPLAIN:** Não é necessário row count preciso. O EXPLAIN mostra o plano de execução estimado, que é suficiente para o usuário entender o impacto antes de confirmar. Implementar `SELECT count(*)` prévio adicionaria complexidade desnecessária para queries complexas.
+
+2. **Output de erro no CSV:** Uma linha por database que falhou. Isso permite rastrear exatamente qual database em qual servidor teve problema, facilitando debugging e análise pós-execução.
+
+3. **Validação de input no `add -i`:** Validação de host/porta ocorre apenas no `test`, não no `add`. Isso permite salvar configurações mesmo quando o servidor está temporariamente indisponível, e separa claramente a responsabilidade de "salvar configuração" de "verificar conectividade".
