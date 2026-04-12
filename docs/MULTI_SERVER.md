@@ -1,401 +1,145 @@
 # Multi-Server Query Execution
 
-O comando `query` suporta execução em múltiplos servidores PostgreSQL configurados no `appsettings.json`, gerando arquivos CSV organizados por servidor e banco de dados.
+O comando `query` suporta execução em múltiplos servidores PostgreSQL com seleção interativa, execução paralela e exportação CSV.
 
 ## Configuração
 
-### 1. Configurar Servidores no appsettings.json
+### Usando `settings db-servers`
 
-Edite o arquivo `appsettings.json` e configure a seção `Servers`:
+Servidores são gerenciados via CLI (armazenados em `%LocalAppData%\FurLab\furlab.jsonc`):
 
-```json
+```bash
+# Adicionar servidor interativamente
+FurLab settings db-servers add -i
+
+# Adicionar servidor com flags
+FurLab settings db-servers add -n dev -h localhost -p 5432 -U postgres -W mypass \
+    -d mydb,app_dev --ssl Prefer --timeout 30 --command-timeout 300
+
+# Adicionar com auto-descoberta de databases
+FurLab settings db-servers add -n prod -h prod-db.com -U readonly -W secret \
+    --fetch-all --exclude-patterns "template*,postgres"
+
+# Listar servidores
+FurLab settings db-servers ls
+
+# Testar conexão
+FurLab settings db-servers test -n dev
+
+# Remover servidor
+FurLab settings db-servers rm -n dev
+```
+
+### Estrutura do furlab.jsonc
+
+O arquivo `furlab.jsonc` em `%LocalAppData%\FurLab\` suporta comentários:
+
+```jsonc
 {
-  "Servers": {
-    "Enabled": true,
-    "PrimaryServer": "localhost",
-    "ServersList": [
-      {
-        "Name": "localhost",
-        "Host": "localhost",
-        "Port": "5432",
-        "Username": "postgres",
-        "Password": "",
-        "Database": "mydb",
-        "Databases": []
-      }
-    ]
+  // Servidores PostgreSQL
+  "servers": [
+    {
+      "name": "dev",               // Identificador único (obrigatório)
+      "host": "localhost",          // Host (obrigatório)
+      "port": 5432,                 // Porta (default: 5432)
+      "username": "postgres",       // Usuário (obrigatório)
+      "password": "mypassword",     // Senha (opcional)
+      "databases": ["mydb"],        // Databases específicas
+      "fetchAllDatabases": false,   // Auto-descoberta (default: false)
+      "excludePatterns": ["template*", "postgres"],  // Patterns de exclusão
+      "sslMode": "Prefer",          // SSL (default: Prefer)
+      "timeout": 30,                // Timeout de conexão (default: 30)
+      "commandTimeout": 300,        // Timeout do comando (default: 300)
+      "maxParallelism": 4           // Paralelismo por servidor (default: 4)
+    }
+  ],
+  // Defaults
+  "defaults": {
+    "outputFormat": "csv",
+    "outputDirectory": "./results",
+    "fetchAllDatabases": false,
+    "requireConfirmation": true,
+    "maxParallelism": 4
   }
 }
 ```
 
-### Estrutura de Configuração
+## Fluxo de Execução
 
-- **Enabled**: Ativa/desativa o modo multi-server (para `--servers`)
-- **PrimaryServer**: Nome do servidor a ser usado por padrão em comandos sem `--servers`
-- **ServersList**: Lista de servidores configurados
+### 1. Seleção Interativa de Servidores
 
-### 2. Configurar Servidores
+Ao executar `query run`, todos os servidores configurados são exibidos num prompt de seleção múltipla (todos pré-selecionados). Você pode desmarcar servidores que não deseja usar.
 
-Para cada servidor, você pode especificar:
+### 2. Detecção de Queries Destrutivas
 
-| Campo | Obrigatório | Descrição |
-|-------|-------------|-----------|
-| `Name` | ✅ | Identificador único do servidor (usado para nomear diretórios e referenciar o PrimaryServer) |
-| `Host` | ✅ | Endereço do host do PostgreSQL |
-| `Port` | ❌ | Porta (padrão: 5432) |
-| `Username` | ✅ | Nome de usuário |
-| `Password` | ✅ | Senha |
-| `Database` | ❌ | Banco padrão para esse servidor (usado quando não especificado --all e Databases está vazio) |
-| `Databases` | ❌ | Lista de bancos para consultar (vazio = todos ou padrão do servidor) |
-| `SslMode` | ❌ | Modo SSL (Disable, Allow, Prefer, Require, VerifyCA, VerifyFull) |
-| `Timeout` | ❌ | Timeout de conexão em segundos |
-| `CommandTimeout` | ❌ | Timeout do comando em segundos |
-| `Pooling` | ❌ | Habilitar connection pooling |
-| `MinPoolSize` | ❌ | Tamanho mínimo do pool |
-| `MaxPoolSize` | ❌ | Tamanho máximo do pool |
-| `Keepalive` | ❌ | Intervalo de keepalive em segundos |
-| `ConnectionLifetime` | ❌ | Tempo de vida da conexão em segundos |
+Se a query contém keywords destrutivas (INSERT, UPDATE, DELETE, ALTER, DROP, CREATE, TRUNCATE, MERGE, GRANT, REVOKE, SET ROLE), uma confirmação é exibida antes de prosseguir.
 
-## Uso
+### 3. Execução Paralela
 
-### Executar em Todos os Servidores Configurados
+Queries executam em paralelo em todos os servidores/databases selecionados, com:
+- `MaxDegreeOfParallelism` configurável por servidor
+- Polly retries automáticos (3 tentativas, backoff exponencial) para falhas transitórias
+- Tolerância a falhas: se um servidor falha, os outros continuam
 
-```bash
-FurLab query run --servers --input query.sql --output ./results
-```
+### 4. Log e Exportação
 
-**Saída:**
-```
-results/
-├── prod-primary/
-│   ├── app_prod.csv
-│   └── analytics.csv
-├── prod-secondary/
-│   ├── app_prod.csv
-│   └── analytics.csv
-└── staging/
-    └── app_staging.csv
-```
-
-### Filtrar Servidores por Nome
-
-Use `--server-filter` para selecionar servidores específicos:
-
-```bash
-# Apenas servidores de produção
-FurLab query run --servers --server-filter "prod-*" --input query.sql --output ./results
-
-# Apenas servidores primários
-FurLab query run --servers --server-filter "*-primary" --input query.sql --output ./results
-
-# Apenas servidor específico
-FurLab query run --servers --server-filter "staging" --input query.sql --output ./results
-```
-
-O filtro suporta o caractere curinga `*` e é case-insensitive.
-
-### Combinar com --all (Todos os Bancos)
-
-Se um servidor não tiver a lista `Databases` configurada, você pode usar `--all` para consultar todos os bancos:
-
-```bash
-FurLab query run --servers --all --input query.sql --output ./results
-```
-
-### Excluir Bancos Específicos
-
-Use `--exclude` para pular bancos do sistema:
-
-```bash
-FurLab query run --servers --all --exclude "postgres,template0,template1" --input query.sql --output ./results
-```
-
-## Comportamento
-
-### Determinação de Bancos a Consultar
-
-Para cada servidor, a ferramenta segue esta ordem de prioridade:
-
-1. **Lista `Databases` configurada**: Usa os bancos especificados na configuração do servidor
-2. **Flag `--all`**: Lista todos os bancos no servidor (aplicando `--exclude` se fornecido)
-3. **Banco padrão do servidor**: Usa o banco configurado em `Database` na configuração do servidor
-
-### Prioridade de Configuração
-
-As configurações de conexão seguem esta ordem de precedência (do maior para o menor):
-
-1. **Opções da linha de comando** (`--host`, `--port`, `--database`, `--ssl-mode`, `--timeout`, etc.)
-2. **Configuração específica do servidor** (no `Servers:ServersList`)
-3. **Configuração do PrimaryServer** (servidor referenciado em `Servers:PrimaryServer`)
-
-### Servidor Primário
-
-Quando você executa um comando sem `--servers`, a ferramenta usa o servidor configurado em `Servers:PrimaryServer`:
-
-```bash
-# Usa o servidor configurado em PrimaryServer
-FurLab query run --input query.sql --output result.csv
-
-# Sobrescreve configurações do PrimaryServer
-FurLab query run --input query.sql --output result.csv --host other-host.com --database otherdb
-```
+- **Terminal**: Log por database (`✓ dev/db1 — Success — 5 rows (14:30:22)`)
+- **Terminal**: Tabela resumo final (Server, Database, Status, Rows, ExecutedAt, Error)
+- **CSV**: Apenas resultados de sucesso (colunas: `Server, Database, <query cols>`)
 
 ## Exemplos
 
-### Usando o Servidor Primário
+### Query em servidores selecionados
 
 ```bash
-# Usa o servidor configurado em PrimaryServer
-FurLab query run --input query.sql --output result.csv
+FurLab query run -i audit.sql -o ./results
 ```
 
-### Auditoria em Todos os Servidores de Produção
+### Query inline
 
 ```bash
-FurLab query run --servers --server-filter "prod-*" \
-    --input audit_tables.sql \
-    --output ./audit_results \
-    --exclude "postgres,template0,template1"
+FurLab query run -c "SELECT count(*) FROM users" -o ./results
 ```
 
-**Arquivo `audit_tables.sql`:**
-```sql
-SELECT
-    schemaname,
-    tablename,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-FROM
-    pg_tables
-WHERE
-    schemaname NOT IN ('pg_catalog', 'information_schema')
-ORDER BY
-    pg_total_relation_size(schemaname||'.'||tablename) DESC;
-```
-
-### Relatório de Usuários com Timeout Estendido
+### CSV por servidor
 
 ```bash
-FurLab query run --servers --input users_report.sql \
-    --output ./reports \
-    --command-timeout 600
+FurLab query run -i query.sql --separate-files -o ./results
 ```
 
-### Consulta Apenas em Servidores com SSL
+Gera: `dev_20260412_143022.csv`, `prod_20260412_143022.csv`
 
-Os servidores com `SslMode` configurado usarão suas configurações específicas:
+### Auto-descoberta de databases
 
-```json
-{
-  "Servers": {
-    "ServersList": [
-      {
-        "Name": "prod-secure",
-        "Host": "prod-db.company.com",
-        "Port": "5432",
-        "Username": "readonly",
-        "Password": "securepass",
-        "Database": "app_prod",
-        "SslMode": "VerifyFull"
-      }
-    ]
-  }
-}
+```bash
+# Servidor com fetchAllDatabases: true no furlab.jsonc
+FurLab query run -i query.sql -o ./results
 ```
 
-## Saída e Feedback
+## Saída CSV
 
-### Progresso Durante Execução
+### Consolidado (padrão)
 
 ```
-Found 3 servers to process:
-  - prod-primary (prod-db-01.company.com:5432)
-  - prod-secondary (prod-db-02.company.com:5432)
-  - staging (staging-db.company.com:5432)
-
-Output directory: C:\Users\user\results
-
-========================================
-Processing server: prod-primary
-Host: prod-db-01.company.com:5432
-========================================
-
-Using configured databases: app_prod, analytics
-
-  Processing database 'app_prod'...
-    ✓ Results exported to: app_prod.csv (1500 rows)
-  Processing database 'analytics'...
-    ✓ Results exported to: analytics.csv (250 rows)
-
-Server 'prod-primary' summary:
-  Successful: 2
-  Failed: 0
-  Total rows: 1750
-
-========================================
-Overall Execution Summary:
-  Servers processed: 3
-  Successful databases: 8
-  Failed databases: 0
-  Total rows: 5230
-  Output directory: C:\Users\user\results
-========================================
+Server,Database,id,name
+dev,mydb,1,Alice
+dev,mydb,2,Bob
+prod,mydb,1,Alice
 ```
 
-## Segurança
+### Separado (`--separate-files`)
 
-### Senhas
+Um arquivo por servidor: `<server>_<timestamp>.csv`
 
-- As senhas são armazenadas em texto plano no `appsettings.json`
-- **Recomendação**: Use variáveis de ambiente ou um sistema de gerenciamento de segredos em produção
-- **Windows**: Use segredos do usuário ou Azure Key Vault
-- **Linux**: Use variáveis de ambiente ou HashiCorp Vault
+### Comportamento com Erros
 
-### Validação
+- Erros são logados no terminal (não no CSV)
+- Se todos os servidores falham, exibe: "Nenhum servidor respondeu com sucesso. Verifique as conexões." (exit code 1)
 
-- Validação de host, port e username
-- Validação de paths para prevenir path traversal
-- Validação de identificadores PostgreSQL
+## Migração do appsettings.json
 
-## Solução de Problemas
+Se você usava `appsettings.json` para configurar servidores:
 
-### Erro: "PrimaryServer is not configured in appsettings.json"
-
-**Causa:** A propriedade `Servers:PrimaryServer` está ausente ou vazia.
-
-**Solução:**
-```json
-{
-  "Servers": {
-    "PrimaryServer": "localhost",
-    "ServersList": [...]
-  }
-}
-```
-
-### Erro: "Primary server 'X' not found in ServersList"
-
-**Causa:** O servidor especificado em `PrimaryServer` não existe na lista `ServersList`.
-
-**Solução:** Verifique se o nome do servidor em `PrimaryServer` corresponde exatamente ao `Name` de um servidor em `ServersList`.
-
-### Erro: "Multi-server configuration is not enabled"
-
-**Causa:** A configuração `Servers:Enabled` está definida como `false` ou ausente e você está usando `--servers`.
-
-**Solução:**
-```json
-{
-  "Servers": {
-    "Enabled": true,
-    "ServersList": [...]
-  }
-}
-```
-
-### Erro: "No servers configured in appsettings.json"
-
-**Causa:** A lista `Servers:ServersList` está vazia ou ausente.
-
-**Solução:** Adicione servidores à configuração.
-
-### Erro: "No servers found matching filter pattern"
-
-**Causa:** O filtro `--server-filter` não corresponde a nenhum servidor configurado.
-
-**Solução:** Verifique o padrão do filtro e os nomes dos servidores configurados.
-
-### Erro: "psql not found"
-
-**Causa:** O `psql` não está instalado ou não está no PATH (necessário para `--all`).
-
-**Solução:** Instale PostgreSQL e adicione `psql` ao PATH. No Windows, a ferramenta procura automaticamente em:
-- `C:\Program Files\PostgreSQL\*\bin\psql.exe`
-- `C:\PostgreSQL\*\bin\psql.exe`
-
-## Melhores Práticas
-
-### 1. Organização de Servidores
-
-Use nomes descritivos que incluam ambiente e propósito:
-
-```json
-{
-  "Servers": {
-    "PrimaryServer": "dev-local",
-    "ServersList": [
-      { "Name": "prod-primary", ... },
-      { "Name": "prod-secondary", ... },
-      { "Name": "staging-primary", ... },
-      { "Name": "dev-local", ... }
-    ]
-  }
-}
-```
-
-### 2. Configuração de Bancos
-
-Especifique bancos explicitamente quando possível:
-
-```json
-{
-  "Name": "prod-app",
-  "Database": "app_prod",
-  "Databases": ["app_prod", "app_logs"]
-}
-```
-
-Use `--all` apenas quando realmente precisar consultar todos os bancos.
-
-### 3. Servidor Primário
-
-Configure o `PrimaryServer` para desenvolvimento local:
-
-```json
-{
-  "Servers": {
-    "PrimaryServer": "dev-local",
-    "ServersList": [
-      {
-        "Name": "dev-local",
-        "Host": "localhost",
-        "Port": "5432",
-        "Username": "postgres",
-        "Password": "",
-        "Database": "mydb"
-      }
-    ]
-  }
-}
-```
-
-### 4. Timeouts
-
-Ajuste timeouts para consultas pesadas:
-
-```json
-{
-  "Name": "prod-analytics",
-  "Database": "analytics",
-  "CommandTimeout": 600
-}
-```
-
-### 5. SSL em Produção
-
-Sempre use SSL em servidores de produção:
-
-```json
-{
-  "Name": "prod-secure",
-  "Database": "app_prod",
-  "SslMode": "VerifyFull"
-}
-```
-
-### 6. Separar Configuração
-
-Use arquivos de configuração diferentes por ambiente:
-
-- `appsettings.json` - Desenvolvimento local (PrimaryServer: dev-local)
-- `appsettings.staging.json` - Staging (PrimaryServer: staging-primary)
-- `appsettings.production.json` - Produção (PrimaryServer: prod-primary, não commitar no Git)
+1. Use `settings db-servers add` para recriar servidores no novo formato
+2. O `appsettings.json` ainda funciona como fallback durante transição
+3. Quando ambos existem, `furlab.jsonc` tem precedência

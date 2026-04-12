@@ -86,20 +86,20 @@
 
 ## 10. Testes e validação
 
-- [ ] 10.1 Criar testes unitários para `SqlQueryAnalyzer` (keywords destrutivas, comentários, CTEs)
-- [ ] 10.2 Criar testes unitários para `UserConfigService` (leitura, escrita, validação, fallback)
-- [ ] 10.3 Criar testes de integração para `settings db-servers` (add, ls, rm, test)
-- [ ] 10.4 Criar testes de integração para `query run` com múltiplos servidores
-- [ ] 10.5 Testar execução paralela com limite configurável
-- [ ] 10.6 Testar tolerância a falhas parcial (um servidor falha, outros continuam)
-- [ ] 10.7 Testar formato de CSV consolidado (Server, Database, <query cols>) e CSV por servidor (--separate-files)
-- [ ] 10.8 Testar migração de `appsettings.json` para `furlab.jsonc`
+- [x] 10.1 Criar testes unitários para `SqlQueryAnalyzer` (keywords destrutivas, comentários, CTEs)
+- [x] 10.2 Criar testes unitários para `UserConfigService` (leitura, escrita, validação, fallback)
+- [x] 10.3 Criar testes de integração para `settings db-servers` (add, ls, rm, test)
+- [x] 10.4 Criar testes de integração para `query run` com múltiplos servidores
+- [x] 10.5 Testar execução paralela com limite configurável
+- [x] 10.6 Testar tolerância a falhas parcial (um servidor falha, outros continuam)
+- [x] 10.7 Testar formato de CSV consolidado (Server, Database, <query cols>) e CSV por servidor (--separate-files)
+- [x] 10.8 Testar migração de `appsettings.json` para `furlab.jsonc`
 
 ## 11. Documentação
 
-- [ ] 11.1 Atualizar README.md com novo fluxo de `query run`
-- [ ] 11.2 Atualizar README.pt-BR.md com novo fluxo
-- [ ] 11.3 Criar exemplo de `furlab.jsonc` com comentários explicativos
-- [ ] 11.4 Documentar comandos `settings db-servers` no README
-- [ ] 11.5 Documentar guard rail de queries destrutivas
-- [ ] 11.6 Atualizar appsettings.example.json com nota de depreciação
+- [x] 11.1 Atualizar README.md com novo fluxo de `query run`
+- [x] 11.2 Atualizar README.pt-BR.md com novo fluxo
+- [x] 11.3 Criar exemplo de `furlab.jsonc` com comentários explicativos
+- [x] 11.4 Documentar comandos `settings db-servers` no README
+- [x] 11.5 Documentar guard rail de queries destrutivas
+- [x] 11.6 Atualizar appsettings.example.json com nota de depreciação
