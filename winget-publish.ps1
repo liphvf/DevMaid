@@ -248,6 +248,16 @@ function Get-InformacoesPacote {
 }
 
 # ─────────────────────────────────────────────────────────────
+# Configuração do ícone
+# ─────────────────────────────────────────────────────────────
+
+function Set-IconePadrao {
+    $script:IconUrl = "https://raw.githubusercontent.com/liphvf/FurLab/refs/heads/main/icon.png"
+    $script:IconFileType = "png"
+    Write-Ok "Ícone configurado: $($script:IconUrl)"
+}
+
+# ─────────────────────────────────────────────────────────────
 # Token GitHub (para wingetcreate submit)
 # ─────────────────────────────────────────────────────────────
 
@@ -296,6 +306,7 @@ function Confirm-Revisao {
     foreach ($url in $script:InstallerUrls) {
         Write-Host "    - $url" -ForegroundColor Gray
     }
+    Write-Host "  Ícone          : " -NoNewline; Write-Host $script:IconUrl -ForegroundColor White
     Write-Host "  Saída          : " -NoNewline; Write-Host $script:OutputDir -ForegroundColor White
     Write-Host ""
 
@@ -334,24 +345,6 @@ function Get-InstallerSha256 {
     }
 }
 
-function Get-InstallerType {
-    param([string]$Url)
-
-    $ext = [System.IO.Path]::GetExtension($Url.Split('?')[0]).ToLower()
-    switch ($ext) {
-        '.msi'  { return 'msi' }
-        '.msix' { return 'msix' }
-        '.appx' { return 'appx' }
-        '.exe'  { return 'exe' }
-        default { return 'exe' }
-    }
-}
-
-function Get-InstallerScope {
-    param([string]$InstallerType)
-    if ($InstallerType -eq 'msi') { return 'machine' }
-    return 'user'
-}
 
 function Get-InstallerArchitecture {
     param([string]$Url)
@@ -372,6 +365,13 @@ function New-ManifestYaml {
 
     # DefaultLocale manifest
     $defaultLocalePath = Join-Path $versionDir "FurLab.CLI.locale.en-US.yaml"
+
+    $iconsSection = @"
+Icons:
+  - IconUrl: $($script:IconUrl)
+    IconFileType: $($script:IconFileType)
+"@
+
     $defaultLocaleYaml = @"
 # yaml-language-server: `$schema=https://aka.ms/winget-manifest.defaultLocale.1.12.0.schema.json
 PackageIdentifier: $($script:PackageId)
@@ -381,6 +381,7 @@ Publisher: FurLab
 PackageName: FurLab CLI
 ShortDescription: Command-line utility for database backups, Docker management, and Windows features.
 License: GPL-3.0
+$($iconsSection.TrimEnd())
 ManifestType: defaultLocale
 ManifestVersion: 1.12.0
 "@
@@ -407,14 +408,13 @@ ManifestVersion: 1.12.0
 
     foreach ($url in $script:InstallerUrls) {
         $idx++
-        $installerType = Get-InstallerType $url
         $architecture = Get-InstallerArchitecture $url
         $sha256 = Get-InstallerSha256 $url
 
         $entry = "  - Architecture: ${architecture}`n    InstallerType: portable`n    InstallerUrl: ${url}`n    InstallerSha256: ${sha256}`n    Commands:`n    - fur"
         $installerEntries.Add($entry)
 
-        Write-Ok "Installer ${idx}: ${architecture} / ${installerType} / SHA256: $($sha256.Substring(0,16))..."
+        Write-Ok "Installer ${idx}: ${architecture} / portable / SHA256: $($sha256.Substring(0,16))..."
     }
 
     $installerYaml = @"
@@ -534,6 +534,7 @@ Write-Info "Voce precisara de: URL(s) do instalador e um GitHub PAT (public_repo
 
 Test-Dependencias
 Get-InformacoesPacote
+Set-IconePadrao
 Get-GitHubToken
 Set-DiretorioSaida
 Confirm-Revisao
