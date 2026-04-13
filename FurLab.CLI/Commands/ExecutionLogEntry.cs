@@ -1,12 +1,10 @@
 namespace FurLab.CLI.Commands;
 
-internal sealed record CsvRow(
+internal sealed record ExecutionLogEntry(
     string Server,
     string Database,
     DateTime ExecutedAt,
     string Status,
     int RowCount,
-    string Error,
     double DurationMs,
-    List<string> ColumnNames,
-    List<Dictionary<string, string>> Data);
+    string Error);

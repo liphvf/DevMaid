@@ -5,71 +5,63 @@ namespace FurLab.CLI.CommandOptions;
 /// </summary>
 public class QueryCommandOptions
 {
-    // Input/Output
-    /// <summary>Gets or sets the path to the SQL input file.</summary>
+    /// <summary>Path to the SQL input file.</summary>
     public string InputFile { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the inline SQL query (alternative to InputFile).</summary>
+    /// <summary>Inline SQL query (alternative to InputFile).</summary>
     public string InlineQuery { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the path to the CSV output file or directory.</summary>
+    /// <summary>Path to the CSV output directory.</summary>
     public string OutputFile { get; set; } = string.Empty;
 
-    // Multi-database options
-    /// <summary>Gets or sets a value indicating whether to execute on all databases.</summary>
+    /// <summary>Execute on all databases.</summary>
     public bool All { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether to generate separate files per database.</summary>
-    public bool SeparateFiles { get; set; }
-
-    /// <summary>Gets or sets a comma-separated list of database names to exclude.</summary>
+    /// <summary>Comma-separated list of database names to exclude.</summary>
     public string? Exclude { get; set; }
 
-    // Connection string alternatives
-    /// <summary>Gets or sets a complete Npgsql connection string.</summary>
+    /// <summary>Complete Npgsql connection string.</summary>
     public string? NpgsqlConnectionString { get; set; }
 
-    // Individual connection parameters
-    /// <summary>Gets or sets the database host address.</summary>
+    /// <summary>Database host address.</summary>
     public string? Host { get; set; }
 
-    /// <summary>Gets or sets the database port.</summary>
+    /// <summary>Database port.</summary>
     public string? Port { get; set; }
 
-    /// <summary>Gets or sets the database name.</summary>
+    /// <summary>Database name.</summary>
     public string? Database { get; set; }
 
-    /// <summary>Gets or sets the database username.</summary>
+    /// <summary>Database username.</summary>
     public string? Username { get; set; }
 
-    /// <summary>Gets or sets the database password.</summary>
+    /// <summary>Database password.</summary>
     public string? Password { get; set; }
 
-    // Connection options
-    /// <summary>Gets or sets the SSL mode.</summary>
+    /// <summary>SSL mode.</summary>
     public string? SslMode { get; set; }
 
-    /// <summary>Gets or sets the connection timeout in seconds.</summary>
+    /// <summary>Connection timeout in seconds.</summary>
     public int? Timeout { get; set; }
 
-    /// <summary>Gets or sets the command timeout in seconds.</summary>
+    /// <summary>Command timeout in seconds.</summary>
     public int? CommandTimeout { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether connection pooling is enabled.</summary>
+    /// <summary>Enable connection pooling.</summary>
     public bool? Pooling { get; set; }
 
-    /// <summary>Gets or sets the minimum connection pool size.</summary>
+    /// <summary>Minimum pool size.</summary>
     public int? MinPoolSize { get; set; }
 
-    /// <summary>Gets or sets the maximum connection pool size.</summary>
+    /// <summary>Maximum pool size.</summary>
     public int? MaxPoolSize { get; set; }
 
-    /// <summary>Gets or sets the keepalive interval in seconds.</summary>
+    /// <summary>Keepalive interval in seconds.</summary>
     public int? Keepalive { get; set; }
 
-    /// <summary>Gets or sets the connection lifetime in seconds.</summary>
+    /// <summary>Connection lifetime in seconds.</summary>
     public int? ConnectionLifetime { get; set; }
 
-    /// <summary>Gets or sets a value indicating whether to skip confirmation for destructive queries.</summary>
+    /// <summary>Skip confirmation for destructive queries.</summary>
     public bool NoConfirm { get; set; }
 }

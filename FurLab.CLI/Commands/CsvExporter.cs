@@ -3,18 +3,8 @@ using System.Text;
 
 namespace FurLab.CLI.Commands;
 
-/// <summary>
-/// Provides CSV export functionality for query results.
-/// Extracted to allow unit testing without depending on file I/O side effects.
-/// </summary>
 internal static class CsvExporter
 {
-    /// <summary>
-    /// Writes a consolidated CSV file containing results from multiple servers and databases.
-    /// Columns: Server, Database, then all query result columns (union of all result sets).
-    /// </summary>
-    /// <param name="outputPath">Destination file path.</param>
-    /// <param name="successResults">Query results with Status == "Success".</param>
     public static void WriteConsolidatedCsv(string outputPath, List<CsvRow> successResults)
     {
         using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
@@ -22,24 +12,6 @@ internal static class CsvExporter
         WriteConsolidatedCsv(csv, successResults);
     }
 
-    /// <summary>
-    /// Writes a per-server CSV file containing results for a single server.
-    /// Columns: Server, Database, then all query result columns.
-    /// </summary>
-    /// <param name="outputPath">Destination file path.</param>
-    /// <param name="serverName">Name of the server (written into the Server column).</param>
-    /// <param name="serverResults">Query results for this server.</param>
-    public static void WriteServerCsv(string outputPath, string serverName, List<CsvRow> serverResults)
-    {
-        using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
-        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
-        WriteServerCsv(csv, serverName, serverResults);
-    }
-
-    /// <summary>
-    /// Writes consolidated CSV rows to an already-open CsvWriter.
-    /// Used for testing without requiring file I/O.
-    /// </summary>
     internal static void WriteConsolidatedCsv(CsvHelper.CsvWriter csv, List<CsvRow> successResults)
     {
         var allColumnNames = BuildColumnList(successResults);
@@ -50,7 +22,6 @@ internal static class CsvExporter
         {
             csv.WriteField(columnName);
         }
-
         csv.NextRecord();
 
         foreach (var result in successResults)
@@ -64,50 +35,100 @@ internal static class CsvExporter
                     var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
                     csv.WriteField(value);
                 }
-
                 csv.NextRecord();
             }
         }
     }
 
-    /// <summary>
-    /// Writes per-server CSV rows to an already-open CsvWriter.
-    /// Used for testing without requiring file I/O.
-    /// </summary>
-    internal static void WriteServerCsv(CsvHelper.CsvWriter csv, string serverName, List<CsvRow> serverResults)
+    public static void AppendToServerCsv(string outputPath, CsvRow row)
     {
-        var allColumnNames = BuildColumnList(serverResults);
-
-        csv.WriteField("Server");
-        csv.WriteField("Database");
-        foreach (var columnName in allColumnNames)
+        var fileExists = File.Exists(outputPath);
+        using var writer = new StreamWriter(outputPath, append: true, Encoding.UTF8)
         {
-            csv.WriteField(columnName);
+            AutoFlush = true
+        };
+        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
+
+        if (!fileExists)
+        {
+            csv.WriteField("Server");
+            csv.WriteField("Database");
+            foreach (var columnName in row.ColumnNames)
+            {
+                csv.WriteField(columnName);
+            }
+            csv.NextRecord();
         }
 
-        csv.NextRecord();
-
-        foreach (var result in serverResults)
+        foreach (var dataRow in row.Data)
         {
-            foreach (var dataRow in result.Data)
+            csv.WriteField(row.Server);
+            csv.WriteField(row.Database);
+            foreach (var columnName in row.ColumnNames)
             {
-                csv.WriteField(serverName);
-                csv.WriteField(result.Database);
-                foreach (var columnName in allColumnNames)
-                {
-                    var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
-                    csv.WriteField(value);
-                }
-
-                csv.NextRecord();
+                var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
+                csv.WriteField(value);
             }
+            csv.NextRecord();
         }
     }
 
-    /// <summary>
-    /// Builds an ordered, deduplicated list of column names from all result sets.
-    /// Column order is determined by first appearance across results.
-    /// </summary>
+    public static void WriteErrorEntry(string outputPath, string server, string database, DateTime executedAt, string error)
+    {
+        var fileExists = File.Exists(outputPath);
+        using var writer = new StreamWriter(outputPath, append: true, Encoding.UTF8)
+        {
+            AutoFlush = true
+        };
+        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
+
+        if (!fileExists)
+        {
+            csv.WriteField("Server");
+            csv.WriteField("Database");
+            csv.WriteField("ExecutedAt");
+            csv.WriteField("Error");
+            csv.NextRecord();
+        }
+
+        csv.WriteField(server);
+        csv.WriteField(database);
+        csv.WriteField(executedAt.ToString("O", CultureInfo.InvariantCulture));
+        csv.WriteField(error);
+        csv.NextRecord();
+    }
+
+    public static void WriteLogEntry(string outputPath, ExecutionLogEntry entry)
+    {
+        var fileExists = File.Exists(outputPath);
+        using var writer = new StreamWriter(outputPath, append: true, Encoding.UTF8)
+        {
+            AutoFlush = true
+        };
+        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
+
+        if (!fileExists)
+        {
+            csv.WriteField("Server");
+            csv.WriteField("Database");
+            csv.WriteField("ExecutedAt");
+            csv.WriteField("Status");
+            csv.WriteField("RowCount");
+            csv.WriteField("DurationMs");
+            csv.WriteField("Error");
+            csv.NextRecord();
+        }
+
+        csv.WriteField(entry.Server);
+        csv.WriteField(entry.Database);
+        csv.WriteField(entry.ExecutedAt.ToString("O", CultureInfo.InvariantCulture));
+        csv.WriteField(entry.Status);
+        csv.WriteField(entry.RowCount);
+        csv.WriteField(entry.DurationMs);
+        csv.WriteField(entry.Error);
+        csv.NextRecord();
+    }
+
     internal static List<string> BuildColumnList(List<CsvRow> results)
     {
         var allColumnNames = new List<string>();
@@ -122,7 +143,73 @@ internal static class CsvExporter
                 }
             }
         }
-
         return allColumnNames;
+    }
+
+    internal static string SanitizeFilename(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var sb = new StringBuilder(name.Length);
+        foreach (var c in name)
+        {
+            sb.Append(invalid.Contains(c) ? '_' : c);
+        }
+        return sb.ToString();
+    }
+
+    public static void MergeServerCsvsToConsolidated(string outputDirectory, string timestamp, List<string> serverNames)
+    {
+        var allResults = new List<CsvRow>();
+        foreach (var serverName in serverNames)
+        {
+            var serverFile = Path.Combine(outputDirectory, $"{SanitizeFilename(serverName)}_{timestamp}.csv");
+            if (!File.Exists(serverFile)) continue;
+
+            var rows = ReadServerCsv(serverFile);
+            allResults.AddRange(rows);
+        }
+
+        if (allResults.Count == 0) return;
+
+        var consolidatedPath = Path.Combine(outputDirectory, $"consolidated_{timestamp}.csv");
+        WriteConsolidatedCsv(consolidatedPath, allResults);
+    }
+
+    private static List<CsvRow> ReadServerCsv(string filePath)
+    {
+        using var reader = new StreamReader(filePath, Encoding.UTF8);
+        using var csv = new CsvHelper.CsvReader(reader, CultureInfo.InvariantCulture);
+
+        var records = csv.GetRecords<dynamic>().ToList();
+        if (records.Count == 0) return [];
+
+        var header = csv.HeaderRecord;
+        if (header == null) return [];
+
+        var queryColumns = header
+            .Where(h => h != "Server" && h != "Database")
+            .ToList();
+
+        var columnNames = queryColumns;
+        var results = new List<CsvRow>();
+
+        using var reader2 = new StreamReader(filePath, Encoding.UTF8);
+        using var csv2 = new CsvHelper.CsvReader(reader2, CultureInfo.InvariantCulture);
+        csv2.Read();
+        csv2.ReadHeader();
+
+        while (csv2.Read())
+        {
+            var server = csv2.GetField("Server");
+            var database = csv2.GetField("Database");
+            var dataRow = new Dictionary<string, string>();
+            foreach (var col in queryColumns)
+            {
+                dataRow[col] = csv2.TryGetField<string>(col, out var val) ? val ?? string.Empty : string.Empty;
+            }
+            results.Add(new CsvRow(server ?? string.Empty, database ?? string.Empty, DateTime.MinValue, "Success", 0, string.Empty, 0, columnNames, [dataRow]));
+        }
+
+        return results;
     }
 }
