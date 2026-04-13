@@ -121,6 +121,10 @@ public static class QueryCommand
     /// <summary>
     /// Executes a SQL query and exports the results to CSV.
     /// </summary>
+    /// <param name="options">The query execution options.</param>
+    /// <exception cref="ArgumentException">Thrown when required options are missing or invalid.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the SQL input file does not exist.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the user cancels execution of a destructive query.</exception>
     public static void Run(QueryCommandOptions options)
     {
         if (!string.IsNullOrWhiteSpace(options.InlineQuery) && !string.IsNullOrWhiteSpace(options.InputFile))
@@ -192,6 +196,27 @@ public static class QueryCommand
         ExecuteOnSelectedServers(selectedServers, sqlQuery, options, querySource, queryTypeDescription).GetAwaiter().GetResult();
     }
 
+    /// <summary>
+    /// Unescapes an inline SQL query string received from the command line.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// On Windows, the shell and <c>System.CommandLine</c> do not always strip
+    /// the outer quotes from arguments, especially when the value contains spaces
+    /// or special characters. This method performs a best-effort strip of a single
+    /// outer quote pair (either <c>"…"</c> or <c>'…'</c>) and then unescapes
+    /// any backslash-escaped quotes inside the value.
+    /// </para>
+    /// <para>
+    /// Examples:
+    /// <list type="bullet">
+    ///   <item><description><c>"SELECT 1"</c> → <c>SELECT 1</c></description></item>
+    ///   <item><description><c>'SELECT 1'</c> → <c>SELECT 1</c></description></item>
+    ///   <item><description><c>SELECT \"name\" FROM t</c> → <c>SELECT "name" FROM t</c></description></item>
+    ///   <item><description><c>SELECT 1</c> (no outer quotes) → <c>SELECT 1</c> (unchanged)</description></item>
+    /// </list>
+    /// </para>
+    /// </remarks>
     internal static string UnescapeInlineQuery(string query)
     {
         if ((query.StartsWith('"') && query.EndsWith('"')) ||
@@ -204,6 +229,10 @@ public static class QueryCommand
         return query;
     }
 
+    /// <summary>
+    /// Shows interactive server selection prompt with all servers pre-selected.
+    /// If only one server is configured, returns it directly without a prompt.
+    /// </summary>
     private static List<ServerConfigEntry> SelectServers(IReadOnlyList<ServerConfigEntry> servers)
     {
         if (servers.Count == 1)
@@ -227,6 +256,10 @@ public static class QueryCommand
         return servers.Where(s => selected.Contains(s.Name)).ToList();
     }
 
+    /// <summary>
+    /// Shows a confirmation prompt for destructive queries, displaying the query type,
+    /// number of affected servers and databases, and a preview of the SQL.
+    /// </summary>
     private static bool ConfirmDestructiveQuery(string queryType, List<ServerConfigEntry> selectedServers, int databaseCount, string sqlQuery)
     {
         var preview = sqlQuery.Length > 200 ? sqlQuery.Substring(0, 200) + "..." : sqlQuery;
@@ -247,6 +280,13 @@ public static class QueryCommand
         return AnsiConsole.Confirm("Proceed with execution?");
     }
 
+    /// <summary>
+    /// Executes the query on all selected servers with parallel execution, progressive CSV output,
+    /// and a Spectre.Console progress bar with live activity feed.
+    /// Writes per-server partial CSVs progressively via a Channel-based single writer task,
+    /// then merges them into a consolidated CSV at the end. Errors and all executions are
+    /// also logged progressively to dedicated CSV files.
+    /// </summary>
     private static async Task ExecuteOnSelectedServers(List<ServerConfigEntry> selectedServers, string sqlQuery, QueryCommandOptions options, string querySource, string queryTypeDescription)
     {
         var defaults = UserConfigService.GetDefaults();
@@ -427,6 +467,9 @@ public static class QueryCommand
         }
     }
 
+    /// <summary>
+    /// Executes a query with Polly retry logic for transient failures (up to 3 retries with exponential backoff).
+    /// </summary>
     private static async Task<(List<string> ColumnNames, List<Dictionary<string, string>> Data)> ExecuteQueryWithRetryAsync(string connectionString, string sqlQuery, int commandTimeout, CancellationToken ct)
     {
         return await ResiliencePipeline.ExecuteAsync(async (innerCt) =>
@@ -436,6 +479,9 @@ public static class QueryCommand
         }, ct);
     }
 
+    /// <summary>
+    /// Executes a query and returns column names and all data rows as string dictionaries.
+    /// </summary>
     private static async Task<(List<string> ColumnNames, List<Dictionary<string, string>> Data)> ExecuteQueryAsync(string connectionString, string sqlQuery, int commandTimeout, CancellationToken ct)
     {
         await using var connection = new NpgsqlConnection(connectionString);
@@ -469,6 +515,12 @@ public static class QueryCommand
         return (columnNames, data);
     }
 
+    /// <summary>
+    /// Gets the list of accessible databases for a server.
+    /// Uses explicitly configured databases, auto-discovers via <c>pg_database</c> query when
+    /// <c>FetchAllDatabases</c> is true, and falls back to configured databases if discovery fails.
+    /// Each candidate database is validated by attempting a test connection.
+    /// </summary>
     private static async Task<List<string>> GetDatabasesForServerAsync(ServerConfigEntry server, CancellationToken ct)
     {
         if (!server.FetchAllDatabases && server.Databases.Count > 0)
@@ -504,6 +556,10 @@ public static class QueryCommand
         return await ValidateDatabaseAccessAsync(server, [defaultDb], ct);
     }
 
+    /// <summary>
+    /// Validates access to each database by attempting a test connection and a <c>SELECT 1</c> query.
+    /// Returns only databases that are accessible; inaccessible databases are logged as warnings.
+    /// </summary>
     private static async Task<List<string>> ValidateDatabaseAccessAsync(ServerConfigEntry server, List<string> databases, CancellationToken ct)
     {
         var accessibleDatabases = new List<string>();
@@ -535,6 +591,9 @@ public static class QueryCommand
         return accessibleDatabases;
     }
 
+    /// <summary>
+    /// Lists all databases on a server using <c>pg_database</c>, filtered by the server's exclude patterns.
+    /// </summary>
     private static async Task<List<string>> ListDatabasesAsync(ServerConfigEntry server, CancellationToken ct)
     {
         var connectionString = BuildConnectionStringForServer(server, "postgres");
@@ -560,12 +619,19 @@ public static class QueryCommand
         return databases;
     }
 
+    /// <summary>
+    /// Checks if a database name matches a wildcard pattern (supports <c>*</c> as a multi-character wildcard).
+    /// Matching is case-insensitive.
+    /// </summary>
     private static bool MatchesPattern(string dbName, string pattern)
     {
         var regexPattern = "^" + System.Text.RegularExpressions.Regex.Escape(pattern).Replace("\\*", ".*") + "$";
         return System.Text.RegularExpressions.Regex.IsMatch(dbName, regexPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
+    /// <summary>
+    /// Builds a connection string for a specific server and database using the server's configured credentials and options.
+    /// </summary>
     private static string BuildConnectionStringForServer(ServerConfigEntry server, string database)
     {
         var builder = new NpgsqlConnectionStringBuilder
