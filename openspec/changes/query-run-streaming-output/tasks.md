@@ -17,10 +17,10 @@
 
 ## 3. Escrita Progressiva de CSVs por Servidor
 
-- [ ] 3.1 Criar método `CsvExporter.AppendToServerCsv(outputPath, CsvRow)` que faz append de dados no CSV do servidor (cria header + dados se arquivo não existe, apenas append dados se já existe)
+- [ ] 3.1 Criar método `CsvExporter.AppendToServerCsv(outputPath, CsvRow)` que faz append de dados no CSV do servidor (cria header + dados se arquivo não existe, apenas append dados se já existe). StreamWriter com `AutoFlush = true` para garantir flush após cada escrita.
 - [ ] 3.2 Na task consumidora, chamar `AppendToServerCsv` para cada CsvRow de sucesso
-- [ ] 3.3 Criar método `CsvExporter.WriteErrorEntry(outputPath, Server, Database, ExecutedAt, Error)` que faz append de uma linha no arquivo de erros (cria header se arquivo não existe)
-- [ ] 3.4 Criar método `CsvExporter.WriteLogEntry(outputPath, ExecutionLogEntry)` que faz append de uma linha no log de execução (cria header se arquivo não existe)
+- [ ] 3.3 Criar método `CsvExporter.WriteErrorEntry(outputPath, Server, Database, ExecutedAt, Error)` que faz append de uma linha no arquivo de erros (cria header se arquivo não existe). StreamWriter com `AutoFlush = true`.
+- [ ] 3.4 Criar método `CsvExporter.WriteLogEntry(outputPath, ExecutionLogEntry)` que faz append de uma linha no log de execução (cria header se arquivo não existe). StreamWriter com `AutoFlush = true`.
 
 ## 4. Geração do CSV Consolidado
 
@@ -64,5 +64,6 @@
 - [ ] 9.4 Teste unitário: merge de CSVs por servidor em consolidado com header unificado (colunas diferentes entre servidores)
 - [ ] 9.5 Teste unitário: sanitização de nomes de servidor
 - [ ] 9.6 Teste unitário: `Duration` medido corretamente
-- [ ] 9.7 Atualizar testes existentes de `QueryCommandTests` para refletir novo comportamento (sem `--separate-files`, subpasta, etc.)
-- [ ] 9.8 Atualizar testes de `CsvExportTests` para novos métodos
+- [ ] 9.7 Teste unitário: flush imediato — dados persistidos no arquivo após cada escrita (verificar que conteúdo está no disco sem flush manual)
+- [ ] 9.8 Atualizar testes existentes de `QueryCommandTests` para refletir novo comportamento (sem `--separate-files`, subpasta, etc.)
+- [ ] 9.9 Atualizar testes de `CsvExportTests` para novos métodos

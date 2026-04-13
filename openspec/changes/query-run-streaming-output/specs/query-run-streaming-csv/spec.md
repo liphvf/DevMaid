@@ -1,7 +1,7 @@
 ## ADICIONADO Requisitos
 
 ### Requisito: Escrita progressiva de CSV parcial por servidor
-O sistema DEVE escrever em um arquivo CSV por servidor, fazendo append progressivo imediatamente após cada query completar com sucesso naquele servidor.
+O sistema DEVE escrever em um arquivo CSV por servidor, fazendo append progressivo imediatamente após cada query completar com sucesso naquele servidor. Cada escrita DEVE fazer flush para o disco, garantindo durabilidade em caso de crash.
 
 #### Cenário: Primeira query completa com sucesso em um servidor
 - **QUANDO** uma query executa com sucesso como primeira em um servidor
@@ -19,6 +19,11 @@ O sistema DEVE escrever em um arquivo CSV por servidor, fazendo append progressi
 - **QUANDO** nome de servidor contém caracteres inválidos para filename
 - **ENTÃO** sistema substitui caracteres inválidos por `_`
 - **E** arquivo é escrito com o nome sanitizado
+
+#### Cenário: Durabilidade de escrita (flush)
+- **QUANDO** sistema escreve dados em um CSV parcial (append)
+- **ENTÃO** sistema faz flush para o disco após cada escrita
+- **E** dados ficam persistidos mesmo se o processo crashar imediatamente após
 
 ### Requisito: CSV consolidado por merge
 O sistema DEVE gerar um arquivo CSV consolidado após todas as queries terminarem, fazendo merge dos CSVs parciais.

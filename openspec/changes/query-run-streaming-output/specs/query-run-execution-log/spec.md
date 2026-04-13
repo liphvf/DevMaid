@@ -1,7 +1,7 @@
 ## ADICIONADO Requisitos
 
 ### Requisito: Arquivo de erros progressivo
-O sistema DEVE escrever um arquivo CSV de erros progressivamente, appending uma linha a cada falha de query.
+O sistema DEVE escrever um arquivo CSV de erros progressivamente, appending uma linha a cada falha de query. Cada escrita DEVE fazer flush para o disco.
 
 #### Cenário: Query falha em servidor/database
 - **QUANDO** uma query falha em um servidor/database
@@ -20,7 +20,7 @@ O sistema DEVE escrever um arquivo CSV de erros progressivamente, appending uma 
 - **ENTÃO** arquivo `_erros.csv` NÃO é criado
 
 ### Requisito: Log de execução em arquivo CSV
-O sistema DEVE manter um log de execução em arquivo CSV com entradas escritas progressivamente a cada query completada (sucesso ou falha).
+O sistema DEVE manter um log de execução em arquivo CSV com entradas escritas progressivamente a cada query completada (sucesso ou falha). Cada escrita DEVE fazer flush para o disco.
 
 #### Cenário: Query completa com sucesso
 - **QUANDO** uma query executa com sucesso

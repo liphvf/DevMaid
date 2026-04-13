@@ -56,6 +56,8 @@ Cada servidor tem um arquivo CSV parcial `results/<ts>/<server>_<ts>.csv`. A cad
 
 **Append ao invés de recriar:** Usa `StreamWriter` com `append=true`. Header só é escrito na primeira vez (verifica se arquivo existe). Dados subsequentes são apenas append. Sem lock — single-writer via Channel.
 
+**Flush imediato após cada escrita:** O `StreamWriter` DEVE ter `AutoFlush = true` ou chamar `Flush()` explicitamente após cada append. Isso garante que cada linha escrita vá para o disco imediatamente, sem ficar no buffer da aplicação. Sem flush, um crash do processo perde dados que foram "escritos" mas ainda estavam no buffer — o que contradiz a motivação principal de resiliência (dados salvos mesmo se o processo crashar).
+
 **Nomenclatura:** `<server>_<timestamp>.csv`. Sanitização de nomes: substituir caracteres inválidos de filename por `_`.
 
 ### D4: CSV consolidado gerado por merge ao final
