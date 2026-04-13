@@ -60,8 +60,6 @@ FurLab/
 ├── FurLab.Tests/                 ← MSTest project (references FurLab.CLI)
 │   └── Commands/                  ← One test class per command
 │
-├── FurLab.CodeAnalysis/          ← Standalone Roslyn analysis utility
-│
 ├── openspec/                      ← OpenSpec workflow (substituiu specs/ e .specify/)
 │   ├── config.yaml                ← Configuração do projeto (schema, idioma pt-BR)
 │   ├── specs/                     ← Especificações canônicas por feature
@@ -136,13 +134,21 @@ FurLab windowsfeatures list
 ## Code Style
 
 - **Language**: C# 13, `<Nullable>enable</Nullable>`, `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`
+- **Primary constructors**: Use primary constructors in classes and records whenever possible (e.g., `public class Foo(ILogger logger) { }`) to reduce boilerplate and improve readability
 - **Naming**: PascalCase for types/methods/properties; camelCase for locals and parameters
 - **Command classes**: Always `static`, expose `static Build(): Command` factory — never inherit
 - **Service classes**: Always implement a `IXxxService` interface in `FurLab.Core/Interfaces/`; concrete implementation in `FurLab.Core/Services/`
 - **No business logic in commands**: Commands parse input into a typed Options DTO, then call the service method. Never put logic inside the command handler lambda.
+- **One file per type**: Each `.cs` file should contain only one class, record, struct, or enum. Multiple types in the same file are discouraged; split into separate files with matching names (e.g., `DatabaseBackupConfig.cs`, `DatabaseRestoreConfig.cs`).
 - **Result pattern**: Return `OperationResult` / `OperationResult<T>` records — use `SuccessResult(...)` / `FailureResult(...)` factory methods
 - **External processes**: Always `UseShellExecute = false`, capture stdout/stderr via redirect — never shell out to `cmd.exe` or `powershell.exe`
 - **Test naming**: `<MethodName>_<StateUnderTest>_<ExpectedBehavior>` (e.g., `BackupAsync_ComOpcoesValidas_DeveCriarArquivoDump`)
+- **Unit test attributes**: Use `[TestMethod(DisplayName = "<short description>")]` and `[Description("<detailed description>")]` on all test methods for better reporting:
+  ```csharp
+  [TestMethod(DisplayName = "Backup with valid options should succeed")]
+  [Description("Verifies that when pg_dump is available and valid options are provided, the backup operation completes without throwing exceptions.")]
+  public void Backup_ValidOptions_DoesNotThrow()
+  ```
 - **XML doc comments**: Required on all public members (enforced by `GenerateDocumentationFile true`)
 - **Configuration**: Read from `%LocalAppData%\FurLab\appsettings.json`; never hard-code connection strings; use `SecurityUtils.IsValidPath()` and `SecurityUtils.IsValidPostgreSQLIdentifier()` before using any user-supplied input; `SecurityUtils.IsValidHost()` and `SecurityUtils.IsValidPort()` para conexões; `*` é aceito como curinga em host/port/username no pgpass
 - **Async**: All service methods that touch I/O or external processes must be `async Task<T>` and accept `CancellationToken`
@@ -186,5 +192,39 @@ Skills disponíveis em `.opencode/skills/`:
 - 008-project-cleaner: Added `CleanCommand` — recursive `bin/` and `obj/` directory deletion
 - 007-sql-query-csv-export: Added `QueryCommand` — SQL file execution with CSV export, multi-server support
 
-<!-- MANUAL ADDITIONS START -->
-<!-- MANUAL ADDITIONS END -->
+## Guard Rails
+
+### 🚨 CRITICAL: Git Safety
+
+**NEVER** perform or suggest Git operations that modify repository state without **explicit user confirmation**.
+
+#### Prohibited Operations (unless explicitly asked):
+- `git add`, `git commit`, `git push`
+- `git merge`, `git rebase`, `git reset`
+- `git checkout` (if it changes files)
+- `git stash`, `git cherry-pick`
+- Deleting or modifying tracked files
+- Force push to main/master branches
+
+#### Required Behavior:
+1. **Never run Git commands automatically**
+2. **Never assume permission** to modify version control
+3. **Always ask for confirmation** before suggesting any Git operation
+4. **Explain consequences** before executing any Git command
+
+#### Exception - Safe Read-Only Commands:
+These are allowed without confirmation:
+- `git status`
+- `git log`
+- `git diff`
+- `git show`
+- `git branch -a`
+
+#### If Git Action Is Required:
+```
+1. Explain what will happen
+2. Ask for explicit confirmation
+3. Only then proceed (if confirmed)
+```
+
+---

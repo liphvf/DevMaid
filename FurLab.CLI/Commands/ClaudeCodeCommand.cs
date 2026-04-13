@@ -42,7 +42,7 @@ public static class ClaudeCodeCommand
             ConfigureMcpDatabase();
         });
 
-        var winEnvCommand = new Command("win-env", "Configura o ~/.claude.json para liberar edit/read/shell e cria o arquivo CLAUDE.md com regras do shell");
+        var winEnvCommand = new Command("win-env", "Configures ~/.claude.json to enable edit/read/shell and creates the CLAUDE.md file with shell rules");
         winEnvCommand.SetAction(_ =>
         {
             ConfigureWindowsEnvironment();
@@ -72,7 +72,7 @@ public static class ClaudeCodeCommand
         var result = RunProcess("winget", WingetInstallArguments);
         if (result.ExitCode != 0)
         {
-            throw new Exception($"Falha ao instalar o Claude Code com winget. Codigo de saida: {result.ExitCode}.");
+            throw new Exception($"Failed to install Claude Code with winget. Exit code: {result.ExitCode}.");
         }
     }
 
@@ -107,7 +107,7 @@ public static class ClaudeCodeCommand
         };
 
         SaveSettingsFile(configPath, config);
-        Console.WriteLine($"Arquivo de configuracao atualizado: {configPath}");
+        Console.WriteLine($"Configuration file updated: {configPath}");
 
         // Create CLAUDE.md file with global shell rules
         var claudeMdPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude", "CLAUDE.md");
@@ -167,7 +167,7 @@ Environment:
         }
         catch (Win32Exception ex)
         {
-            throw new InvalidOperationException($"Nao foi possivel executar '{fileName}'. Verifique se o comando existe no PATH.", ex);
+            throw new InvalidOperationException($"Could not execute '{fileName}'. Please check if the command exists in PATH.", ex);
         }
     }
 
@@ -195,7 +195,7 @@ Environment:
             return objectNode;
         }
 
-        throw new InvalidDataException($"O arquivo '{settingsPath}' nao contem um JSON objeto valido.");
+        throw new InvalidDataException($"The file '{settingsPath}' does not contain a valid JSON object.");
     }
 
     private static void SaveSettingsFile(string settingsPath, JsonObject settings)

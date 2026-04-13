@@ -112,7 +112,7 @@ public static class DockerService
         using var process = Process.Start(startInfo);
         if (process == null)
         {
-            throw new DockerOperationException("Falha ao iniciar o processo docker.");
+            throw new DockerOperationException("Failed to start docker process.");
         }
 
         var output = process.StandardOutput.ReadToEnd();
@@ -121,7 +121,7 @@ public static class DockerService
 
         if (process.ExitCode != 0)
         {
-            throw new DockerOperationException($"Falha ao iniciar container: {error}");
+            throw new DockerOperationException($"Failed to start container: {error}");
         }
 
         return true;
@@ -143,7 +143,7 @@ public static class DockerService
             CreateNoWindow = true
         };
 
-        using var process = Process.Start(startInfo) ?? throw new DockerOperationException("Falha ao iniciar o processo docker.");
+        using var process = Process.Start(startInfo) ?? throw new DockerOperationException("Failed to start docker process.");
 
         var output = process.StandardOutput.ReadToEnd();
         var error = process.StandardError.ReadToEnd();
@@ -151,7 +151,7 @@ public static class DockerService
 
         if (process.ExitCode != 0)
         {
-            throw new DockerOperationException($"Falha ao criar container: {error}");
+            throw new DockerOperationException($"Failed to create container: {error}");
         }
 
         return output.Trim();
@@ -208,19 +208,4 @@ public static class DockerService
             "-c log_min_duration_statement=0"
         });
     }
-}
-
-/// <summary>
-/// Represents the Docker daemon availability state.
-/// </summary>
-public enum DockerStatus
-{
-    /// <summary>Docker is installed and the daemon is running.</summary>
-    Running,
-
-    /// <summary>Docker is installed but the daemon is not running.</summary>
-    NotRunning,
-
-    /// <summary>Docker executable was not found on the system PATH.</summary>
-    NotInstalled
 }

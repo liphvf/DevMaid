@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Linq;
 
 using FurLab.CLI.Commands;
 
@@ -42,56 +43,17 @@ public class PgPassCommandTests
 
     [TestMethod]
     [TestCategory("US1")]
-    public void SubcomandoAdd_ContemArgumentoBanco()
+    public void SubcomandoAdd_ContemTodosArgumentosEOpcoes()
     {
         var command = PgPassCommand.Build();
         var addCommand = command.Children.OfType<Command>().First(c => c.Name == "add");
         var argumentos = addCommand.Arguments.Select(a => a.Name).ToList();
+        var opcoes = addCommand.Options.Select(o => o.Name).ToList();
 
         CollectionAssert.Contains(argumentos, "banco");
-    }
-
-    [TestMethod]
-    [TestCategory("US1")]
-    public void SubcomandoAdd_ContemOpcaoPassword()
-    {
-        var command = PgPassCommand.Build();
-        var addCommand = command.Children.OfType<Command>().First(c => c.Name == "add");
-        var opcoes = addCommand.Options.Select(o => o.Name).ToList();
-
         CollectionAssert.Contains(opcoes, "--password");
-    }
-
-    [TestMethod]
-    [TestCategory("US1")]
-    public void SubcomandoAdd_ContemOpcaoHost()
-    {
-        var command = PgPassCommand.Build();
-        var addCommand = command.Children.OfType<Command>().First(c => c.Name == "add");
-        var opcoes = addCommand.Options.Select(o => o.Name).ToList();
-
         CollectionAssert.Contains(opcoes, "--host");
-    }
-
-    [TestMethod]
-    [TestCategory("US1")]
-    public void SubcomandoAdd_ContemOpcaoPort()
-    {
-        var command = PgPassCommand.Build();
-        var addCommand = command.Children.OfType<Command>().First(c => c.Name == "add");
-        var opcoes = addCommand.Options.Select(o => o.Name).ToList();
-
         CollectionAssert.Contains(opcoes, "--port");
-    }
-
-    [TestMethod]
-    [TestCategory("US1")]
-    public void SubcomandoAdd_ContemOpcaoUsername()
-    {
-        var command = PgPassCommand.Build();
-        var addCommand = command.Children.OfType<Command>().First(c => c.Name == "add");
-        var opcoes = addCommand.Options.Select(o => o.Name).ToList();
-
         CollectionAssert.Contains(opcoes, "--username");
     }
 
@@ -118,45 +80,16 @@ public class PgPassCommandTests
 
     [TestMethod]
     [TestCategory("US3")]
-    public void SubcomandoRemove_ContemArgumentoBanco()
+    public void SubcomandoRemove_ContemTodosArgumentosEOpcoes()
     {
         var command = PgPassCommand.Build();
         var removeCommand = command.Children.OfType<Command>().First(c => c.Name == "remove");
         var argumentos = removeCommand.Arguments.Select(a => a.Name).ToList();
+        var opcoes = removeCommand.Options.Select(o => o.Name).ToList();
 
         CollectionAssert.Contains(argumentos, "banco");
-    }
-
-    [TestMethod]
-    [TestCategory("US3")]
-    public void SubcomandoRemove_ContemOpcaoHost()
-    {
-        var command = PgPassCommand.Build();
-        var removeCommand = command.Children.OfType<Command>().First(c => c.Name == "remove");
-        var opcoes = removeCommand.Options.Select(o => o.Name).ToList();
-
         CollectionAssert.Contains(opcoes, "--host");
-    }
-
-    [TestMethod]
-    [TestCategory("US3")]
-    public void SubcomandoRemove_ContemOpcaoPort()
-    {
-        var command = PgPassCommand.Build();
-        var removeCommand = command.Children.OfType<Command>().First(c => c.Name == "remove");
-        var opcoes = removeCommand.Options.Select(o => o.Name).ToList();
-
         CollectionAssert.Contains(opcoes, "--port");
-    }
-
-    [TestMethod]
-    [TestCategory("US3")]
-    public void SubcomandoRemove_ContemOpcaoUsername()
-    {
-        var command = PgPassCommand.Build();
-        var removeCommand = command.Children.OfType<Command>().First(c => c.Name == "remove");
-        var opcoes = removeCommand.Options.Select(o => o.Name).ToList();
-
         CollectionAssert.Contains(opcoes, "--username");
     }
 

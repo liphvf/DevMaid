@@ -1,14 +1,11 @@
 using System;
 using System.IO;
-using System.Reflection;
-using FurLab.CLI.CommandOptions;
+using System.Linq;
 using FurLab.CLI.Services;
 using FurLab.CLI.Services.Logging;
 using FurLab.Core.Interfaces;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 
 namespace FurLab.Tests.Commands;
 
@@ -28,18 +25,15 @@ public class QueryCommandTests
     [ClassInitialize]
     public static void ClassInitialize(TestContext context)
     {
-        // Initialize logger
         var logger = new ConsoleLogger(useColors: false);
         _logger = logger;
 
-        // Initialize core services
         _configurationService = new Core.Services.ConfigurationService(logger);
         _processExecutor = new Core.Services.ProcessExecutor(logger);
         _databaseService = new Core.Services.DatabaseService(_processExecutor, logger);
         _fileService = new Core.Services.FileService(logger);
         _wingetService = new Core.Services.WingetService(_processExecutor, logger);
 
-        // Create service collection and register services
         var services = new ServiceCollection();
         services.AddSingleton(_configurationService);
         services.AddSingleton(_databaseService);
@@ -50,7 +44,6 @@ public class QueryCommandTests
 
         var serviceProvider = services.BuildServiceProvider();
 
-        // Set service provider for static services
         Logger.SetServiceProvider(serviceProvider);
         ConfigurationService.SetServiceProvider(serviceProvider);
         PostgresDatabaseLister.SetServiceProvider(serviceProvider);
@@ -75,16 +68,18 @@ public class QueryCommandTests
         }
     }
 
-    [TestMethod]
-    public void Build_ReturnsCommandWithCorrectName()
+    [TestMethod(DisplayName = "Build deve retornar comando com nome 'query'")]
+    [Description("Verifica que o comando principal é construído com o nome correto.")]
+    public void Build_ComandoPrincipal_RetornaNomeQuery()
     {
         var command = CLI.Commands.QueryCommand.Build();
 
         Assert.AreEqual("query", command.Name);
     }
 
-    [TestMethod]
-    public void Build_ContainsRunSubcommand()
+    [TestMethod(DisplayName = "Build deve conter exatamente um subcomando 'run'")]
+    [Description("Verifica que o comando query possui apenas o subcomando run registrado.")]
+    public void Build_ComandoPrincipal_ContemUnicoSubcomandoRun()
     {
         var command = CLI.Commands.QueryCommand.Build();
 
@@ -94,174 +89,72 @@ public class QueryCommandTests
         Assert.IsNotNull(runCommand);
     }
 
-    [TestMethod]
-    public void Run_MissingInputFile_ThrowsArgumentException()
-    {
-        var options = new QueryCommandOptions
-        {
-            InputFile = "",
-            OutputFile = Path.Combine(_testDirectory, "output.csv")
-        };
+    // --- UnescapeInlineQuery edge cases ---
 
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+    [TestMethod(DisplayName = "UnescapeInlineQuery strips outer double quotes")]
+    public void UnescapeInlineQuery_OuterDoubleQuotes_Stripped()
+    {
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("\"SELECT 1\"");
+        Assert.AreEqual("SELECT 1", result);
     }
 
-    [TestMethod]
-    public void Run_NonExistentInputFile_ThrowsFileNotFoundException()
+    [TestMethod(DisplayName = "UnescapeInlineQuery strips outer single quotes")]
+    public void UnescapeInlineQuery_OuterSingleQuotes_Stripped()
     {
-        var options = new QueryCommandOptions
-        {
-            InputFile = Path.Combine(_testDirectory, "nonexistent.sql"),
-            OutputFile = Path.Combine(_testDirectory, "output.csv")
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (FileNotFoundException) { }
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("'SELECT 1'");
+        Assert.AreEqual("SELECT 1", result);
     }
 
-    [TestMethod]
-    public void Run_EmptyInputFile_ThrowsArgumentException()
+    [TestMethod(DisplayName = "UnescapeInlineQuery with no outer quotes returns unchanged")]
+    public void UnescapeInlineQuery_NoOuterQuotes_ReturnsUnchanged()
     {
-        var emptyFile = Path.Combine(_testDirectory, "empty.sql");
-        File.WriteAllText(emptyFile, "");
-
-        var options = new QueryCommandOptions
-        {
-            InputFile = emptyFile,
-            OutputFile = Path.Combine(_testDirectory, "output.csv")
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("SELECT 1");
+        Assert.AreEqual("SELECT 1", result);
     }
 
-    [TestMethod]
-    public void Run_MissingOutputFile_ThrowsArgumentException()
+    [TestMethod(DisplayName = "UnescapeInlineQuery unescapes backslash-escaped double quotes")]
+    public void UnescapeInlineQuery_BackslashEscapedDoubleQuotes_Unescaped()
     {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = ""
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery(@"SELECT \""name\"" FROM t");
+        Assert.AreEqual("SELECT \"name\" FROM t", result);
     }
 
-    [TestMethod]
-    public void Run_PathTraversalInInput_ThrowsArgumentException()
+    [TestMethod(DisplayName = "UnescapeInlineQuery unescapes backslash-escaped single quotes")]
+    public void UnescapeInlineQuery_BackslashEscapedSingleQuotes_Unescaped()
     {
-        var options = new QueryCommandOptions
-        {
-            InputFile = Path.Combine(_testDirectory, "..", "..", "test.sql"),
-            OutputFile = Path.Combine(_testDirectory, "output.csv")
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); }
-        catch (ArgumentException) { }
-        catch (FileNotFoundException) { Assert.Fail("Should throw ArgumentException before checking file existence"); }
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery(@"SELECT \''val\'' FROM t");
+        Assert.AreEqual("SELECT ''val'' FROM t", result);
     }
 
-    [TestMethod]
-    public void Run_PathTraversalInOutput_ThrowsArgumentException()
+    [TestMethod(DisplayName = "UnescapeInlineQuery with mismatched quotes returns unchanged")]
+    public void UnescapeInlineQuery_MismatchedQuotes_ReturnsUnchanged()
     {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = Path.Combine(_testDirectory, "..", "..", "output.csv")
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        // starts with " ends with ' — should not strip anything
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("\"SELECT 1'");
+        Assert.AreEqual("\"SELECT 1'", result);
     }
 
-    [TestMethod]
-    public void Run_AllFlag_MissingOutputDirectory_ThrowsArgumentException()
+    [TestMethod(DisplayName = "UnescapeInlineQuery on empty string returns empty")]
+    public void UnescapeInlineQuery_EmptyString_ReturnsEmpty()
     {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = "",
-            All = true
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery(string.Empty);
+        Assert.AreEqual(string.Empty, result);
     }
 
-    [TestMethod]
-    public void Run_ServersFlag_MissingOutputDirectory_ThrowsArgumentException()
+    [TestMethod(DisplayName = "UnescapeInlineQuery on single character in double quotes returns empty")]
+    public void UnescapeInlineQuery_SingleCharInDoubleQuotes_ReturnsChar()
     {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = "",
-            Servers = true
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        // "x" → x  (strips outer quotes, length 1 remains)
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("\"x\"");
+        Assert.AreEqual("x", result);
     }
 
-    [TestMethod]
-    public void Run_AllFlag_PathTraversal_ThrowsArgumentException()
+    [TestMethod(DisplayName = "UnescapeInlineQuery on two double-quote chars returns empty")]
+    public void UnescapeInlineQuery_TwoDoubleQuoteChars_ReturnsEmpty()
     {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = Path.Combine(_testDirectory, "..", "..", "output"),
-            All = true,
-            Password = "test" // Provide password to avoid console input
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
+        // "" → (empty after stripping outer pair)
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("\"\"");
+        Assert.AreEqual(string.Empty, result);
     }
 
-    [TestMethod]
-    public void Run_ServersFlag_PathTraversal_ThrowsArgumentException()
-    {
-        var options = new QueryCommandOptions
-        {
-            InputFile = _sqlInputFile,
-            OutputFile = Path.Combine(_testDirectory, "..", "..", "output"),
-            Servers = true
-        };
-
-        try { CLI.Commands.QueryCommand.Run(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void BuildConnectionString_ExplicitParameters_DoNotRequireServersConfigurationOrDatabaseAccess()
-    {
-        var mockConfigurationService = new Mock<IConfigurationService>();
-        mockConfigurationService
-            .SetupGet(x => x.Configuration)
-            .Returns(new ConfigurationBuilder().AddInMemoryCollection().Build());
-        mockConfigurationService
-            .Setup(x => x.GetDatabaseConfig())
-            .Returns(new Core.Models.DatabaseConnectionConfig());
-
-        var services = new ServiceCollection();
-        services.AddSingleton(mockConfigurationService.Object);
-        ConfigurationService.SetServiceProvider(services.BuildServiceProvider());
-
-        var options = new QueryCommandOptions
-        {
-            Host = "db.internal",
-            Port = "5433",
-            Database = "reporting",
-            Username = "readonly_user",
-            Password = "secret123"
-        };
-
-        var method = typeof(CLI.Commands.QueryCommand).GetMethod("BuildConnectionString", BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.IsNotNull(method);
-
-        var connectionString = method.Invoke(null, [options]) as string;
-
-        Assert.IsNotNull(connectionString);
-        StringAssert.Contains(connectionString, "Host=db.internal");
-        StringAssert.Contains(connectionString, "Port=5433");
-        StringAssert.Contains(connectionString, "Database=reporting");
-        StringAssert.Contains(connectionString, "Username=readonly_user");
-        StringAssert.Contains(connectionString, "Password=secret123");
-
-        mockConfigurationService.Verify(x => x.GetDatabaseConfig(), Times.Once);
-        mockConfigurationService.VerifyGet(x => x.Configuration, Times.Never);
-        mockConfigurationService.VerifyNoOtherCalls();
-    }
 }

@@ -22,6 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="System.Linq" />
+    <None Update="FurLab.runsettings">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

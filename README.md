@@ -18,12 +18,16 @@ Developers often perform repetitive tasks that can be automated:
 - Combining multiple files into one
 - Installing and configuring AI development tools
 - Backing up and restoring Windows packages
+- Running SQL queries across multiple PostgreSQL servers
 
 FurLab consolidates these tasks into a single, easy-to-use CLI tool.
 
 ## Key Features
 
 - **Database Backup**: Backup PostgreSQL databases using pg_dump
+- **Query Execution**: Run SQL queries across multiple PostgreSQL servers with interactive server selection, parallel execution, and CSV export
+- **Destructive Query Guard Rail**: Automatic detection of INSERT, UPDATE, DELETE, ALTER, DROP, etc. with confirmation prompt
+- **Server Management**: Add, list, remove, and test PostgreSQL servers via CLI
 - **File (Combine)**: Combine multiple files into one
 - **Claude Code Integration**: Install and configure Claude Code CLI
 - **OpenCode Integration**: Install and configure OpenCode CLI
@@ -35,7 +39,8 @@ FurLab consolidates these tasks into a single, easy-to-use CLI tool.
 - **Language**: C#
 - **CLI Parsing**: System.CommandLine
 - **Database**: Npgsql (PostgreSQL)
-- **Configuration**: Microsoft.Extensions.Configuration
+- **Configuration**: JSONC (furlab.jsonc)
+- **UI**: Spectre.Console
 
 ## Installation
 
@@ -75,10 +80,47 @@ dotnet run -- --help
 
 ## Basic Usage Examples
 
+### Query Execution
+
+```bash
+# Run a SQL file across selected servers
+FurLab query run --input query.sql
+
+# Run an inline query
+FurLab query run --command "SELECT * FROM users"
+
+# Run with output directory
+FurLab query run -i query.sql -o ./results
+
+# Generate one CSV per server
+FurLab query run -i query.sql --separate-files
+```
+
+On execution, FurLab shows an interactive server selection prompt (all configured servers are pre-selected). Results are exported to CSV with columns `Server, Database, <query columns>`.
+
+### Server Management
+
+```bash
+# List configured servers
+FurLab settings db-servers ls
+
+# Add a server interactively
+FurLab settings db-servers add -i
+
+# Add a server with flags
+FurLab settings db-servers add -n dev -h localhost -p 5432 -U postgres -W mypass
+
+# Test connection to a server
+FurLab settings db-servers test -n dev
+
+# Remove a server
+FurLab settings db-servers rm -n dev
+```
+
 ### Database Backup
 
 ```bash
-# Backup with default connection settings (from appsettings.json)
+# Backup with default connection settings
 FurLab database backup mydb
 
 # Backup with custom connection settings
@@ -86,26 +128,6 @@ FurLab database backup mydb --host localhost --port 5432 --username postgres --p
 
 # Backup with custom output path
 FurLab database backup mydb -o "C:\backups\mydb.backup"
-
-# Backup with password prompt (password not provided in command line)
-FurLab database backup mydb --host localhost --username postgres
-```
-
-**Configuration File**: Create an `appsettings.json` in `%LocalAppData%\FurLab\` to set default connection values:
-
-```json
-{
-  "Database": {
-    "Host": "localhost",
-    "Port": "5432",
-    "Username": "postgres",
-    "Password": ""
-  }
-}
-```
-
-
-```bash
 ```
 
 ### Combine Files
@@ -124,23 +146,91 @@ FurLab claude install
 
 ```bash
 FurLab winget backup -o "C:\backup"
+FurLab winget restore -i "C:\backup\backup-winget.json"
 ```
 
-### Winget Restore
+## Configuration
 
-```bash
-FurLab winget restore -i "C:\backup\backup-winget.json"
+FurLab stores user configuration in `%LocalAppData%\FurLab\furlab.jsonc` (JSONC format with comments support).
+
+### Example furlab.jsonc
+
+```jsonc
+{
+  // PostgreSQL servers configuration
+  "servers": [
+    {
+      "name": "dev",           // Unique identifier
+      "host": "localhost",
+      "port": 5432,
+      "username": "postgres",
+      "password": "mypassword",
+      "databases": ["mydb", "app_dev"],
+      "sslMode": "Prefer",
+      "timeout": 30,
+      "commandTimeout": 300,
+      "maxParallelism": 4
+    },
+    {
+      "name": "prod",
+      "host": "prod-db.company.com",
+      "port": 5432,
+      "username": "readonly",
+      "password": "secret",
+      "fetchAllDatabases": true,
+      "excludePatterns": ["template*", "postgres"],
+      "sslMode": "Require"
+    }
+  ],
+  // Default settings
+  "defaults": {
+    "outputFormat": "csv",
+    "outputDirectory": "./results",
+    "fetchAllDatabases": false,
+    "requireConfirmation": true,
+    "maxParallelism": 4
+  }
+}
 ```
 
 ## Command List
 
 | Command | Description |
 |---------|-------------|
+| `query run` | Execute SQL queries and export to CSV |
+| `settings db-servers ls` | List configured servers |
+| `settings db-servers add` | Add a server (interactive or with flags) |
+| `settings db-servers rm` | Remove a server |
+| `settings db-servers test` | Test server connection |
 | `database backup` | Backup PostgreSQL database |
 | `file combine` | Combine multiple files into one |
 | `claude` | Claude Code integration |
 | `opencode` | OpenCode CLI integration |
 | `winget` | Windows package manager |
+
+## Query Command Details
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `-i, --input <file>` | SQL input file |
+| `-c, --command <sql>` | Inline SQL query (mutually exclusive with `-i`) |
+| `-o, --output <path>` | Output file or directory |
+| `--separate-files` | One CSV per server (default: single consolidated file) |
+| `--all, -a` | Query all databases on server |
+| `--exclude <dbs>` | Comma-separated databases to exclude |
+| `--no-confirm` | Skip destructive query confirmation |
+
+### CSV Output Format
+
+- **Consolidated** (default): Single file with columns `Server, Database, <query columns>`
+- **Separate files** (`--separate-files`): One file per server (`<server>_<timestamp>.csv`)
+- Errors are logged to the terminal, not included in CSV
+
+### Destructive Query Detection
+
+Queries containing INSERT, UPDATE, DELETE, ALTER, DROP, CREATE, TRUNCATE, MERGE, GRANT, REVOKE, or SET ROLE trigger a confirmation prompt before execution. Use `--no-confirm` to skip in CI/scripts.
 
 ## Documentation
 
@@ -148,6 +238,8 @@ For more detailed information, see:
 
 - [Architecture](./docs/en/ARCHITECTURE.md)
 - [Feature Specification](./docs/en/FEATURE_SPECIFICATION.md)
+- [Query Command](./docs/QUERY_COMMAND.md)
+- [Multi-Server](./docs/MULTI_SERVER.md)
 
 ## Contribution
 

@@ -6,6 +6,8 @@ using FurLab.CLI.CommandOptions;
 using FurLab.CLI.Services;
 using FurLab.CLI.Services.Logging;
 
+using Spectre.Console;
+
 namespace FurLab.CLI.Commands;
 
 /// <summary>
@@ -239,7 +241,9 @@ public static class DatabaseCommand
 
         if (!config.BackupAll && string.IsNullOrWhiteSpace(config.DatabaseName))
         {
-            throw new ArgumentException("Database name is required when --all is not specified.");
+            AnsiConsole.MarkupLine("[red]Error:[/] Database name is required when --all is not specified.");
+            Environment.Exit(2);
+            throw new InvalidOperationException(); // unreachable but required for compilation
         }
 
         return config;
@@ -270,7 +274,9 @@ public static class DatabaseCommand
 
         if (!config.RestoreAll && string.IsNullOrWhiteSpace(config.DatabaseName))
         {
-            throw new ArgumentException("Database name is required when --all is not specified.");
+            AnsiConsole.MarkupLine("[red]Error:[/] Database name is required when --all is not specified.");
+            Environment.Exit(2);
+            throw new InvalidOperationException(); // unreachable but required for compilation
         }
 
         return config;
@@ -280,17 +286,20 @@ public static class DatabaseCommand
     {
         if (!SecurityUtils.IsValidHost(host))
         {
-            throw new ArgumentException($"Invalid host: '{host}'");
+            AnsiConsole.MarkupLine($"[red]Error:[/] Invalid host: '{host}'");
+            Environment.Exit(2);
         }
 
         if (!SecurityUtils.IsValidPort(port))
         {
-            throw new ArgumentException($"Invalid port: '{port}'. Port must be between 1 and 65535.");
+            AnsiConsole.MarkupLine($"[red]Error:[/] Invalid port: '{port}'. Port must be between 1 and 65535.");
+            Environment.Exit(2);
         }
 
         if (!string.IsNullOrWhiteSpace(username) && !SecurityUtils.IsValidUsername(username))
         {
-            throw new ArgumentException($"Invalid username: '{username}'");
+            AnsiConsole.MarkupLine($"[red]Error:[/] Invalid username: '{username}'");
+            Environment.Exit(2);
         }
     }
 
@@ -715,7 +724,9 @@ public static class DatabaseCommand
     {
         if (!SecurityUtils.IsValidPostgreSQLIdentifier(databaseName))
         {
-            throw new ArgumentException($"Invalid database name: '{databaseName}'");
+            AnsiConsole.MarkupLine($"[red]Error:[/] Invalid database name: '{databaseName}'");
+            Environment.Exit(2);
+            return;
         }
 
         var psqlPath = PostgresBinaryLocator.FindPsql();
@@ -818,34 +829,4 @@ public static class DatabaseCommand
         Logger.LogInformation("  Input directory: {Directory}", Path.GetFullPath(inputDirectory));
         Logger.LogInformation("========================================");
     }
-}
-
-/// <summary>
-/// Configuration for database backup operations.
-/// </summary>
-internal record DatabaseBackupConfig
-{
-    public string Host { get; init; } = string.Empty;
-    public string Port { get; init; } = string.Empty;
-    public string? Username { get; init; }
-    public string? Password { get; init; }
-    public string DatabaseName { get; init; } = string.Empty;
-    public bool BackupAll { get; init; }
-    public string[]? ExcludeTableData { get; init; }
-    public string? OutputPath { get; init; }
-}
-
-/// <summary>
-/// Configuration for database restore operations.
-/// </summary>
-internal record DatabaseRestoreConfig
-{
-    public string Host { get; init; } = string.Empty;
-    public string Port { get; init; } = string.Empty;
-    public string? Username { get; init; }
-    public string? Password { get; init; }
-    public string DatabaseName { get; init; } = string.Empty;
-    public bool RestoreAll { get; init; }
-    public string? InputFile { get; init; }
-    public string? OutputPath { get; init; }
 }

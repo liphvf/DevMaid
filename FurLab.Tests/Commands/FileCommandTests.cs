@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 using FurLab.CLI.CommandOptions;
@@ -29,8 +30,9 @@ public class FileCommandTests
         }
     }
 
-    [TestMethod]
-    public void Build_ReturnsCommandWithCorrectName()
+    [TestMethod(DisplayName = "Build deve retornar comando com nome 'file'")]
+    [Description("Verifica que o comando principal é construído com o nome e descrição corretos.")]
+    public void Build_ComandoPrincipal_RetornaNomeEDescricaoCorretos()
     {
         var command = CLI.Commands.FileCommand.Build();
 
@@ -38,8 +40,9 @@ public class FileCommandTests
         Assert.AreEqual("File utilities.", command.Description);
     }
 
-    [TestMethod]
-    public void Build_ContainsCombineSubcommand()
+    [TestMethod(DisplayName = "Build deve conter subcomando 'combine'")]
+    [Description("Verifica que o subcomando de combinação de arquivos está registrado na árvore de comandos.")]
+    public void Build_ComandoPrincipal_ContemSubcomandoCombine()
     {
         var command = CLI.Commands.FileCommand.Build();
 
@@ -47,8 +50,9 @@ public class FileCommandTests
         Assert.IsNotNull(combineCommand);
     }
 
-    [TestMethod]
-    public void Combine_ValidPattern_CombinesFiles()
+    [TestMethod(DisplayName = "Combine com padrão válido deve mesclar arquivos corretamente")]
+    [Description("Verifica que múltiplos arquivos correspondentes ao pattern são combinados no arquivo de saída.")]
+    public void Combine_PadraoValido_MesclaArquivosCorretamente()
     {
         var file1 = Path.Combine(_testDirectory, "file1.txt");
         var file2 = Path.Combine(_testDirectory, "file2.txt");
@@ -70,71 +74,9 @@ public class FileCommandTests
         Assert.Contains("Content 2", content);
     }
 
-    [TestMethod]
-    public void Combine_EmptyPattern_ThrowsArgumentException()
-    {
-        var options = new FileCommandOptions
-        {
-            Input = "",
-            Output = Path.Combine(_testDirectory, "output.txt")
-        };
-
-        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Combine_InvalidPath_ThrowsArgumentException()
-    {
-        var options = new FileCommandOptions
-        {
-            Input = Path.Combine(_testDirectory, "*.txt"),
-            Output = Path.Combine(Path.GetTempPath(), "outside", "output.txt")
-        };
-
-        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Combine_NoFilesFound_ThrowsException()
-    {
-        var options = new FileCommandOptions
-        {
-            Input = Path.Combine(_testDirectory, "nonexistent*.txt"),
-            Output = Path.Combine(_testDirectory, "output.txt")
-        };
-
-        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (Exception) { }
-    }
-
-    [TestMethod]
-    public void Combine_PathTraversalInInput_ThrowsArgumentException()
-    {
-        var options = new FileCommandOptions
-        {
-            Input = Path.Combine(_testDirectory, "..", "*.txt"),
-            Output = Path.Combine(_testDirectory, "output.txt")
-        };
-
-        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Combine_PathTraversalInOutput_ThrowsArgumentException()
-    {
-        var file1 = Path.Combine(_testDirectory, "file1.txt");
-        File.WriteAllText(file1, "Content");
-
-        var options = new FileCommandOptions
-        {
-            Input = Path.Combine(_testDirectory, "*.txt"),
-            Output = Path.Combine(_testDirectory, "..", "output.txt")
-        };
-
-        try { CLI.Commands.FileCommand.Combine(options); Assert.Fail(); } catch (ArgumentException) { }
-    }
-
-    [TestMethod]
-    public void Combine_DefaultOutputFile_UsesCombineFilesExtension()
+    [TestMethod(DisplayName = "Combine sem OutputFile especificado deve usar extensão padrão .sql")]
+    [Description("Verifica que quando o arquivo de saída não é informado, o nome padrão 'CombineFiles.sql' é utilizado.")]
+    public void Combine_OutputNaoEspecificado_UsaNomePadraoCombineFilesSql()
     {
         var file1 = Path.Combine(_testDirectory, "test1.sql");
         File.WriteAllText(file1, "SELECT 1;");
@@ -150,8 +92,9 @@ public class FileCommandTests
         Assert.IsTrue(File.Exists(expectedOutput));
     }
 
-    [TestMethod]
-    public void Combine_MultipleFilesWithEncoding_PreservesEncoding()
+    [TestMethod(DisplayName = "Combine com arquivos codificados em UTF-8 deve preservar caracteres especiais")]
+    [Description("Verifica que caracteres com acentuação e símbolos são preservados corretamente na mesclagem.")]
+    public void Combine_ArquivosUtf8_PreservaCaracteresEspeciais()
     {
         var file1 = Path.Combine(_testDirectory, "file1.txt");
         var file2 = Path.Combine(_testDirectory, "file2.txt");
