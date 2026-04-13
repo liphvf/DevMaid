@@ -1,13 +1,11 @@
 using System.CommandLine;
-using System.Globalization;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Threading.Channels;
-
 using FurLab.CLI.CommandOptions;
 using FurLab.CLI.Services;
 using FurLab.Core.Models;
-
 using Npgsql;
 using Polly;
 using Polly.Retry;
@@ -37,10 +35,10 @@ public static class QueryCommand
         })
         .Build();
 
-        /// <summary>
-        /// Builds the query command structure.
-        /// </summary>
-        public static Command Build()
+    /// <summary>
+    /// Builds the query command structure.
+    /// </summary>
+    public static Command Build()
     {
         var command = new Command("query", "Execute SQL queries and export results to CSV.");
         var runCommand = new Command("run", "Run a SQL query and export the results to CSV.");
@@ -120,10 +118,10 @@ public static class QueryCommand
         return command;
     }
 
-        /// <summary>
-        /// Executes a SQL query and exports the results to CSV.
-        /// </summary>
-        public static void Run(QueryCommandOptions options)
+    /// <summary>
+    /// Executes a SQL query and exports the results to CSV.
+    /// </summary>
+    public static void Run(QueryCommandOptions options)
     {
         if (!string.IsNullOrWhiteSpace(options.InlineQuery) && !string.IsNullOrWhiteSpace(options.InputFile))
         {

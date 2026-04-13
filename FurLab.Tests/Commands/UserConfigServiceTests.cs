@@ -117,7 +117,7 @@ public class UserConfigServiceTests
         var threwExpected = false;
         try { service.LoadConfig(); }
         catch (InvalidOperationException) { threwExpected = true; }
-        catch (System.Text.Json.JsonException) { threwExpected = true; }
+        catch (JsonException) { threwExpected = true; }
         Assert.IsTrue(threwExpected);
     }
 
@@ -329,7 +329,7 @@ public class UserConfigServiceTests
 
             var json = File.ReadAllText(_configFilePath);
             var strippedJson = StripJsonComments(json);
-            var deserialized = System.Text.Json.JsonSerializer.Deserialize<UserConfig>(strippedJson, new JsonSerializerOptions
+            var deserialized = JsonSerializer.Deserialize<UserConfig>(strippedJson, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 PropertyNameCaseInsensitive = true
@@ -392,7 +392,7 @@ public class UserConfigServiceTests
                 var json = File.ReadAllText(_legacyConfigFilePath);
                 var strippedJson = StripJsonComments(json);
 
-                using var doc = System.Text.Json.JsonDocument.Parse(strippedJson);
+                using var doc = JsonDocument.Parse(strippedJson);
                 var root = doc.RootElement;
 
                 if (!root.TryGetProperty("Servers", out var serversSection))
@@ -402,7 +402,7 @@ public class UserConfigServiceTests
 
                 var config = new UserConfig();
 
-                if (serversSection.TryGetProperty("ServersList", out var serversList) && serversList.ValueKind == System.Text.Json.JsonValueKind.Array)
+                if (serversSection.TryGetProperty("ServersList", out var serversList) && serversList.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var serverJson in serversList.EnumerateArray())
                     {
@@ -413,7 +413,7 @@ public class UserConfigServiceTests
                             Port = serverJson.TryGetProperty("Port", out var portProp) ? portProp.GetInt32() : 5432,
                             Username = serverJson.TryGetProperty("Username", out var userProp) ? userProp.GetString() ?? string.Empty : string.Empty,
                             Password = serverJson.TryGetProperty("Password", out var passProp) ? passProp.GetString() ?? string.Empty : string.Empty,
-                            Databases = serverJson.TryGetProperty("Databases", out var dbProp) && dbProp.ValueKind == System.Text.Json.JsonValueKind.Array
+                            Databases = serverJson.TryGetProperty("Databases", out var dbProp) && dbProp.ValueKind == JsonValueKind.Array
                                 ? dbProp.EnumerateArray().Select(d => d.GetString() ?? string.Empty).ToList()
                                 : [],
                             SslMode = serverJson.TryGetProperty("SslMode", out var sslProp) ? sslProp.GetString() ?? "Prefer" : "Prefer",
