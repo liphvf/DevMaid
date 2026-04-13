@@ -227,6 +227,82 @@ public class UserConfigServiceTests
         Assert.IsTrue(service.ConfigFileExists());
     }
 
+    [TestMethod(DisplayName = "TryLoadLegacyConfig retorna null quando arquivo não existe")]
+    public void TryLoadLegacyConfig_NoFile_ReturnsNull()
+    {
+        var service = new TestableUserConfigService(_logger, _testDirectory);
+        var result = service.TryLoadLegacyConfig();
+        Assert.IsNull(result);
+    }
+
+    [TestMethod(DisplayName = "TryLoadLegacyConfig migra servidores do appsettings.json legado")]
+    public void TryLoadLegacyConfig_ValidLegacyFile_MigratesServers()
+    {
+        var legacyJson = @"{
+  ""Servers"": {
+    ""ServersList"": [
+      {
+        ""Name"": ""legacy-server"",
+        ""Host"": ""db.legacy.com"",
+        ""Port"": 5433,
+        ""Username"": ""admin"",
+        ""Password"": ""secret"",
+        ""Databases"": [""app"", ""analytics""],
+        ""SslMode"": ""Require"",
+        ""Timeout"": 60,
+        ""CommandTimeout"": 600
+      }
+    ]
+  }
+}";
+        var legacyPath = Path.Combine(_testDirectory, "appsettings.json");
+        File.WriteAllText(legacyPath, legacyJson);
+
+        var service = new TestableUserConfigService(_logger, _testDirectory);
+        var config = service.TryLoadLegacyConfig();
+
+        Assert.IsNotNull(config);
+        Assert.AreEqual(1, config.Servers.Count);
+
+        var server = config.Servers[0];
+        Assert.AreEqual("legacy-server", server.Name);
+        Assert.AreEqual("db.legacy.com", server.Host);
+        Assert.AreEqual(5433, server.Port);
+        Assert.AreEqual("admin", server.Username);
+        Assert.AreEqual("secret", server.Password);
+        Assert.AreEqual(2, server.Databases.Count);
+        Assert.AreEqual("app", server.Databases[0]);
+        Assert.AreEqual("analytics", server.Databases[1]);
+        Assert.AreEqual("Require", server.SslMode);
+        Assert.AreEqual(60, server.Timeout);
+        Assert.AreEqual(600, server.CommandTimeout);
+    }
+
+    [TestMethod(DisplayName = "TryLoadLegacyConfig retorna null quando appsettings.json não tem seção Servers")]
+    public void TryLoadLegacyConfig_NoServersSection_ReturnsNull()
+    {
+        var legacyJson = @"{ ""OtherSection"": {} }";
+        var legacyPath = Path.Combine(_testDirectory, "appsettings.json");
+        File.WriteAllText(legacyPath, legacyJson);
+
+        var service = new TestableUserConfigService(_logger, _testDirectory);
+        var result = service.TryLoadLegacyConfig();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod(DisplayName = "TryLoadLegacyConfig retorna null quando appsettings.json tem JSON inválido")]
+    public void TryLoadLegacyConfig_InvalidJson_ReturnsNull()
+    {
+        var legacyPath = Path.Combine(_testDirectory, "appsettings.json");
+        File.WriteAllText(legacyPath, "{ not valid json");
+
+        var service = new TestableUserConfigService(_logger, _testDirectory);
+        var result = service.TryLoadLegacyConfig();
+
+        Assert.IsNull(result);
+    }
+
     private sealed class TestLogger : Core.Logging.ILogger
     {
         public void LogInformation(string message, params object[] args) { }
@@ -310,7 +386,51 @@ public class UserConfigServiceTests
         public UserConfig? TryLoadLegacyConfig()
         {
             if (!File.Exists(_legacyConfigFilePath)) return null;
-            return null;
+
+            try
+            {
+                var json = File.ReadAllText(_legacyConfigFilePath);
+                var strippedJson = StripJsonComments(json);
+
+                using var doc = System.Text.Json.JsonDocument.Parse(strippedJson);
+                var root = doc.RootElement;
+
+                if (!root.TryGetProperty("Servers", out var serversSection))
+                {
+                    return null;
+                }
+
+                var config = new UserConfig();
+
+                if (serversSection.TryGetProperty("ServersList", out var serversList) && serversList.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    foreach (var serverJson in serversList.EnumerateArray())
+                    {
+                        var server = new ServerConfigEntry
+                        {
+                            Name = serverJson.TryGetProperty("Name", out var nameProp) ? nameProp.GetString() ?? string.Empty : string.Empty,
+                            Host = serverJson.TryGetProperty("Host", out var hostProp) ? hostProp.GetString() ?? string.Empty : string.Empty,
+                            Port = serverJson.TryGetProperty("Port", out var portProp) ? portProp.GetInt32() : 5432,
+                            Username = serverJson.TryGetProperty("Username", out var userProp) ? userProp.GetString() ?? string.Empty : string.Empty,
+                            Password = serverJson.TryGetProperty("Password", out var passProp) ? passProp.GetString() ?? string.Empty : string.Empty,
+                            Databases = serverJson.TryGetProperty("Databases", out var dbProp) && dbProp.ValueKind == System.Text.Json.JsonValueKind.Array
+                                ? dbProp.EnumerateArray().Select(d => d.GetString() ?? string.Empty).ToList()
+                                : [],
+                            SslMode = serverJson.TryGetProperty("SslMode", out var sslProp) ? sslProp.GetString() ?? "Prefer" : "Prefer",
+                            Timeout = serverJson.TryGetProperty("Timeout", out var timeoutProp) ? timeoutProp.GetInt32() : 30,
+                            CommandTimeout = serverJson.TryGetProperty("CommandTimeout", out var cmdTimeoutProp) ? cmdTimeoutProp.GetInt32() : 300
+                        };
+
+                        config.Servers.Add(server);
+                    }
+                }
+
+                return config;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static void ApplyDefaults(UserConfig config)

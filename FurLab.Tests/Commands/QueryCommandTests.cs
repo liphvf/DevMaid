@@ -89,4 +89,72 @@ public class QueryCommandTests
         Assert.IsNotNull(runCommand);
     }
 
+    // --- UnescapeInlineQuery edge cases ---
+
+    [TestMethod(DisplayName = "UnescapeInlineQuery strips outer double quotes")]
+    public void UnescapeInlineQuery_OuterDoubleQuotes_Stripped()
+    {
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("\"SELECT 1\"");
+        Assert.AreEqual("SELECT 1", result);
+    }
+
+    [TestMethod(DisplayName = "UnescapeInlineQuery strips outer single quotes")]
+    public void UnescapeInlineQuery_OuterSingleQuotes_Stripped()
+    {
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("'SELECT 1'");
+        Assert.AreEqual("SELECT 1", result);
+    }
+
+    [TestMethod(DisplayName = "UnescapeInlineQuery with no outer quotes returns unchanged")]
+    public void UnescapeInlineQuery_NoOuterQuotes_ReturnsUnchanged()
+    {
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("SELECT 1");
+        Assert.AreEqual("SELECT 1", result);
+    }
+
+    [TestMethod(DisplayName = "UnescapeInlineQuery unescapes backslash-escaped double quotes")]
+    public void UnescapeInlineQuery_BackslashEscapedDoubleQuotes_Unescaped()
+    {
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery(@"SELECT \""name\"" FROM t");
+        Assert.AreEqual("SELECT \"name\" FROM t", result);
+    }
+
+    [TestMethod(DisplayName = "UnescapeInlineQuery unescapes backslash-escaped single quotes")]
+    public void UnescapeInlineQuery_BackslashEscapedSingleQuotes_Unescaped()
+    {
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery(@"SELECT \''val\'' FROM t");
+        Assert.AreEqual("SELECT ''val'' FROM t", result);
+    }
+
+    [TestMethod(DisplayName = "UnescapeInlineQuery with mismatched quotes returns unchanged")]
+    public void UnescapeInlineQuery_MismatchedQuotes_ReturnsUnchanged()
+    {
+        // starts with " ends with ' — should not strip anything
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("\"SELECT 1'");
+        Assert.AreEqual("\"SELECT 1'", result);
+    }
+
+    [TestMethod(DisplayName = "UnescapeInlineQuery on empty string returns empty")]
+    public void UnescapeInlineQuery_EmptyString_ReturnsEmpty()
+    {
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery(string.Empty);
+        Assert.AreEqual(string.Empty, result);
+    }
+
+    [TestMethod(DisplayName = "UnescapeInlineQuery on single character in double quotes returns empty")]
+    public void UnescapeInlineQuery_SingleCharInDoubleQuotes_ReturnsChar()
+    {
+        // "x" → x  (strips outer quotes, length 1 remains)
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("\"x\"");
+        Assert.AreEqual("x", result);
+    }
+
+    [TestMethod(DisplayName = "UnescapeInlineQuery on two double-quote chars returns empty")]
+    public void UnescapeInlineQuery_TwoDoubleQuoteChars_ReturnsEmpty()
+    {
+        // "" → (empty after stripping outer pair)
+        var result = CLI.Commands.QueryCommand.UnescapeInlineQuery("\"\"");
+        Assert.AreEqual(string.Empty, result);
+    }
+
 }

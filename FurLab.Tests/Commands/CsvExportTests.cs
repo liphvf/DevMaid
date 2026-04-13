@@ -1,8 +1,10 @@
+#pragma warning disable IDE0005 // These usings are required when the project is built standalone (no solution-level ImplicitUsings)
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+#pragma warning restore IDE0005
 using CsvHelper;
 using FurLab.CLI.Commands;
 
@@ -53,7 +55,7 @@ public class CsvExportTests
         var results = CreateSuccessResults();
         var outputPath = Path.Combine(_testDirectory, "test.csv");
 
-        WriteConsolidatedCsv(outputPath, results);
+        CsvExporter.WriteConsolidatedCsv(outputPath, results);
 
         var lines = ReadCsvLines(outputPath);
         Assert.AreEqual("Server,Database,id,name", lines[0]);
@@ -65,7 +67,7 @@ public class CsvExportTests
         var results = CreateSuccessResults();
         var outputPath = Path.Combine(_testDirectory, "test.csv");
 
-        WriteConsolidatedCsv(outputPath, results);
+        CsvExporter.WriteConsolidatedCsv(outputPath, results);
 
         var lines = ReadCsvLines(outputPath);
         Assert.AreEqual(4, lines.Length);
@@ -80,7 +82,7 @@ public class CsvExportTests
         var results = CreateSuccessResults();
         var outputPath = Path.Combine(_testDirectory, "test.csv");
 
-        WriteConsolidatedCsv(outputPath, results);
+        CsvExporter.WriteConsolidatedCsv(outputPath, results);
 
         var header = ReadCsvLines(outputPath)[0];
         Assert.IsFalse(header.Contains("ExecutedAt"));
@@ -95,7 +97,7 @@ public class CsvExportTests
         var results = CreateSuccessResults().Where(r => r.Server == "dev").ToList();
         var outputPath = Path.Combine(_testDirectory, "server_dev.csv");
 
-        WriteServerCsv(outputPath, "dev", results);
+        CsvExporter.WriteServerCsv(outputPath, "dev", results);
 
         var lines = ReadCsvLines(outputPath);
         Assert.AreEqual("Server,Database,id,name", lines[0]);
@@ -115,85 +117,63 @@ public class CsvExportTests
         };
 
         var outputPath = Path.Combine(_testDirectory, "test.csv");
-        WriteConsolidatedCsv(outputPath, results);
+        CsvExporter.WriteConsolidatedCsv(outputPath, results);
 
         var lines = ReadCsvLines(outputPath);
         Assert.IsTrue(lines[1].StartsWith("dev,db1,"));
         Assert.IsTrue(lines[2].StartsWith("dev,db2,"));
     }
 
-    private static void WriteConsolidatedCsv(string outputPath, List<CsvRow> successResults)
+    [TestMethod(DisplayName = "BuildColumnList retorna colunas em ordem de primeira aparição")]
+    public void BuildColumnList_ReturnsColumnsInFirstAppearanceOrder()
     {
-        using var writer = new StreamWriter(outputPath, false, System.Text.Encoding.UTF8);
-        using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-
-        var allColumnNames = new List<string>();
-        var seenColumns = new HashSet<string>();
-        foreach (var result in successResults)
+        var results = new List<CsvRow>
         {
-            foreach (var columnName in result.ColumnNames)
-            {
-                if (seenColumns.Add(columnName))
-                    allColumnNames.Add(columnName);
-            }
-        }
+            new("s1", "db1", DateTime.UtcNow, "Success", 1, string.Empty, ["b", "a"], []),
+            new("s1", "db2", DateTime.UtcNow, "Success", 1, string.Empty, ["a", "c"], []),
+        };
 
-        csv.WriteField("Server");
-        csv.WriteField("Database");
-        foreach (var columnName in allColumnNames) csv.WriteField(columnName);
-        csv.NextRecord();
+        var columns = CsvExporter.BuildColumnList(results);
 
-        foreach (var result in successResults)
-        {
-            foreach (var dataRow in result.Data)
-            {
-                csv.WriteField(result.Server);
-                csv.WriteField(result.Database);
-                foreach (var columnName in allColumnNames)
-                {
-                    var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
-                    csv.WriteField(value);
-                }
-                csv.NextRecord();
-            }
-        }
+        CollectionAssert.AreEqual(new[] { "b", "a", "c" }, columns);
     }
 
-    private static void WriteServerCsv(string outputPath, string serverName, List<CsvRow> serverResults)
+    [TestMethod(DisplayName = "BuildColumnList deduplica colunas entre result sets")]
+    public void BuildColumnList_DeduplicatesColumns()
     {
-        using var writer = new StreamWriter(outputPath, false, System.Text.Encoding.UTF8);
-        using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-
-        var allColumnNames = new List<string>();
-        var seenColumns = new HashSet<string>();
-        foreach (var result in serverResults)
+        var results = new List<CsvRow>
         {
-            foreach (var columnName in result.ColumnNames)
-            {
-                if (seenColumns.Add(columnName))
-                    allColumnNames.Add(columnName);
-            }
-        }
+            new("s1", "db1", DateTime.UtcNow, "Success", 1, string.Empty, ["id", "name"], []),
+            new("s1", "db2", DateTime.UtcNow, "Success", 1, string.Empty, ["id", "email"], []),
+        };
 
-        csv.WriteField("Server");
-        csv.WriteField("Database");
-        foreach (var columnName in allColumnNames) csv.WriteField(columnName);
-        csv.NextRecord();
+        var columns = CsvExporter.BuildColumnList(results);
 
-        foreach (var result in serverResults)
+        CollectionAssert.AreEqual(new[] { "id", "name", "email" }, columns);
+    }
+
+    [TestMethod(DisplayName = "CSV consolidado preenche coluna ausente com string vazia")]
+    public void ConsolidatedCsv_MissingColumnFilledWithEmpty()
+    {
+        var results = new List<CsvRow>
         {
-            foreach (var dataRow in result.Data)
-            {
-                csv.WriteField(serverName);
-                csv.WriteField(result.Database);
-                foreach (var columnName in allColumnNames)
-                {
-                    var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
-                    csv.WriteField(value);
-                }
-                csv.NextRecord();
-            }
-        }
+            new("s1", "db1", DateTime.UtcNow, "Success", 1, string.Empty, ["id", "name"],
+            [new Dictionary<string, string> { ["id"] = "1", ["name"] = "Alice" }]),
+            new("s1", "db2", DateTime.UtcNow, "Success", 1, string.Empty, ["id"],
+            [new Dictionary<string, string> { ["id"] = "2" }]),
+        };
+
+        using var writer = new StringWriter();
+        using var csv = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
+        CsvExporter.WriteConsolidatedCsv(csv, results);
+        csv.Flush();
+
+        var lines = writer.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        // header: Server,Database,id,name
+        // row1:   s1,db1,1,Alice
+        // row2:   s1,db2,2,  (empty name — trailing comma)
+        var lastDataLine = lines[2].TrimEnd('\r');
+        Assert.IsTrue(lastDataLine.EndsWith(","), $"Expected trailing comma for empty name column but got: {lastDataLine}");
     }
 
     private static string[] ReadCsvLines(string path)

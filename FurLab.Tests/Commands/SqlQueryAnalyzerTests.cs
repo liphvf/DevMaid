@@ -146,4 +146,30 @@ public class SqlQueryAnalyzerTests
     {
         Assert.AreEqual("UNKNOWN", SqlQueryAnalyzer.GetQueryTypeDescription(""));
     }
+
+    // ── CTE edge cases (documented limitations) ──────────────────────────────
+
+    [TestMethod(DisplayName = "CTE múltiplos: segundo CTE destrutivo — limita\u00e7\u00e3o conhecida retorna Safe")]
+    public void AnalyzeQuery_MultipleCtes_SecondDestructive_ReturnsSafe_KnownLimitation()
+    {
+        // KNOWN LIMITATION: only the first CTE body is inspected.
+        // WITH a AS (SELECT …), b AS (DELETE …) → the parser sees SELECT in the first
+        // CTE body and returns Safe, even though the second CTE is destructive.
+        var query = "WITH a AS (SELECT 1), b AS (DELETE FROM users) SELECT * FROM a";
+        Assert.AreEqual(QueryType.Safe, SqlQueryAnalyzer.AnalyzeQuery(query));
+    }
+
+    [TestMethod(DisplayName = "CTE múltiplos: primeiro CTE destrutivo é detectado corretamente")]
+    public void AnalyzeQuery_MultipleCtes_FirstDestructive_ReturnsDestructive()
+    {
+        var query = "WITH a AS (DELETE FROM users WHERE id = 1), b AS (SELECT 1) SELECT * FROM b";
+        Assert.AreEqual(QueryType.Destructive, SqlQueryAnalyzer.AnalyzeQuery(query));
+    }
+
+    [TestMethod(DisplayName = "CTE sem AS retorna Safe (fallback para WITH)")]
+    public void AnalyzeQuery_CteWithoutAs_ReturnsSafe()
+    {
+        // Malformed CTE — treated as Safe (unknown keyword fallback)
+        Assert.AreEqual(QueryType.Safe, SqlQueryAnalyzer.AnalyzeQuery("WITH cte SELECT * FROM cte"));
+    }
 }

@@ -240,6 +240,7 @@ public partial class UserConfigService : IUserConfigService
             {
                 server.ExcludePatterns = ["template*", "postgres"];
             }
+
         }
     }
 

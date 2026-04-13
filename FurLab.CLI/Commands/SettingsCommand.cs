@@ -136,9 +136,9 @@ public static class SettingsCommand
         }
 
         var table = new Table();
-        table.AddColumn("Nome");
+        table.AddColumn("Name");
         table.AddColumn("Host");
-        table.AddColumn("Porta");
+        table.AddColumn("Port");
         table.AddColumn("Username");
         table.AddColumn("Databases");
         table.AddColumn("Auto-DB");
@@ -179,24 +179,18 @@ public static class SettingsCommand
     {
         if (string.IsNullOrWhiteSpace(options.Name))
         {
-            AnsiConsole.MarkupLine("[red]Error: --name (-n) is required.[/]");
-            Environment.Exit(2);
-            return;
+            throw new ArgumentException("--name (-n) is required.");
         }
 
         if (string.IsNullOrWhiteSpace(options.Host))
         {
-            AnsiConsole.MarkupLine("[red]Error: --host (-h) is required.[/]");
-            Environment.Exit(2);
-            return;
+            throw new ArgumentException("--host (-h) is required.");
         }
 
         var existing = UserConfigService.GetServer(options.Name);
         if (existing != null)
         {
-            AnsiConsole.MarkupLine($"[red]Error: Server '{options.Name}' already exists. Use a different name or remove the existing one first.[/]");
-            Environment.Exit(2);
-            return;
+            throw new InvalidOperationException($"Server '{options.Name}' already exists. Use a different name or remove the existing one first.");
         }
 
         var server = BuildServerFromOptions(options);
@@ -251,10 +245,10 @@ public static class SettingsCommand
 
         var action = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
-                .Title("Ação:")
-                .AddChoices("Salvar e testar conexão", "Salvar sem testar", "Cancelar"));
+                .Title("Action:")
+                .AddChoices("Save and test connection", "Save without testing", "Cancel"));
 
-        if (action == "Cancelar")
+        if (action == "Cancel")
         {
             AnsiConsole.MarkupLine("[yellow]Operation cancelled.[/]");
             return;
@@ -263,14 +257,12 @@ public static class SettingsCommand
         var existing = UserConfigService.GetServer(name);
         if (existing != null)
         {
-            AnsiConsole.MarkupLine($"[red]Error: Server '{name}' already exists.[/]");
-            Environment.Exit(2);
-            return;
+            throw new InvalidOperationException($"Server '{name}' already exists.");
         }
 
         UserConfigService.AddOrUpdateServer(server);
 
-        if (action == "Salvar e testar conexão")
+        if (action == "Save and test connection")
         {
             TestServerConnection(name);
         }
@@ -293,47 +285,36 @@ public static class SettingsCommand
             return;
         }
 
-        string serverName;
-
         if (!string.IsNullOrWhiteSpace(options.Name))
         {
-            serverName = options.Name;
-        }
-        else if (options.Interactive || string.IsNullOrWhiteSpace(options.Name))
-        {
-            var selection = AnsiConsole.Prompt(
-                new MultiSelectionPrompt<string>()
-                    .Title("Select servers to remove:")
-                    .PageSize(10)
-                    .AddChoices(servers.Select(s => s.Name)));
-
-            if (selection.Count == 0)
+            var removed = UserConfigService.RemoveServer(options.Name);
+            if (!removed)
             {
-                AnsiConsole.MarkupLine("[yellow]No servers selected. Operation cancelled.[/]");
-                return;
+                throw new ArgumentException($"Server '{options.Name}' not found.");
             }
 
-            foreach (var name in selection)
-            {
-                UserConfigService.RemoveServer(name);
-                AnsiConsole.MarkupLine($"[green]Server '{name}' removed.[/]");
-            }
-            return;
-        }
-        else
-        {
-            serverName = options.Name!;
-        }
-
-        var removed = UserConfigService.RemoveServer(serverName);
-        if (!removed)
-        {
-            AnsiConsole.MarkupLine($"[red]Server '{serverName}' not found.[/]");
-            Environment.Exit(2);
+            AnsiConsole.MarkupLine($"[green]Server '{options.Name}' removed successfully.[/]");
             return;
         }
 
-        AnsiConsole.MarkupLine($"[green]Server '{serverName}' removed successfully.[/]");
+        // Interactive mode (or no name provided): prompt for selection
+        var selection = AnsiConsole.Prompt(
+            new MultiSelectionPrompt<string>()
+                .Title("Select servers to remove:")
+                .PageSize(10)
+                .AddChoices(servers.Select(s => s.Name)));
+
+        if (selection.Count == 0)
+        {
+            AnsiConsole.MarkupLine("[yellow]No servers selected. Operation cancelled.[/]");
+            return;
+        }
+
+        foreach (var name in selection)
+        {
+            UserConfigService.RemoveServer(name);
+            AnsiConsole.MarkupLine($"[green]Server '{name}' removed.[/]");
+        }
     }
 
     /// <summary>
@@ -344,12 +325,10 @@ public static class SettingsCommand
         var server = UserConfigService.GetServer(name);
         if (server == null)
         {
-            AnsiConsole.MarkupLine($"[red]Server '{name}' not found.[/]");
-            Environment.Exit(2);
-            return;
+            throw new ArgumentException($"Server '{name}' not found.");
         }
 
-        AnsiConsole.MarkupLine($"[cyan]Testando conexão com {server.Name} ({server.Host}:{server.Port})...[/]");
+        AnsiConsole.MarkupLine($"[cyan]Testing connection to {server.Name} ({server.Host}:{server.Port})...[/]");
 
         try
         {
@@ -357,8 +336,8 @@ public static class SettingsCommand
             using var connection = new NpgsqlConnection(connectionString);
             connection.Open();
 
-            AnsiConsole.MarkupLine($"[green]✓ Conexão com {server.Host}:{server.Port} bem-sucedida[/]");
-            AnsiConsole.MarkupLine($"[green]✓ Autenticação como {server.Username} bem-sucedida[/]");
+            AnsiConsole.MarkupLine($"[green]✓ Connection to {server.Host}:{server.Port} successful[/]");
+            AnsiConsole.MarkupLine($"[green]✓ Authenticated as {server.Username}[/]");
 
             try
             {
@@ -374,7 +353,7 @@ public static class SettingsCommand
 
                 if (databases.Count > 0)
                 {
-                    AnsiConsole.MarkupLine($"[green]✓ Databases encontradas: {string.Join(", ", databases)}[/]");
+                    AnsiConsole.MarkupLine($"[green]✓ Databases found: {string.Join(", ", databases)}[/]");
                 }
                 else
                 {
@@ -391,18 +370,14 @@ public static class SettingsCommand
             if (ex.Message.Contains("authentication", StringComparison.OrdinalIgnoreCase) ||
                 ex.Message.Contains("password", StringComparison.OrdinalIgnoreCase))
             {
-                AnsiConsole.MarkupLine($"[red]✗ Authentication failed: {ex.Message}[/]");
+                throw new InvalidOperationException($"Authentication failed: {ex.Message}", ex);
             }
-            else
-            {
-                AnsiConsole.MarkupLine($"[red]✗ Connection failed: {ex.Message}[/]");
-            }
-            Environment.Exit(1);
+
+            throw new InvalidOperationException($"Connection failed: {ex.Message}", ex);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not InvalidOperationException and not ArgumentException)
         {
-            AnsiConsole.MarkupLine($"[red]✗ Falha na conexão: {ex.Message}[/]");
-            Environment.Exit(1);
+            throw new InvalidOperationException($"Connection failed: {ex.Message}", ex);
         }
     }
 

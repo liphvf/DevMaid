@@ -220,14 +220,13 @@ public static class QueryCommand
     /// <param name="options">The query execution options.</param>
     /// <exception cref="ArgumentException">Thrown when required options are missing or invalid.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the SQL input file does not exist.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the user cancels execution of a destructive query.</exception>
     public static void Run(QueryCommandOptions options)
     {
         // Validate mutual exclusivity between -c and -i
         if (!string.IsNullOrWhiteSpace(options.InlineQuery) && !string.IsNullOrWhiteSpace(options.InputFile))
         {
-            AnsiConsole.MarkupLine("[red]Error:[/] Options -c/--command and -i/--input are mutually exclusive. Use only one.");
-            Environment.Exit(2);
-            return;
+            throw new ArgumentException("Options -c/--command and -i/--input are mutually exclusive. Use only one.");
         }
 
         // Get SQL query from inline command or input file
@@ -242,17 +241,13 @@ public static class QueryCommand
         {
             if (!SecurityUtils.IsValidPath(options.InputFile))
             {
-                AnsiConsole.MarkupLine($"[red]Error:[/] Invalid input path: '{options.InputFile}'. Path traversal not allowed.");
-                Environment.Exit(2);
-                return;
+                throw new ArgumentException($"Invalid input path: '{options.InputFile}'. Path traversal not allowed.");
             }
 
             var inputFullPath = Path.GetFullPath(options.InputFile);
             if (!File.Exists(inputFullPath))
             {
-                AnsiConsole.MarkupLine($"[red]Error:[/] SQL input file not found: {inputFullPath}");
-                Environment.Exit(2);
-                return;
+                throw new FileNotFoundException($"SQL input file not found: {inputFullPath}", inputFullPath);
             }
 
             sqlQuery = File.ReadAllText(inputFullPath, Encoding.UTF8);
@@ -260,36 +255,26 @@ public static class QueryCommand
         }
         else
         {
-            AnsiConsole.MarkupLine("[red]Error:[/] Either -c/--command or -i/--input is required.");
-            AnsiConsole.MarkupLine("[dim]Use -c for an inline query or -i for a SQL file.[/]");
-            Environment.Exit(2);
-            return;
+            throw new ArgumentException("Use -c for an inline query or -i for a SQL file.");
         }
 
         if (string.IsNullOrWhiteSpace(sqlQuery))
         {
-            AnsiConsole.MarkupLine("[red]Error:[/] SQL query is empty.");
-            Environment.Exit(2);
-            return;
+            throw new ArgumentException("SQL query is empty.");
         }
 
         // Get configured servers
         var servers = UserConfigService.GetServers();
         if (servers.Count == 0)
         {
-            AnsiConsole.MarkupLine("[red]No servers configured.[/]");
-            AnsiConsole.MarkupLine("[yellow]Run 'settings db-servers add' to add a server first.[/]");
-            Environment.Exit(2);
-            return;
+            throw new InvalidOperationException("No servers configured. Run 'settings db-servers add' to add a server first.");
         }
 
         // Show server selection prompt (all pre-selected)
         var selectedServers = SelectServers(servers);
         if (selectedServers.Count == 0)
         {
-            AnsiConsole.MarkupLine("[yellow]No servers selected. Exiting.[/]");
-            Environment.Exit(1);
-            return;
+            throw new OperationCanceledException("No servers selected. Execution cancelled.");
         }
 
         // Analyze query for destructive operations
@@ -304,9 +289,7 @@ public static class QueryCommand
                 var databaseCount = selectedServers.Sum(s => s.FetchAllDatabases ? 1 : Math.Max(s.Databases.Count, 1));
                 if (!ConfirmDestructiveQuery(queryTypeDescription, selectedServers, databaseCount, sqlQuery))
                 {
-                    AnsiConsole.MarkupLine("[yellow]Query execution cancelled by user.[/]");
-                    Environment.Exit(0);
-                    return;
+                    throw new OperationCanceledException("Query execution cancelled by user.");
                 }
             }
         }
@@ -316,9 +299,27 @@ public static class QueryCommand
     }
 
     /// <summary>
-    /// Unescapes inline query string for Windows command line.
+    /// Unescapes an inline SQL query string received from the command line.
     /// </summary>
-    private static string UnescapeInlineQuery(string query)
+    /// <remarks>
+    /// <para>
+    /// On Windows, the shell and <c>System.CommandLine</c> do not always strip
+    /// the outer quotes from arguments, especially when the value contains spaces
+    /// or special characters. This method performs a best-effort strip of a single
+    /// outer quote pair (either <c>"…"</c> or <c>'…'</c>) and then unescapes
+    /// any backslash-escaped quotes inside the value.
+    /// </para>
+    /// <para>
+    /// Examples:
+    /// <list type="bullet">
+    ///   <item><description><c>"SELECT 1"</c> → <c>SELECT 1</c></description></item>
+    ///   <item><description><c>'SELECT 1'</c> → <c>SELECT 1</c></description></item>
+    ///   <item><description><c>SELECT \"name\" FROM t</c> → <c>SELECT "name" FROM t</c></description></item>
+    ///   <item><description><c>SELECT 1</c> (no outer quotes) → <c>SELECT 1</c> (unchanged)</description></item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    internal static string UnescapeInlineQuery(string query)
     {
         if ((query.StartsWith('"') && query.EndsWith('"')) ||
             (query.StartsWith('\'') && query.EndsWith('\'')))
@@ -418,7 +419,7 @@ public static class QueryCommand
 
         await Parallel.ForEachAsync(selectedServers, parallelOptions, async (server, ct) =>
         {
-            var databases = GetDatabasesForServer(server);
+            var databases = await GetDatabasesForServerAsync(server, ct);
 
             if (databases.Count == 0)
             {
@@ -442,7 +443,9 @@ public static class QueryCommand
                 {
                     var connectionString = BuildConnectionStringForServer(server, database);
                     var executedAt = DateTime.UtcNow;
-                    var (columnNames, data) = await ExecuteQueryWithRetryAsync(connectionString, sqlQuery, server.CommandTimeout, dbCt);
+                    var queryResult = await ExecuteQueryWithRetryAsync(connectionString, sqlQuery, server.CommandTimeout, dbCt);
+                    var columnNames = queryResult.ColumnNames;
+                    var data = queryResult.Data;
 
                     lock (lockObj)
                     {
@@ -530,8 +533,7 @@ public static class QueryCommand
 
         if (successCount == 0 && failureCount > 0)
         {
-            AnsiConsole.MarkupLine("[red]Nenhum servidor respondeu com sucesso. Verifique as conexões.[/]");
-            Environment.Exit(1);
+            throw new InvalidOperationException("No server responded successfully. Please check the connections.");
         }
     }
 
@@ -587,19 +589,19 @@ public static class QueryCommand
     /// Gets list of databases for a server (either explicit or auto-discovered).
     /// Validates access to each database before returning.
     /// </summary>
-    private static List<string> GetDatabasesForServer(ServerConfigEntry server)
+    private static async Task<List<string>> GetDatabasesForServerAsync(ServerConfigEntry server, CancellationToken ct)
     {
         if (!server.FetchAllDatabases && server.Databases.Count > 0)
         {
-            return ValidateDatabaseAccess(server, server.Databases);
+            return await ValidateDatabaseAccessAsync(server, server.Databases, ct);
         }
 
         if (server.FetchAllDatabases)
         {
             try
             {
-                var discoveredDatabases = ListDatabasesAsync(server).GetAwaiter().GetResult();
-                return ValidateDatabaseAccess(server, discoveredDatabases);
+                var discoveredDatabases = await ListDatabasesAsync(server, ct);
+                return await ValidateDatabaseAccessAsync(server, discoveredDatabases, ct);
             }
             catch (Exception ex)
             {
@@ -607,7 +609,7 @@ public static class QueryCommand
                 if (server.Databases.Count > 0)
                 {
                     AnsiConsole.MarkupLine("[yellow]Falling back to configured databases.[/]");
-                    return ValidateDatabaseAccess(server, server.Databases);
+                    return await ValidateDatabaseAccessAsync(server, server.Databases, ct);
                 }
                 return [];
             }
@@ -619,14 +621,14 @@ public static class QueryCommand
             return [];
         }
 
-        return ValidateDatabaseAccess(server, [defaultDb]);
+        return await ValidateDatabaseAccessAsync(server, [defaultDb], ct);
     }
 
     /// <summary>
-    /// Validates access to each database by attempting a simple connection test.
+    /// Validates access to each database by attempting a simple async connection test.
     /// Returns only databases that are accessible.
     /// </summary>
-    private static List<string> ValidateDatabaseAccess(ServerConfigEntry server, List<string> databases)
+    private static async Task<List<string>> ValidateDatabaseAccessAsync(ServerConfigEntry server, List<string> databases, CancellationToken ct)
     {
         var accessibleDatabases = new List<string>();
 
@@ -640,12 +642,12 @@ public static class QueryCommand
             try
             {
                 var connectionString = BuildConnectionStringForServer(server, database);
-                using var connection = new NpgsqlConnection(connectionString);
-                connection.Open();
+                await using var connection = new NpgsqlConnection(connectionString);
+                await connection.OpenAsync(ct);
 
                 // Simple validation query
-                using var command = new NpgsqlCommand("SELECT 1", connection);
-                command.ExecuteScalar();
+                await using var command = new NpgsqlCommand("SELECT 1", connection);
+                await command.ExecuteScalarAsync(ct);
 
                 accessibleDatabases.Add(database);
             }
@@ -661,20 +663,20 @@ public static class QueryCommand
     /// <summary>
     /// Lists all databases on a server using Npgsql.
     /// </summary>
-    private static async Task<List<string>> ListDatabasesAsync(ServerConfigEntry server)
+    private static async Task<List<string>> ListDatabasesAsync(ServerConfigEntry server, CancellationToken ct)
     {
         var connectionString = BuildConnectionStringForServer(server, "postgres");
         var databases = new List<string>();
 
         await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(ct);
 
         await using var command = new NpgsqlCommand(
             "SELECT datname FROM pg_database WHERE datistemplate = false AND datallowconn = true",
             connection);
 
-        await using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        await using var reader = await command.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
         {
             var dbName = reader.GetString(0);
             if (!server.ExcludePatterns.Any(pattern => MatchesPattern(dbName, pattern)))
@@ -729,86 +731,8 @@ public static class QueryCommand
     }
 
     private static void WriteConsolidatedCsv(string outputPath, List<CsvRow> successResults)
-    {
-        using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
-        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
-
-        var allColumnNames = new List<string>();
-        var seenColumns = new HashSet<string>();
-        foreach (var result in successResults)
-        {
-            foreach (var columnName in result.ColumnNames)
-            {
-                if (seenColumns.Add(columnName))
-                {
-                    allColumnNames.Add(columnName);
-                }
-            }
-        }
-
-        csv.WriteField("Server");
-        csv.WriteField("Database");
-        foreach (var columnName in allColumnNames)
-        {
-            csv.WriteField(columnName);
-        }
-        csv.NextRecord();
-
-        foreach (var result in successResults)
-        {
-            foreach (var dataRow in result.Data)
-            {
-                csv.WriteField(result.Server);
-                csv.WriteField(result.Database);
-                foreach (var columnName in allColumnNames)
-                {
-                    var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
-                    csv.WriteField(value);
-                }
-                csv.NextRecord();
-            }
-        }
-    }
+        => CsvExporter.WriteConsolidatedCsv(outputPath, successResults);
 
     private static void WriteServerCsv(string outputPath, string serverName, List<CsvRow> serverResults)
-    {
-        using var writer = new StreamWriter(outputPath, false, Encoding.UTF8);
-        using var csv = new CsvHelper.CsvWriter(writer, CultureInfo.InvariantCulture);
-
-        var allColumnNames = new List<string>();
-        var seenColumns = new HashSet<string>();
-        foreach (var result in serverResults)
-        {
-            foreach (var columnName in result.ColumnNames)
-            {
-                if (seenColumns.Add(columnName))
-                {
-                    allColumnNames.Add(columnName);
-                }
-            }
-        }
-
-        csv.WriteField("Server");
-        csv.WriteField("Database");
-        foreach (var columnName in allColumnNames)
-        {
-            csv.WriteField(columnName);
-        }
-        csv.NextRecord();
-
-        foreach (var result in serverResults)
-        {
-            foreach (var dataRow in result.Data)
-            {
-                csv.WriteField(serverName);
-                csv.WriteField(result.Database);
-                foreach (var columnName in allColumnNames)
-                {
-                    var value = dataRow.ContainsKey(columnName) ? dataRow[columnName] : string.Empty;
-                    csv.WriteField(value);
-                }
-                csv.NextRecord();
-            }
-        }
-    }
+        => CsvExporter.WriteServerCsv(outputPath, serverName, serverResults);
 }

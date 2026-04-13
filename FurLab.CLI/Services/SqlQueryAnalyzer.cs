@@ -122,8 +122,27 @@ public static partial class SqlQueryAnalyzer
     }
 
     /// <summary>
-    /// For CTEs (WITH ... AS (...)), finds the first keyword inside the CTE body.
+    /// For CTEs (WITH ... AS (...)), finds the first keyword inside the first CTE body.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Known limitation: this parser uses a simple heuristic. It finds the first
+    /// "AS (" sequence in the query and inspects the keyword immediately following
+    /// the opening parenthesis. This covers the common cases:
+    /// <list type="bullet">
+    ///   <item><description><c>WITH cte AS (SELECT …) SELECT …</c> → Safe</description></item>
+    ///   <item><description><c>WITH cte AS (INSERT …) SELECT …</c> → Destructive</description></item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// Edge cases not handled:
+    /// <list type="bullet">
+    ///   <item><description>Multiple CTEs: <c>WITH a AS (…), b AS (DELETE …)</c> — only the first CTE body is inspected.</description></item>
+    ///   <item><description>Nested CTEs or CTE bodies that don't start with a recognised keyword fall back to <c>"WITH"</c>, which is classified as Safe.</description></item>
+    /// </list>
+    /// If stricter detection is required, replace this method with a proper SQL parser.
+    /// </para>
+    /// </remarks>
     private static string ExtractKeywordFromCte(string query)
     {
         var asIndex = query.IndexOf("AS", StringComparison.OrdinalIgnoreCase);
