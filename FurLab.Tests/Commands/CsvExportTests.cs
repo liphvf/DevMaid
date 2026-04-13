@@ -1,10 +1,7 @@
-#pragma warning disable IDE0005 // These usings are required when the project is built standalone (no solution-level ImplicitUsings)
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-#pragma warning restore IDE0005
 using CsvHelper;
 using FurLab.CLI.Commands;
 

@@ -20,9 +20,6 @@ public class AddServerCommandOptions
     /// <summary>Database password.</summary>
     public string? Password { get; set; }
 
-    /// <summary>Default database name.</summary>
-    public string? Database { get; set; }
-
     /// <summary>Comma-separated list of specific databases.</summary>
     public string? Databases { get; set; }
 

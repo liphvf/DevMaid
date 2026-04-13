@@ -32,8 +32,7 @@ public static class SettingsCommand
         var portOption = new Option<int>("--port", "-p") { Description = "Database port. Default: 5432." };
         var usernameOption = new Option<string>("--username", "-U") { Description = "Database username." };
         var passwordOption = new Option<string>("--password", "-W") { Description = "Database password." };
-        var databaseOption = new Option<string?>("--database", "-d") { Description = "Default database name." };
-        var databasesOption = new Option<string?>("--databases") { Description = "Comma-separated list of specific databases." };
+        var databasesOption = new Option<string?>("--databases", "-d") { Description = "Comma-separated list of specific databases." };
         var sslModeOption = new Option<string?>("--ssl-mode") { Description = "SSL mode (Disable, Allow, Prefer, Require, VerifyCA, VerifyFull)." };
         var timeoutOption = new Option<int?>("--timeout") { Description = "Connection timeout in seconds." };
         var commandTimeoutOption = new Option<int?>("--command-timeout") { Description = "Command timeout in seconds." };
@@ -47,7 +46,6 @@ public static class SettingsCommand
         addCommand.Add(portOption);
         addCommand.Add(usernameOption);
         addCommand.Add(passwordOption);
-        addCommand.Add(databaseOption);
         addCommand.Add(databasesOption);
         addCommand.Add(sslModeOption);
         addCommand.Add(timeoutOption);
@@ -66,7 +64,6 @@ public static class SettingsCommand
                 Port = parseResult.GetValue(portOption),
                 Username = parseResult.GetValue(usernameOption),
                 Password = parseResult.GetValue(passwordOption),
-                Database = parseResult.GetValue(databaseOption),
                 Databases = parseResult.GetValue(databasesOption),
                 SslMode = parseResult.GetValue(sslModeOption),
                 Timeout = parseResult.GetValue(timeoutOption),
