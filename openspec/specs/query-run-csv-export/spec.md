@@ -7,41 +7,36 @@ Define o comportamento de exportação de resultados de query para arquivos CSV,
 ## Requirements
 
 ### Requirement: Formato do CSV de output
-O sistema DEVE gerar CSV com colunas de identificação (Server, Database) e colunas de resultado da query. Metadados de execução (ExecutedAt, Status, RowCount, Error) são logados apenas no terminal.
+O sistema DEVE gerar arquivos CSV em uma subpasta por execução, com CSVs parciais por servidor escritos progressivamente (append) e um CSV consolidado gerado ao final com header unificado. Erros são registrados em arquivo dedicado `_erros.csv`.
 
 #### Cenário: CSV com execução bem-sucedida
 - **QUANDO** query executa com sucesso em um servidor/database
-- **ENTÃO** CSV inclui colunas: Server, Database, <colunas de resultado da query>
+- **ENTÃO** sistema faz append no CSV parcial do servidor `results/<timestamp>/<server>_<timestamp>.csv`
+- **E** CSV parcial inclui colunas: Server, Database, <colunas de resultado da query>
 - **E** cada linha de resultado da query é precedida por Server e Database
-- **E** falhas NÃO geram linhas no CSV (apenas log no terminal)
+- **E** se for a primeira query naquele servidor, header é escrito; caso contrário, apenas dados são adicionados
+- **E** header inconsistente (databases com colunas diferentes) é ACEITÁVEL
 
 #### Cenário: Log de execução no terminal
 - **QUANDO** query executa em um servidor/database (sucesso ou falha)
-- **ENTÃO** sistema loga no terminal: `<server>/<database> — Success/Error — <rows ou erro> (<timestamp>)`
-- **E** sucesso é exibido em verde
-- **E** erro é exibido em vermelho
+- **ENTÃO** sistema exibe no feed de atividades: status, rows/erro, duração, caminho do arquivo
+- **E** sucesso é exibido em verde com checkmark
+- **E** erro é exibido em vermelho com X
 
-#### Cenário: Múltiplos servidores no mesmo CSV
+#### Cenário: Múltiplos servidores — CSV consolidado
 - **QUANDO** query executa em múltiplos servidores/databases
-- **ENTÃO** CSV contém uma linha por resultado de query
+- **ENTÃO** ao final, sistema gera `results/<timestamp>/consolidated_<timestamp>.csv` com merge dos parciais
+- **E** CSV consolidado contém uma linha por resultado de query
 - **E** cada linha identifica qual servidor e database produziu aquele resultado
-- **E** colunas de resultado da query são as mesmas para todas as linhas
-- **E** tabela resumo no terminal mostra: Server, Database, Status, Rows, ExecutedAt, Error
+- **E** colunas de resultado são a união de todas as colunas, na ordem de primeira aparição
 
-#### Cenário: CSV com --separate-files
-- **QUANDO** usuário executa com flag `--separate-files`
-- **ENTÃO** sistema gera um arquivo CSV por servidor
-- **E** cada arquivo tem nome: `<server>_<timestamp>.csv`
-- **E** cada arquivo inclui colunas Server, Database, <colunas da query>
+#### Cenário: Erros em arquivo dedicado
+- **QUANDO** uma query falha em servidor/database
+- **ENTÃO** erros são registrados em `results/<timestamp>/<timestamp>_erros.csv`
+- **E** arquivo tem colunas: Server, Database, ExecutedAt, Error
+- **E** erros NÃO geram linhas nos CSVs de resultado (parciais ou consolidado)
 
-### Requirement: Output path default
-O sistema DEVE usar `outputDirectory` das configurações defaults como path base para arquivos CSV quando `-o` não é especificado.
-
-#### Cenário: Output path não especificado
-- **QUANDO** usuário não fornece `-o`
-- **ENTÃO** sistema usa `%LocalAppData%\FurLab\results\query_<timestamp>.csv`
-
-#### Cenário: Output path especificado
-- **QUANDO** usuário fornece `-o caminho/arquivo.csv`
-- **ENTÃO** sistema salva CSV naquele caminho
-- **E** cria diretórios pai se não existirem
+#### Cenário: Organização em subpasta
+- **QUANDO** execução inicia
+- **ENTÃO** sistema cria subpasta `results/<timestamp>/`
+- **E** todos os arquivos CSV (parciais, consolidado, erros) ficam nesta subpasta

@@ -18,24 +18,25 @@ O sistema DEVE executar queries em múltiplos servidores/databases em paralelo u
 - **ENTÃO** sistema usa o valor configurado como limite de paralelismo para aquele servidor
 
 ### Requirement: Tolerância a falhas parcial
-O sistema DEVE continuar a execução nos servidores/databases restantes quando um falha, registrando o erro no terminal.
+O sistema DEVE continuar a execução nos servidores/databases restantes quando um falha, registrando o erro no terminal e no arquivo de erros `_erros.csv`.
 
 #### Cenário: Um servidor falha durante execução
 - **QUANDO** um servidor retorna erro de conexão durante a execução
-- **ENTÃO** sistema registra erro no terminal com `✗ server/db — Error — <mensagem> (<timestamp>)`
-- **E** erro é exibido na tabela resumo final com Status=Error e coluna Error preenchida
+- **ENTÃO** sistema registra erro no feed de atividades com `✗ server/db — Error — <mensagem>`
+- **E** sistema adiciona linha ao arquivo `results/<timestamp>/<timestamp>_erros.csv`
+- **E** erro NÃO gera linha nos CSVs de resultado
 - **E** sistema continua executando nos servidores restantes
-- **E** erro NÃO gera linha no CSV (apenas resultados de sucesso vão para o CSV)
 
 #### Cenário: Múltiplos servidores falham
 - **QUANDO** múltiplos servidores retornam erros durante a execução
-- **ENTÃO** sistema registra cada erro individualmente no terminal
+- **ENTÃO** sistema registra cada erro individualmente no feed de atividades
+- **E** sistema adiciona cada erro progressivamente ao arquivo `_erros.csv`
 - **E** sistema continua com os servidores que estão funcionando
-- **E** sistema exibe resumo de falhas na tabela resumo final
 
 #### Cenário: Todos os servidores falham
 - **QUANDO** todos os servidores selecionados retornam erro durante a execução
-- **ENTÃO** sistema exibe tabela resumo com todos os erros no terminal
+- **ENTÃO** sistema exibe resumo com todos os erros
+- **E** arquivo `_erros.csv` contém todas as falhas
 - **E** sistema exibe mensagem: "Nenhum servidor respondeu com sucesso. Verifique as conexões."
 - **E** sistema encerra com exit code 1
 
@@ -48,9 +49,10 @@ O sistema DEVE usar Polly para retries automáticos em falhas transitórias de c
 - **E** se todas as tentativas falham, registra erro e continua
 
 ### Requirement: Resumo de execução
-O sistema DEVE exibir um resumo após a execução em todos os servidores/databases.
+O sistema DEVE exibir um resumo após a execução em todos os servidores/databases, incluindo caminhos dos arquivos gerados.
 
 #### Cenário: Execução completa com sucesso parcial
 - **QUANDO** execução termina em todos os servidores
-- **ENTÃO** sistema exibe resumo: "X servidores executados com sucesso, Y falharam"
-- **E** sistema lista servidores que falharam com seus erros
+- **ENTÃO** sistema exibe caminho do CSV consolidado: `✅ Consolidated → <caminho>`
+- **E** sistema exibe caminho do arquivo de erros (se houver): `❌ Errors → <caminho>`
+- **E** sistema exibe contagem: "X servidores | Y success | Z failed | N total rows"
