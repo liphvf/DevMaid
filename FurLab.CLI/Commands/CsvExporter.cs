@@ -193,6 +193,11 @@ internal static class CsvExporter
         return allColumnNames;
     }
 
+    // Fixed set of Windows-invalid filename chars, used regardless of the OS running the tests
+    // (Path.GetInvalidFileNameChars() on Linux omits chars like ':' and '*').
+    private static readonly char[] s_windowsInvalidFileNameChars =
+        ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '\0'];
+
     /// <summary>
     /// Sanitizes a server name for use as a filename by replacing all invalid filename characters with <c>_</c>.
     /// </summary>
@@ -200,11 +205,10 @@ internal static class CsvExporter
     /// <returns>A string safe for use as a filename component.</returns>
     internal static string SanitizeFilename(string name)
     {
-        var invalid = Path.GetInvalidFileNameChars();
         var sb = new StringBuilder(name.Length);
         foreach (var c in name)
         {
-            sb.Append(invalid.Contains(c) ? '_' : c);
+            sb.Append(s_windowsInvalidFileNameChars.Contains(c) ? '_' : c);
         }
         return sb.ToString();
     }
