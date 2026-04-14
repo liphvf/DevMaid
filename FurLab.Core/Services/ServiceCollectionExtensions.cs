@@ -1,3 +1,5 @@
+using System.Runtime.Versioning;
+
 using FurLab.Core.HealthChecks;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Logging;
@@ -49,13 +51,19 @@ public static class ServiceCollectionExtensions
             "FurLab",
             "keys"));
 
-        _ = services.AddDataProtection()
+        var dpBuilder = services.AddDataProtection()
             .PersistKeysToFileSystem(keysDir)
-            .ProtectKeysWithDpapi(protectToLocalMachine: false)
             .SetApplicationName("FurLab");
+
+        if (OperatingSystem.IsWindows())
+            ProtectKeysWithDpapiOnWindows(dpBuilder);
 
         _ = services.AddSingleton<ICredentialService, CredentialService>();
 
         return services;
     }
+
+    [SupportedOSPlatform("windows")]
+    private static void ProtectKeysWithDpapiOnWindows(IDataProtectionBuilder builder) =>
+        builder.ProtectKeysWithDpapi(protectToLocalMachine: false);
 }
