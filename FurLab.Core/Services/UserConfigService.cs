@@ -195,7 +195,6 @@ public partial class UserConfigService : IUserConfigService
                         Host = serverJson.TryGetProperty("Host", out var hostProp) ? hostProp.GetString() ?? string.Empty : string.Empty,
                         Port = serverJson.TryGetProperty("Port", out var portProp) ? portProp.GetInt32() : 5432,
                         Username = serverJson.TryGetProperty("Username", out var userProp) ? userProp.GetString() ?? string.Empty : string.Empty,
-                        Password = serverJson.TryGetProperty("Password", out var passProp) ? passProp.GetString() ?? string.Empty : string.Empty,
                         Databases = serverJson.TryGetProperty("Databases", out var dbProp) && dbProp.ValueKind == JsonValueKind.Array
                             ? dbProp.EnumerateArray().Select(d => d.GetString() ?? string.Empty).ToList()
                             : [],
@@ -215,6 +214,25 @@ public partial class UserConfigService : IUserConfigService
         {
             return null;
         }
+    }
+
+    /// <inheritdoc/>
+    public void SetEncryptedPassword(string serverName, string encryptedPassword)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(serverName);
+        ArgumentNullException.ThrowIfNull(encryptedPassword);
+
+        var config = LoadConfig();
+        var server = config.Servers.FirstOrDefault(s => s.Name.Equals(serverName, StringComparison.OrdinalIgnoreCase));
+
+        if (server == null)
+        {
+            throw new ArgumentException($"Server '{serverName}' not found.", nameof(serverName));
+        }
+
+        server.EncryptedPassword = encryptedPassword;
+        SaveConfig(config);
+        _logger.LogDebug($"Encrypted password updated for server '{serverName}'.");
     }
 
     private static UserConfig CreateDefaultConfig()

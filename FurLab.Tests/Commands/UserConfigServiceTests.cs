@@ -58,7 +58,7 @@ public class UserConfigServiceTests
                 Host = "localhost",
                 Port = 5432,
                 Username = "postgres",
-                Password = "secret",
+                EncryptedPassword = "encrypted-blob",
                 Databases = ["db1", "db2"]
             }],
             Defaults = new UserDefaults
@@ -76,7 +76,7 @@ public class UserConfigServiceTests
         Assert.AreEqual("localhost", loaded.Servers[0].Host);
         Assert.AreEqual(5432, loaded.Servers[0].Port);
         Assert.AreEqual("postgres", loaded.Servers[0].Username);
-        Assert.AreEqual("secret", loaded.Servers[0].Password);
+        Assert.AreEqual("encrypted-blob", loaded.Servers[0].EncryptedPassword);
         Assert.AreEqual(2, loaded.Servers[0].Databases.Count);
         Assert.AreEqual("./output", loaded.Defaults!.OutputDirectory);
         Assert.AreEqual(8, loaded.Defaults.MaxParallelism);
@@ -117,7 +117,7 @@ public class UserConfigServiceTests
         var threwExpected = false;
         try { service.LoadConfig(); }
         catch (InvalidOperationException) { threwExpected = true; }
-        catch (System.Text.Json.JsonException) { threwExpected = true; }
+        catch (JsonException) { threwExpected = true; }
         Assert.IsTrue(threwExpected);
     }
 
@@ -269,7 +269,7 @@ public class UserConfigServiceTests
         Assert.AreEqual("db.legacy.com", server.Host);
         Assert.AreEqual(5433, server.Port);
         Assert.AreEqual("admin", server.Username);
-        Assert.AreEqual("secret", server.Password);
+        Assert.IsNull(server.EncryptedPassword); // password field removed; legacy migration no longer maps it
         Assert.AreEqual(2, server.Databases.Count);
         Assert.AreEqual("app", server.Databases[0]);
         Assert.AreEqual("analytics", server.Databases[1]);
@@ -329,7 +329,7 @@ public class UserConfigServiceTests
 
             var json = File.ReadAllText(_configFilePath);
             var strippedJson = StripJsonComments(json);
-            var deserialized = System.Text.Json.JsonSerializer.Deserialize<UserConfig>(strippedJson, new JsonSerializerOptions
+            var deserialized = JsonSerializer.Deserialize<UserConfig>(strippedJson, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 PropertyNameCaseInsensitive = true
@@ -383,6 +383,15 @@ public class UserConfigServiceTests
 
         public bool ConfigFileExists() => File.Exists(_configFilePath);
 
+        public void SetEncryptedPassword(string serverName, string encryptedPassword)
+        {
+            var config = LoadConfig();
+            var server = config.Servers.FirstOrDefault(s => s.Name.Equals(serverName, StringComparison.OrdinalIgnoreCase));
+            if (server == null) throw new ArgumentException($"Server '{serverName}' not found.", nameof(serverName));
+            server.EncryptedPassword = encryptedPassword;
+            SaveConfig(config);
+        }
+
         public UserConfig? TryLoadLegacyConfig()
         {
             if (!File.Exists(_legacyConfigFilePath)) return null;
@@ -392,7 +401,7 @@ public class UserConfigServiceTests
                 var json = File.ReadAllText(_legacyConfigFilePath);
                 var strippedJson = StripJsonComments(json);
 
-                using var doc = System.Text.Json.JsonDocument.Parse(strippedJson);
+                using var doc = JsonDocument.Parse(strippedJson);
                 var root = doc.RootElement;
 
                 if (!root.TryGetProperty("Servers", out var serversSection))
@@ -402,7 +411,7 @@ public class UserConfigServiceTests
 
                 var config = new UserConfig();
 
-                if (serversSection.TryGetProperty("ServersList", out var serversList) && serversList.ValueKind == System.Text.Json.JsonValueKind.Array)
+                if (serversSection.TryGetProperty("ServersList", out var serversList) && serversList.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var serverJson in serversList.EnumerateArray())
                     {
@@ -412,8 +421,7 @@ public class UserConfigServiceTests
                             Host = serverJson.TryGetProperty("Host", out var hostProp) ? hostProp.GetString() ?? string.Empty : string.Empty,
                             Port = serverJson.TryGetProperty("Port", out var portProp) ? portProp.GetInt32() : 5432,
                             Username = serverJson.TryGetProperty("Username", out var userProp) ? userProp.GetString() ?? string.Empty : string.Empty,
-                            Password = serverJson.TryGetProperty("Password", out var passProp) ? passProp.GetString() ?? string.Empty : string.Empty,
-                            Databases = serverJson.TryGetProperty("Databases", out var dbProp) && dbProp.ValueKind == System.Text.Json.JsonValueKind.Array
+                            Databases = serverJson.TryGetProperty("Databases", out var dbProp) && dbProp.ValueKind == JsonValueKind.Array
                                 ? dbProp.EnumerateArray().Select(d => d.GetString() ?? string.Empty).ToList()
                                 : [],
                             SslMode = serverJson.TryGetProperty("SslMode", out var sslProp) ? sslProp.GetString() ?? "Prefer" : "Prefer",

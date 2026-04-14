@@ -58,4 +58,12 @@ public interface IUserConfigService
     /// Returns null if no legacy config exists.
     /// </summary>
     UserConfig? TryLoadLegacyConfig();
+
+    /// <summary>
+    /// Sets the encrypted password for a server identified by name.
+    /// </summary>
+    /// <param name="serverName">The server name.</param>
+    /// <param name="encryptedPassword">The encrypted password blob to store.</param>
+    /// <exception cref="ArgumentException">Thrown when the server is not found.</exception>
+    void SetEncryptedPassword(string serverName, string encryptedPassword);
 }

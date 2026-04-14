@@ -31,7 +31,6 @@ public static class SettingsCommand
         var hostOption = new Option<string>("--host", "-h") { Description = "Database host address." };
         var portOption = new Option<int>("--port", "-p") { Description = "Database port. Default: 5432." };
         var usernameOption = new Option<string>("--username", "-U") { Description = "Database username." };
-        var passwordOption = new Option<string>("--password", "-W") { Description = "Database password." };
         var databasesOption = new Option<string?>("--databases", "-d") { Description = "Comma-separated list of specific databases." };
         var sslModeOption = new Option<string?>("--ssl-mode") { Description = "SSL mode (Disable, Allow, Prefer, Require, VerifyCA, VerifyFull)." };
         var timeoutOption = new Option<int?>("--timeout") { Description = "Connection timeout in seconds." };
@@ -39,13 +38,11 @@ public static class SettingsCommand
         var maxParallelismOption = new Option<int?>("--max-parallelism") { Description = "Max degree of parallelism." };
         var fetchAllOption = new Option<bool>("--fetch-all") { Description = "Auto-discover all databases on server." };
         var excludePatternsOption = new Option<string?>("--exclude-patterns") { Description = "Comma-separated patterns to exclude from auto-discovery." };
-        var interactiveOption = new Option<bool>("--interactive", "-i") { Description = "Use interactive mode to add server." };
 
         addCommand.Add(nameOption);
         addCommand.Add(hostOption);
         addCommand.Add(portOption);
         addCommand.Add(usernameOption);
-        addCommand.Add(passwordOption);
         addCommand.Add(databasesOption);
         addCommand.Add(sslModeOption);
         addCommand.Add(timeoutOption);
@@ -53,7 +50,6 @@ public static class SettingsCommand
         addCommand.Add(maxParallelismOption);
         addCommand.Add(fetchAllOption);
         addCommand.Add(excludePatternsOption);
-        addCommand.Add(interactiveOption);
 
         addCommand.SetAction(parseResult =>
         {
@@ -63,38 +59,33 @@ public static class SettingsCommand
                 Host = parseResult.GetValue(hostOption),
                 Port = parseResult.GetValue(portOption),
                 Username = parseResult.GetValue(usernameOption),
-                Password = parseResult.GetValue(passwordOption),
                 Databases = parseResult.GetValue(databasesOption),
                 SslMode = parseResult.GetValue(sslModeOption),
                 Timeout = parseResult.GetValue(timeoutOption),
                 CommandTimeout = parseResult.GetValue(commandTimeoutOption),
                 MaxParallelism = parseResult.GetValue(maxParallelismOption),
                 FetchAllDatabases = parseResult.GetValue(fetchAllOption),
-                ExcludePatterns = parseResult.GetValue(excludePatternsOption),
-                Interactive = parseResult.GetValue(interactiveOption)
+                ExcludePatterns = parseResult.GetValue(excludePatternsOption)
             };
             AddServer(options);
         });
 
         var rmCommand = new Command("rm", "Remove a configured database server.");
         var rmNameOption = new Option<string?>("--name", "-n") { Description = "Server name to remove." };
-        var rmInteractiveOption = new Option<bool>("--interactive", "-i") { Description = "Use interactive mode to select server." };
 
         rmCommand.Add(rmNameOption);
-        rmCommand.Add(rmInteractiveOption);
 
         rmCommand.SetAction(parseResult =>
         {
             var options = new RemoveServerCommandOptions
             {
-                Name = parseResult.GetValue(rmNameOption),
-                Interactive = parseResult.GetValue(rmInteractiveOption)
+                Name = parseResult.GetValue(rmNameOption)
             };
             RemoveServer(options);
         });
 
         var testCommand = new Command("test", "Test connection to a configured database server.");
-        var testNameOption = new Option<string>("--name", "-n") { Description = "Server name to test." };
+        var testNameOption = new Option<string?>("--name", "-n") { Description = "Server name to test." };
         testCommand.Add(testNameOption);
 
         testCommand.SetAction(parseResult =>
@@ -102,10 +93,25 @@ public static class SettingsCommand
             var name = parseResult.GetValue(testNameOption);
             if (string.IsNullOrWhiteSpace(name))
             {
-                AnsiConsole.MarkupLine("[red]Error: --name (-n) is required.[/]");
-                return 2;
+                name = SelectServer("Select a server to test:");
+                if (name == null)
+                {
+                    return 0;
+                }
             }
+
             TestServerConnection(name);
+            return 0;
+        });
+
+        var setPasswordCommand = new Command("set-password", "Define ou redefine a senha encriptada de um servidor.");
+        var setPasswordNameArg = new Argument<string?>("name") { Description = "Nome do servidor. Se omitido, exibe seleção interativa.", Arity = ArgumentArity.ZeroOrOne };
+        setPasswordCommand.Add(setPasswordNameArg);
+
+        setPasswordCommand.SetAction(parseResult =>
+        {
+            var name = parseResult.GetValue(setPasswordNameArg);
+            SetPassword(name);
             return 0;
         });
 
@@ -113,6 +119,7 @@ public static class SettingsCommand
         dbServersCommand.Add(addCommand);
         dbServersCommand.Add(rmCommand);
         dbServersCommand.Add(testCommand);
+        dbServersCommand.Add(setPasswordCommand);
 
         command.Add(dbServersCommand);
 
@@ -160,10 +167,11 @@ public static class SettingsCommand
 
     /// <summary>
     /// Adds a new server configuration.
+    /// Enters interactive mode automatically when --name or --host are not provided.
     /// </summary>
     public static void AddServer(AddServerCommandOptions options)
     {
-        if (options.Interactive)
+        if (string.IsNullOrWhiteSpace(options.Name) || string.IsNullOrWhiteSpace(options.Host))
         {
             AddServerInteractive(options);
             return;
@@ -193,15 +201,27 @@ public static class SettingsCommand
         var server = BuildServerFromOptions(options);
         UserConfigService.AddOrUpdateServer(server);
         AnsiConsole.MarkupLine($"[green]Server '{server.Name}' added successfully.[/]");
+        AnsiConsole.MarkupLine($"[dim]Use 'fur settings db-servers set-password {server.Name.EscapeMarkup()}' to set the password.[/]");
     }
 
     private static void AddServerInteractive(AddServerCommandOptions options)
     {
-        var name = AnsiConsole.Ask<string>("Server name*: ");
-        var host = AnsiConsole.Ask<string>("Host*: ");
-        var port = AnsiConsole.Ask("Port [[5432]]: ", 5432);
-        var username = AnsiConsole.Ask("Username [[postgres]]: ", "postgres");
-        var password = ReadPassword();
+        var name = AnsiConsole.Ask("Server name*: ", options.Name ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            AnsiConsole.MarkupLine("[red]Server name is required.[/]");
+            return;
+        }
+
+        var host = AnsiConsole.Ask("Host*: ", options.Host ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            AnsiConsole.MarkupLine("[red]Host is required.[/]");
+            return;
+        }
+
+        var port = AnsiConsole.Ask("Port [[5432]]: ", options.Port > 0 ? options.Port : 5432);
+        var username = AnsiConsole.Ask("Username [[postgres]]: ", !string.IsNullOrWhiteSpace(options.Username) ? options.Username : "postgres");
 
         var databasesInput = AnsiConsole.Ask<string?>("Databases (comma-separated, optional): ", string.Empty);
         var databases = ParseDatabases(databasesInput);
@@ -230,7 +250,6 @@ public static class SettingsCommand
             Host = host,
             Port = port,
             Username = username,
-            Password = password,
             Databases = databases,
             FetchAllDatabases = fetchAll,
             ExcludePatterns = excludePatterns,
@@ -243,7 +262,7 @@ public static class SettingsCommand
         var action = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
                 .Title("Action:")
-                .AddChoices("Save and test connection", "Save without testing", "Cancel"));
+                .AddChoices("Save and set password", "Save and test connection", "Save without password", "Cancel"));
 
         if (action == "Cancel")
         {
@@ -259,18 +278,24 @@ public static class SettingsCommand
 
         UserConfigService.AddOrUpdateServer(server);
 
-        if (action == "Save and test connection")
+        if (action == "Save and set password")
+        {
+            SavePasswordForServer(name);
+        }
+        else if (action == "Save and test connection")
         {
             TestServerConnection(name);
         }
         else
         {
-            AnsiConsole.MarkupLine($"[green]Server '{name}' added successfully.[/]");
+            AnsiConsole.MarkupLine($"[green]Server '{name.EscapeMarkup()}' added successfully.[/]");
+            AnsiConsole.MarkupLine($"[dim]Use 'fur settings db-servers set-password {name.EscapeMarkup()}' to set the password.[/]");
         }
     }
 
     /// <summary>
     /// Removes a server configuration.
+    /// Uses interactive selection when --name is not provided.
     /// </summary>
     public static void RemoveServer(RemoveServerCommandOptions options)
     {
@@ -290,11 +315,11 @@ public static class SettingsCommand
                 throw new ArgumentException($"Server '{options.Name}' not found.");
             }
 
-            AnsiConsole.MarkupLine($"[green]Server '{options.Name}' removed successfully.[/]");
+            AnsiConsole.MarkupLine($"[green]Server '{options.Name.EscapeMarkup()}' removed successfully.[/]");
             return;
         }
 
-        // Interactive mode (or no name provided): prompt for selection
+        // No --name provided: use interactive selection
         var selection = AnsiConsole.Prompt(
             new MultiSelectionPrompt<string>()
                 .Title("Select servers to remove:")
@@ -310,7 +335,7 @@ public static class SettingsCommand
         foreach (var name in selection)
         {
             UserConfigService.RemoveServer(name);
-            AnsiConsole.MarkupLine($"[green]Server '{name}' removed.[/]");
+            AnsiConsole.MarkupLine($"[green]Server '{name.EscapeMarkup()}' removed.[/]");
         }
     }
 
@@ -325,16 +350,23 @@ public static class SettingsCommand
             throw new ArgumentException($"Server '{name}' not found.");
         }
 
-        AnsiConsole.MarkupLine($"[cyan]Testing connection to {server.Name} ({server.Host}:{server.Port})...[/]");
+        AnsiConsole.MarkupLine($"[cyan]Testing connection to {server.Name.EscapeMarkup()} ({server.Host.EscapeMarkup()}:{server.Port})...[/]");
+
+        var password = CredentialService.TryDecrypt(server.EncryptedPassword);
+        if (password == null)
+        {
+            AnsiConsole.MarkupLine($"[yellow]No password found for '{server.Name.EscapeMarkup()}'. Type to test (will not be saved):[/]");
+            password = ReadPassword();
+        }
 
         try
         {
-            var connectionString = BuildConnectionString(server, "postgres");
+            var connectionString = BuildConnectionString(server, "postgres", password);
             using var connection = new NpgsqlConnection(connectionString);
             connection.Open();
 
-            AnsiConsole.MarkupLine($"[green]✓ Connection to {server.Host}:{server.Port} successful[/]");
-            AnsiConsole.MarkupLine($"[green]✓ Authenticated as {server.Username}[/]");
+            AnsiConsole.MarkupLine($"[green]✓ Connection to {server.Host.EscapeMarkup()}:{server.Port} successful[/]");
+            AnsiConsole.MarkupLine($"[green]✓ Authenticated as {server.Username.EscapeMarkup()}[/]");
 
             try
             {
@@ -359,7 +391,7 @@ public static class SettingsCommand
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine($"[yellow]! Could not list databases: {ex.Message}[/]");
+                AnsiConsole.MarkupLine($"[yellow]! Could not list databases: {ex.Message.EscapeMarkup()}[/]");
             }
         }
         catch (NpgsqlException ex)
@@ -378,6 +410,61 @@ public static class SettingsCommand
         }
     }
 
+    /// <summary>
+    /// Defines or redefines the encrypted password for a server.
+    /// </summary>
+    public static void SetPassword(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            name = SelectServer("Select a server to set the password:");
+            if (name == null)
+            {
+                return;
+            }
+        }
+
+        SavePasswordForServer(name);
+    }
+
+    /// <summary>
+    /// Shared helper: prompts for password, encrypts, and saves for the given server.
+    /// </summary>
+    private static void SavePasswordForServer(string serverName)
+    {
+        var server = UserConfigService.GetServer(serverName);
+        if (server == null)
+        {
+            throw new ArgumentException($"Server '{serverName}' not found.");
+        }
+
+        var password = ReadPassword();
+        var encrypted = CredentialService.Encrypt(password);
+        UserConfigService.SetEncryptedPassword(serverName, encrypted);
+        AnsiConsole.MarkupLine($"[green]Password saved securely for '{serverName.EscapeMarkup()}'.[/]");
+    }
+
+    /// <summary>
+    /// Displays an interactive server selection prompt and returns the selected server name.
+    /// Returns <see langword="null"/> if no servers are configured or user cancels.
+    /// </summary>
+    private static string? SelectServer(string prompt)
+    {
+        var servers = UserConfigService.GetServers();
+
+        if (servers.Count == 0)
+        {
+            AnsiConsole.MarkupLine("[yellow]No servers configured. Use 'fur settings db-servers add' to add one.[/]");
+            return null;
+        }
+
+        return AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title(prompt)
+                .PageSize(10)
+                .AddChoices(servers.Select(s => s.Name)));
+    }
+
     private static ServerConfigEntry BuildServerFromOptions(AddServerCommandOptions options)
     {
         var databases = ParseDatabases(options.Databases);
@@ -389,7 +476,6 @@ public static class SettingsCommand
             Host = options.Host ?? string.Empty,
             Port = options.Port,
             Username = options.Username ?? string.Empty,
-            Password = options.Password ?? string.Empty,
             Databases = databases,
             FetchAllDatabases = options.FetchAllDatabases,
             ExcludePatterns = excludePatterns,
@@ -400,14 +486,14 @@ public static class SettingsCommand
         };
     }
 
-    private static string BuildConnectionString(ServerConfigEntry server, string database)
+    private static string BuildConnectionString(ServerConfigEntry server, string database, string password)
     {
         var csb = new NpgsqlConnectionStringBuilder
         {
             Host = server.Host,
             Port = server.Port,
             Username = server.Username,
-            Password = server.Password,
+            Password = password,
             Database = database,
             SslMode = Enum.TryParse<SslMode>(server.SslMode, true, out var sslMode) ? sslMode : SslMode.Prefer,
             Timeout = server.Timeout,

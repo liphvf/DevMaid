@@ -17,9 +17,6 @@ public class AddServerCommandOptions
     /// <summary>Database username.</summary>
     public string? Username { get; set; }
 
-    /// <summary>Database password.</summary>
-    public string? Password { get; set; }
-
     /// <summary>Comma-separated list of specific databases.</summary>
     public string? Databases { get; set; }
 

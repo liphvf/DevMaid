@@ -1,7 +1,10 @@
+using System.Runtime.Versioning;
+
 using FurLab.Core.HealthChecks;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Logging;
 
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -43,6 +46,24 @@ public static class ServiceCollectionExtensions
 
         _ = services.AddSingleton<IUserConfigService, UserConfigService>();
 
+        var keysDir = new DirectoryInfo(Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "FurLab",
+            "keys"));
+
+        var dpBuilder = services.AddDataProtection()
+            .PersistKeysToFileSystem(keysDir)
+            .SetApplicationName("FurLab");
+
+        if (OperatingSystem.IsWindows())
+            ProtectKeysWithDpapiOnWindows(dpBuilder);
+
+        _ = services.AddSingleton<ICredentialService, CredentialService>();
+
         return services;
     }
+
+    [SupportedOSPlatform("windows")]
+    private static void ProtectKeysWithDpapiOnWindows(IDataProtectionBuilder builder) =>
+        builder.ProtectKeysWithDpapi(protectToLocalMachine: false);
 }
