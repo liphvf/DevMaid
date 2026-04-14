@@ -51,6 +51,7 @@ public static class ServiceCollectionExtensions
 
         _ = services.AddDataProtection()
             .PersistKeysToFileSystem(keysDir)
+            .ProtectKeysWithDpapi(protectToLocalMachine: false)
             .SetApplicationName("FurLab");
 
         _ = services.AddSingleton<ICredentialService, CredentialService>();
