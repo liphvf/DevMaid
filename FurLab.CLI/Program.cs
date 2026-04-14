@@ -37,6 +37,7 @@ internal static class Program
         Services.ConfigurationService.SetServiceProvider(serviceProvider);
         PostgresDatabaseLister.SetServiceProvider(serviceProvider);
         Services.UserConfigService.SetServiceProvider(serviceProvider);
+        Services.CredentialService.SetServiceProvider(serviceProvider);
 
         AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
         {

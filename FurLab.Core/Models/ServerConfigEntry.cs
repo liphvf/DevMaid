@@ -26,9 +26,10 @@ public class ServerConfigEntry
     public string Username { get; set; } = string.Empty;
 
     /// <summary>
-    /// Database password (stored in plain text for dev environments).
+    /// Encrypted password blob (base64). Managed by <c>ICredentialService</c>.
+    /// Use <c>ICredentialService.TryDecrypt</c> to obtain the plaintext at runtime.
     /// </summary>
-    public string Password { get; set; } = string.Empty;
+    public string? EncryptedPassword { get; set; }
 
     /// <summary>
     /// Specific databases to query. If empty and FetchAllDatabases is false, uses default database.

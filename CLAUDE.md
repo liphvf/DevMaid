@@ -8,6 +8,8 @@ Todo output para o usuário deve ser em **português do Brasil (pt-BR)**.
 Isso inclui explicações, resumos, mensagens de erro, perguntas de esclarecimento e qualquer comunicação direta com o usuário.
 Exceção: não traduza nomes de skills, comandos do openspec (ex: `openspec-propose`, `opsx-apply`), identificadores de código, nomes de arquivos ou comandos de terminal.
 
+Todas as **mensagens exibidas ao usuário pelo CLI** (output de comandos, prompts interativos, mensagens de erro e confirmações) devem ser escritas em **inglês**.
+
 ## Active Technologies
 
 - C# 13 / .NET 10 (`net10.0`)

@@ -631,16 +631,25 @@ public static class QueryCommand
 
     /// <summary>
     /// Builds a connection string for a specific server and database using the server's configured credentials and options.
+    /// Resolves the password via <c>ICredentialService.TryDecrypt</c>; if unavailable, prompts interactively.
     /// </summary>
     private static string BuildConnectionStringForServer(ServerConfigEntry server, string database)
     {
+        var password = CredentialService.TryDecrypt(server.EncryptedPassword);
+
+        if (password == null)
+        {
+            AnsiConsole.MarkupLine($"[yellow]No password found for server '[bold]{Markup.Escape(server.Name)}[/]'. Use 'fur settings db-servers set-password' to save it permanently.[/]");
+            password = ReadPasswordInteractive(server.Name);
+        }
+
         var builder = new NpgsqlConnectionStringBuilder
         {
             Host = server.Host,
             Port = server.Port,
             Database = database,
             Username = server.Username,
-            Password = server.Password,
+            Password = password,
             SslMode = ParseSslMode(server.SslMode),
             Timeout = server.Timeout,
             CommandTimeout = server.CommandTimeout,
@@ -660,5 +669,45 @@ public static class QueryCommand
         }
 
         return SslMode.Prefer;
+    }
+
+    /// <summary>
+    /// Reads a password interactively from the console with masked input.
+    /// Used as fallback when the encrypted password is unavailable.
+    /// </summary>
+    private static string ReadPasswordInteractive(string serverName)
+    {
+        AnsiConsole.Markup($"[dim]Password for '{Markup.Escape(serverName)}': [/]");
+        var securePassword = new System.Security.SecureString();
+        while (true)
+        {
+            var key = Console.ReadKey(true);
+            if (key.Key == ConsoleKey.Enter)
+            {
+                Console.WriteLine();
+                break;
+            }
+
+            if (key.Key == ConsoleKey.Backspace && securePassword.Length > 0)
+            {
+                securePassword.RemoveAt(securePassword.Length - 1);
+                Console.Write("\b \b");
+            }
+            else if (key.Key != ConsoleKey.Backspace)
+            {
+                securePassword.AppendChar(key.KeyChar);
+                Console.Write("*");
+            }
+        }
+
+        var ptr = System.Runtime.InteropServices.Marshal.SecureStringToBSTR(securePassword);
+        try
+        {
+            return System.Runtime.InteropServices.Marshal.PtrToStringBSTR(ptr) ?? string.Empty;
+        }
+        finally
+        {
+            System.Runtime.InteropServices.Marshal.ZeroFreeBSTR(ptr);
+        }
     }
 }
