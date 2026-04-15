@@ -29,7 +29,7 @@ public static class QueryCommand
             },
             ShouldHandle = static args =>
             {
-                var handled = args.Outcome.Exception is NpgsqlException or TimeoutException or OperationCanceledException;
+                var handled = args.Outcome.Exception is NpgsqlException or TimeoutException;
                 return new ValueTask<bool>(handled);
             }
         })
@@ -413,7 +413,8 @@ public static class QueryCommand
 
                 var parallelOptions = new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = defaults.MaxParallelism
+                    MaxDegreeOfParallelism = defaults.MaxParallelism,
+                    CancellationToken = cts.Token
                 };
 
                 await Parallel.ForEachAsync(selectedServers, parallelOptions, async (server, ct) =>
@@ -492,7 +493,7 @@ public static class QueryCommand
             });
 
         channel.Writer.Complete();
-        await writerCompleted.Task;
+        await writerCompleted.Task.WaitAsync(cts.Token);
 
         CsvExporter.MergeServerCsvsToConsolidated(executionDirectory, timestamp, selectedServers.Select(s => s.Name).ToList());
 
