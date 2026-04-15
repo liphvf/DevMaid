@@ -29,7 +29,7 @@ public static class QueryCommand
             },
             ShouldHandle = static args =>
             {
-                var handled = args.Outcome.Exception is NpgsqlException or TimeoutException or OperationCanceledException;
+                var handled = args.Outcome.Exception is NpgsqlException or TimeoutException;
                 return new ValueTask<bool>(handled);
             }
         })
@@ -305,13 +305,43 @@ public static class QueryCommand
         var errorFilePath = Path.Combine(executionDirectory, $"{timestamp}_erros.csv");
         var logFilePath = Path.Combine(executionDirectory, $"{timestamp}_log.csv");
 
-        var allDatabases = new List<(ServerConfigEntry Server, string Database)>();
-        foreach (var server in selectedServers)
+        using var cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (_, e) =>
         {
-            var databases = await GetDatabasesForServerAsync(server, CancellationToken.None);
-            foreach (var db in databases)
+            e.Cancel = true;
+            cts.Cancel();
+        };
+
+        var allDatabases = new List<(ServerConfigEntry Server, string Database)>();
+        var hasAutoDiscover = selectedServers.Any(s => s.FetchAllDatabases);
+
+        if (hasAutoDiscover)
+        {
+            await AnsiConsole.Status()
+                .Spinner(Spinner.Known.Dots)
+                .SpinnerStyle(Style.Parse("grey"))
+                .StartAsync("Discovering databases...", async ctx =>
+                {
+                    foreach (var server in selectedServers)
+                    {
+                        ctx.Status($"Discovering databases on [bold]{Markup.Escape(server.Name)}[/]...");
+                        var databases = await GetDatabasesForServerAsync(server, cts.Token);
+                        foreach (var db in databases)
+                        {
+                            allDatabases.Add((server, db));
+                        }
+                    }
+                });
+        }
+        else
+        {
+            foreach (var server in selectedServers)
             {
-                allDatabases.Add((server, db));
+                var databases = await GetDatabasesForServerAsync(server, cts.Token);
+                foreach (var db in databases)
+                {
+                    allDatabases.Add((server, db));
+                }
             }
         }
 
@@ -363,25 +393,29 @@ public static class QueryCommand
             }
         });
 
-        await AnsiConsole.Progress()
-            .Columns(new ProgressColumn[]
-            {
-                new TaskDescriptionColumn(),
-                new ProgressBarColumn(),
-                new PercentageColumn(),
-                new RemainingTimeColumn(),
-                new SpinnerColumn()
-            })
+        var resultsTable = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn(new TableColumn("[grey]Status[/]").Centered().Width(8))
+            .AddColumn(new TableColumn("[grey]Server[/]"))
+            .AddColumn(new TableColumn("[grey]Database[/]"))
+            .AddColumn(new TableColumn("[grey]Rows[/]").RightAligned())
+            .AddColumn(new TableColumn("[grey]Duration[/]").RightAligned())
+            .AddColumn(new TableColumn("[grey]Detail[/]"));
+
+        var tableLock = new object();
+
+        await AnsiConsole.Live(resultsTable)
+            .AutoClear(false)
+            .Overflow(VerticalOverflow.Ellipsis)
             .StartAsync(async ctx =>
             {
-                var progressTask = ctx.AddTask($"[bold]Executing across {selectedServers.Count} servers, {totalDatabases} databases[/]", maxValue: totalDatabases);
+                ctx.Refresh();
 
                 var parallelOptions = new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = defaults.MaxParallelism
+                    MaxDegreeOfParallelism = defaults.MaxParallelism,
+                    CancellationToken = cts.Token
                 };
-
-                var completedCount = 0;
 
                 await Parallel.ForEachAsync(selectedServers, parallelOptions, async (server, ct) =>
                 {
@@ -392,7 +426,11 @@ public static class QueryCommand
 
                     if (databases.Count == 0)
                     {
-                        ctx.AddTask($"[yellow]{Markup.Escape(server.Name)}: no databases[/]").StopTask();
+                        lock (tableLock)
+                        {
+                            resultsTable.AddRow("[yellow]—[/]", Markup.Escape(server.Name), "[grey]—[/]", "[grey]—[/]", "[grey]—[/]", "[yellow]no databases[/]");
+                            ctx.Refresh();
+                        }
                         return;
                     }
 
@@ -418,7 +456,17 @@ public static class QueryCommand
                             Interlocked.Increment(ref successCount);
                             Interlocked.Add(ref totalRowCount, queryResult.Data.Count);
 
-                            ctx.AddTask($"  [green]✓ {Markup.Escape(server.Name)}/{Markup.Escape(database)}[/] — {queryResult.Data.Count} rows ({sw.Elapsed.TotalSeconds:F1}s)").StopTask();
+                            lock (tableLock)
+                            {
+                                resultsTable.AddRow(
+                                    "[green]✓[/]",
+                                    Markup.Escape(server.Name),
+                                    Markup.Escape(database),
+                                    queryResult.Data.Count.ToString(CultureInfo.InvariantCulture),
+                                    $"{sw.Elapsed.TotalSeconds:F1}s",
+                                    "[grey]—[/]");
+                                ctx.Refresh();
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -428,19 +476,24 @@ public static class QueryCommand
 
                             Interlocked.Increment(ref failureCount);
 
-                            ctx.AddTask($"  [red]✗ {Markup.Escape(server.Name)}/{Markup.Escape(database)}[/] — {Markup.Escape(ex.Message)}").StopTask();
+                            lock (tableLock)
+                            {
+                                resultsTable.AddRow(
+                                    "[red]✗[/]",
+                                    Markup.Escape(server.Name),
+                                    Markup.Escape(database),
+                                    "[grey]—[/]",
+                                    "[grey]—[/]",
+                                    $"[red]{Markup.Escape(ex.Message)}[/]");
+                                ctx.Refresh();
+                            }
                         }
-
-                        Interlocked.Increment(ref completedCount);
-                        progressTask.Increment(1);
                     });
                 });
-
-                progressTask.StopTask();
             });
 
         channel.Writer.Complete();
-        await writerCompleted.Task;
+        await writerCompleted.Task.WaitAsync(cts.Token);
 
         CsvExporter.MergeServerCsvsToConsolidated(executionDirectory, timestamp, selectedServers.Select(s => s.Name).ToList());
 
@@ -516,24 +569,18 @@ public static class QueryCommand
     }
 
     /// <summary>
-    /// Gets the list of accessible databases for a server.
-    /// Uses explicitly configured databases, auto-discovers via <c>pg_database</c> query when
-    /// <c>FetchAllDatabases</c> is true, and falls back to configured databases if discovery fails.
-    /// Each candidate database is validated by attempting a test connection.
+    /// Gets the list of databases for a server.
+    /// When <c>FetchAllDatabases</c> is true, auto-discovers via <c>pg_database</c> query,
+    /// falling back to configured databases if discovery fails.
+    /// Otherwise, returns the databases listed in the server configuration directly.
     /// </summary>
     private static async Task<List<string>> GetDatabasesForServerAsync(ServerConfigEntry server, CancellationToken ct)
     {
-        if (!server.FetchAllDatabases && server.Databases.Count > 0)
-        {
-            return await ValidateDatabaseAccessAsync(server, server.Databases, ct);
-        }
-
         if (server.FetchAllDatabases)
         {
             try
             {
-                var discoveredDatabases = await ListDatabasesAsync(server, ct);
-                return await ValidateDatabaseAccessAsync(server, discoveredDatabases, ct);
+                return await ListDatabasesAsync(server, ct);
             }
             catch (Exception ex)
             {
@@ -541,54 +588,19 @@ public static class QueryCommand
                 if (server.Databases.Count > 0)
                 {
                     AnsiConsole.MarkupLine("[yellow]Falling back to configured databases.[/]");
-                    return await ValidateDatabaseAccessAsync(server, server.Databases, ct);
+                    return server.Databases;
                 }
                 return [];
             }
         }
 
+        if (server.Databases.Count > 0)
+        {
+            return server.Databases;
+        }
+
         var defaultDb = server.Databases.FirstOrDefault() ?? string.Empty;
-        if (string.IsNullOrEmpty(defaultDb))
-        {
-            return [];
-        }
-
-        return await ValidateDatabaseAccessAsync(server, [defaultDb], ct);
-    }
-
-    /// <summary>
-    /// Validates access to each database by attempting a test connection and a <c>SELECT 1</c> query.
-    /// Returns only databases that are accessible; inaccessible databases are logged as warnings.
-    /// </summary>
-    private static async Task<List<string>> ValidateDatabaseAccessAsync(ServerConfigEntry server, List<string> databases, CancellationToken ct)
-    {
-        var accessibleDatabases = new List<string>();
-
-        foreach (var database in databases)
-        {
-            if (string.IsNullOrWhiteSpace(database))
-            {
-                continue;
-            }
-
-            try
-            {
-                var connectionString = BuildConnectionStringForServer(server, database);
-                await using var connection = new NpgsqlConnection(connectionString);
-                await connection.OpenAsync(ct);
-
-                await using var command = new NpgsqlCommand("SELECT 1", connection);
-                await command.ExecuteScalarAsync(ct);
-
-                accessibleDatabases.Add(database);
-            }
-            catch (Exception ex)
-            {
-                AnsiConsole.MarkupLine($"[yellow]Warning: Cannot access database '{database}' on server '{server.Name}': {ex.Message}[/]");
-            }
-        }
-
-        return accessibleDatabases;
+        return string.IsNullOrEmpty(defaultDb) ? [] : [defaultDb];
     }
 
     /// <summary>

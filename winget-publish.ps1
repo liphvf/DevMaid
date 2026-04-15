@@ -18,7 +18,8 @@ $ErrorActionPreference = "Stop"
 # Helpers de UI
 # ─────────────────────────────────────────────────────────────
 
-function Write-Header {
+function Write-Header
+{
     param([string]$Mensagem)
     Write-Host ""
     Write-Host ("=" * 60) -ForegroundColor Cyan
@@ -27,33 +28,49 @@ function Write-Header {
     Write-Host ""
 }
 
-function Write-Passo {
+function Write-Passo
+{
     param([int]$Numero, [string]$Descricao)
     Write-Host ""
     Write-Host "[ Passo $Numero ] $Descricao" -ForegroundColor Yellow
     Write-Host ("-" * 50) -ForegroundColor DarkGray
 }
 
-function Write-Ok    { param([string]$m) Write-Host "[OK]  $m" -ForegroundColor Green  }
-function Write-Erro  { param([string]$m) Write-Host "[ERRO] $m" -ForegroundColor Red    }
-function Write-Info  { param([string]$m) Write-Host "[INFO] $m" -ForegroundColor Cyan   }
-function Write-Aviso { param([string]$m) Write-Host "[AVISO] $m" -ForegroundColor Yellow }
+function Write-Ok
+{ param([string]$m) Write-Host "[OK]  $m" -ForegroundColor Green
+}
+function Write-Erro
+{ param([string]$m) Write-Host "[ERRO] $m" -ForegroundColor Red
+}
+function Write-Info
+{ param([string]$m) Write-Host "[INFO] $m" -ForegroundColor Cyan
+}
+function Write-Aviso
+{ param([string]$m) Write-Host "[AVISO] $m" -ForegroundColor Yellow
+}
 
-function Read-Input {
+function Read-Input
+{
     param(
         [string]$Prompt,
         [string]$Default = "",
         [switch]$Required
     )
-    do {
-        if ($Default) {
+    do
+    {
+        if ($Default)
+        {
             $userInput = Read-Host "$Prompt [$Default]"
-            if ([string]::IsNullOrWhiteSpace($userInput)) { $userInput = $Default }
-        } else {
+            if ([string]::IsNullOrWhiteSpace($userInput))
+            { $userInput = $Default
+            }
+        } else
+        {
             $userInput = Read-Host $Prompt
         }
 
-        if ($Required -and [string]::IsNullOrWhiteSpace($userInput)) {
+        if ($Required -and [string]::IsNullOrWhiteSpace($userInput))
+        {
             Write-Aviso "Este campo é obrigatório."
         }
     } while ($Required -and [string]::IsNullOrWhiteSpace($userInput))
@@ -61,11 +78,18 @@ function Read-Input {
     return $userInput.Trim()
 }
 
-function Confirmar {
+function Confirmar
+{
     param([string]$Pergunta, [bool]$PadraoSim = $true)
-    $opcoes = if ($PadraoSim) { "[S/n]" } else { "[s/N]" }
+    $opcoes = if ($PadraoSim)
+    { "[S/n]"
+    } else
+    { "[s/N]"
+    }
     $resposta = Read-Host "$Pergunta $opcoes"
-    if ([string]::IsNullOrWhiteSpace($resposta)) { return $PadraoSim }
+    if ([string]::IsNullOrWhiteSpace($resposta))
+    { return $PadraoSim
+    }
     return $resposta -match '^[sS]'
 }
 
@@ -73,54 +97,66 @@ function Confirmar {
 # Verificação de dependências
 # ─────────────────────────────────────────────────────────────
 
-function Test-Dependencias {
+function Test-Dependencias
+{
     Write-Passo 1 "Verificando dependências"
 
     $ok = $true
 
     # wingetcreate
-    if (Get-Command wingetcreate -ErrorAction SilentlyContinue) {
+    if (Get-Command wingetcreate -ErrorAction SilentlyContinue)
+    {
         $versao = (wingetcreate --version 2>&1) | Select-String -Pattern '[\d\.]+'
         Write-Ok "wingetcreate encontrado: $($versao.Matches[0].Value)"
-    } else {
+    } else
+    {
         Write-Erro "wingetcreate não encontrado."
         Write-Info "Instale via: winget install Microsoft.WingetCreate"
         $ok = $false
     }
 
     # gh (GitHub CLI) — necessário para abrir PR automaticamente
-    if (Get-Command gh -ErrorAction SilentlyContinue) {
+    if (Get-Command gh -ErrorAction SilentlyContinue)
+    {
         $ghVer = (gh --version 2>&1 | Select-String 'gh version ([\d\.]+)').Matches[0].Groups[1].Value
         Write-Ok "GitHub CLI (gh) encontrado: $ghVer"
 
         # Verifica autenticação
         $null = gh auth status 2>&1
-        if ($LASTEXITCODE -eq 0) {
+        if ($LASTEXITCODE -eq 0)
+        {
             Write-Ok "GitHub CLI autenticado."
-        } else {
+        } else
+        {
             Write-Aviso "GitHub CLI não autenticado. Execute: gh auth login"
             $ok = $false
         }
-    } else {
+    } else
+    {
         Write-Erro "GitHub CLI (gh) não encontrado."
         Write-Host ""
-        if (Confirmar "Deseja instalar o GitHub CLI agora via winget?") {
+        if (Confirmar "Deseja instalar o GitHub CLI agora via winget?")
+        {
             Write-Info "Executando: winget install GitHub.cli ..."
             winget install --id GitHub.cli --silent --accept-package-agreements --accept-source-agreements
-            if ($LASTEXITCODE -eq 0) {
+            if ($LASTEXITCODE -eq 0)
+            {
                 Write-Ok "GitHub CLI instalado com sucesso."
                 Write-Aviso "Reinicie o terminal e execute este script novamente para que o 'gh' seja reconhecido."
-            } else {
+            } else
+            {
                 Write-Erro "Falha ao instalar o GitHub CLI (código $LASTEXITCODE)."
                 Write-Info "Instale manualmente: winget install GitHub.cli"
             }
-        } else {
+        } else
+        {
             Write-Info "Instale manualmente: winget install GitHub.cli"
         }
         $ok = $false
     }
 
-    if (-not $ok) {
+    if (-not $ok)
+    {
         Write-Host ""
         Write-Erro "Resolva as dependências acima e execute o script novamente."
         exit 3
@@ -134,11 +170,13 @@ function Test-Dependencias {
 # Busca informações da última release no GitHub
 # ─────────────────────────────────────────────────────────────
 
-function Get-LatestRelease {
+function Get-LatestRelease
+{
     Write-Info "Buscando última release em liphvf/FurLab via GitHub CLI ..."
 
     $json = gh release view --repo liphvf/FurLab --json tagName,assets 2>&1
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -ne 0)
+    {
         Write-Aviso "Não foi possível buscar a última release."
         Write-Info "Verifique se o repositório existe e o gh está autenticado."
         Write-Info "Você precisará informar as informações manualmente."
@@ -154,16 +192,20 @@ function Get-LatestRelease {
     $script:PackageVersion = $release.tagName.TrimStart('v')
     $script:InstallerUrls = [System.Collections.Generic.List[string]]::new()
 
-    foreach ($asset in $release.assets) {
-        if ($asset.downloadUrl -match '\.(exe|msi|msix|appx|zip)(\?|$)') {
+    foreach ($asset in $release.assets)
+    {
+        if ($asset.downloadUrl -match '\.(exe|msi|msix|appx|zip)(\?|$)')
+        {
             $script:InstallerUrls.Add($asset.downloadUrl)
         }
     }
 
-    if ($script:InstallerUrls.Count -eq 0) {
+    if ($script:InstallerUrls.Count -eq 0)
+    {
         Write-Aviso "Nenhum instalador encontrado na release $($release.tagName)."
         Write-Info "Você precisará informar as URLs manualmente."
-    } else {
+    } else
+    {
         Write-Ok "Release $($release.tagName) encontrada com $($script:InstallerUrls.Count) instalador(es)."
     }
 }
@@ -172,7 +214,8 @@ function Get-LatestRelease {
 # Coleta de informações do pacote
 # ─────────────────────────────────────────────────────────────
 
-function Get-InformacoesPacote {
+function Get-InformacoesPacote
+{
     Write-Passo 2 "Informações do pacote"
 
     Get-LatestRelease
@@ -181,30 +224,36 @@ function Get-InformacoesPacote {
     Write-Info "Identificador do pacote: FurLab.CLI"
     $script:PackageId = "FurLab.CLI"
 
-    if ($script:PackageVersion) {
+    if ($script:PackageVersion)
+    {
         $sugestao = $script:PackageVersion
         Write-Host ""
         Write-Info "Sugestão de versão (última release): $sugestao"
         $versao = Read-Input -Prompt "Versão do pacote (ENTER para aceitar sugestão)" -Default $sugestao
         $script:PackageVersion = $versao
-    } else {
+    } else
+    {
         $script:PackageVersion = Read-Input -Prompt "Versão do pacote (ex: 1.0.0)" -Required
     }
 
-    while ($script:PackageVersion -notmatch '^\d+(\.\d+){0,3}(-[\w\.\-]+)?$') {
+    while ($script:PackageVersion -notmatch '^\d+(\.\d+){0,3}(-[\w\.\-]+)?$')
+    {
         Write-Aviso "Versão inválida. Use formato semântico: 1.0.0 ou 1.2.3.4"
         $script:PackageVersion = Read-Input -Prompt "Versão do pacote" -Required
     }
 
     Write-Host ""
 
-    if ($script:InstallerUrls -and $script:InstallerUrls.Count -gt 0) {
+    if ($script:InstallerUrls -and $script:InstallerUrls.Count -gt 0)
+    {
         Write-Info "URLs de instaladores encontradas na release:"
-        foreach ($url in $script:InstallerUrls) {
+        foreach ($url in $script:InstallerUrls)
+        {
             Write-Host "  - $url" -ForegroundColor Gray
         }
         Write-Host ""
-        if (Confirmar "Usar estas URLs? [S/n]") {
+        if (Confirmar "Usar estas URLs? [S/n]")
+        {
             return
         }
     }
@@ -215,7 +264,8 @@ function Get-InformacoesPacote {
     Write-Host "  $sugestaoUrl" -ForegroundColor Gray
     Write-Host ""
 
-    if (Confirmar "Usar esta URL sugerida? [S/n]") {
+    if (Confirmar "Usar esta URL sugerida? [S/n]")
+    {
         $script:InstallerUrls = [System.Collections.Generic.List[string]]::new()
         $script:InstallerUrls.Add($sugestaoUrl)
         return
@@ -227,19 +277,24 @@ function Get-InformacoesPacote {
 
     $script:InstallerUrls = [System.Collections.Generic.List[string]]::new()
     $idx = 1
-    do {
+    do
+    {
         $url = Read-Input -Prompt "URL do instalador $idx (ENTER para finalizar)"
-        if (-not [string]::IsNullOrWhiteSpace($url)) {
-            if ($url -notmatch '^https?://') {
+        if (-not [string]::IsNullOrWhiteSpace($url))
+        {
+            if ($url -notmatch '^https?://')
+            {
                 Write-Aviso "A URL deve começar com http:// ou https://"
-            } else {
+            } else
+            {
                 $script:InstallerUrls.Add($url)
                 $idx++
             }
         }
     } while (-not [string]::IsNullOrWhiteSpace($url))
 
-    if ($script:InstallerUrls.Count -eq 0) {
+    if ($script:InstallerUrls.Count -eq 0)
+    {
         Write-Erro "Pelo menos uma URL de instalador é obrigatória."
         exit 1
     }
@@ -248,20 +303,11 @@ function Get-InformacoesPacote {
 }
 
 # ─────────────────────────────────────────────────────────────
-# Configuração do ícone
-# ─────────────────────────────────────────────────────────────
-
-function Set-IconePadrao {
-    $script:IconUrl = "https://raw.githubusercontent.com/liphvf/FurLab/refs/heads/main/icon.png"
-    $script:IconFileType = "png"
-    Write-Ok "Ícone configurado: $($script:IconUrl)"
-}
-
-# ─────────────────────────────────────────────────────────────
 # Token GitHub (para wingetcreate submit)
 # ─────────────────────────────────────────────────────────────
 
-function Get-GitHubToken {
+function Get-GitHubToken
+{
     Write-Passo 3 "Token do GitHub"
 
     Write-Info "O wingetcreate precisa de um token GitHub (PAT) para abrir o PR."
@@ -271,7 +317,8 @@ function Get-GitHubToken {
 
     # Tenta ler token salvo pelo gh CLI
     $ghToken = gh auth token 2>&1
-    if ($LASTEXITCODE -eq 0 -and $ghToken) {
+    if ($LASTEXITCODE -eq 0 -and $ghToken)
+    {
         Write-Ok "Token obtido automaticamente via GitHub CLI."
         $script:GhToken = $ghToken
         return
@@ -284,10 +331,12 @@ function Get-GitHubToken {
 # Diretório de saída para o manifesto
 # ─────────────────────────────────────────────────────────────
 
-function Set-DiretorioSaida {
+function Set-DiretorioSaida
+{
     $script:OutputDir = Join-Path $PSScriptRoot "packaging\winget"
 
-    if (-not (Test-Path $script:OutputDir)) {
+    if (-not (Test-Path $script:OutputDir))
+    {
         New-Item -ItemType Directory -Path $script:OutputDir -Force | Out-Null
     }
 }
@@ -296,21 +345,23 @@ function Set-DiretorioSaida {
 # Revisão antes de prosseguir
 # ─────────────────────────────────────────────────────────────
 
-function Confirm-Revisao {
+function Confirm-Revisao
+{
     Write-Passo 4 "Revisão das informações"
 
     Write-Host ""
     Write-Host "  Identificador  : " -NoNewline; Write-Host $script:PackageId -ForegroundColor White
     Write-Host "  Versão         : " -NoNewline; Write-Host $script:PackageVersion -ForegroundColor White
     Write-Host "  URLs           :" -ForegroundColor White
-    foreach ($url in $script:InstallerUrls) {
+    foreach ($url in $script:InstallerUrls)
+    {
         Write-Host "    - $url" -ForegroundColor Gray
     }
-    Write-Host "  Ícone          : " -NoNewline; Write-Host $script:IconUrl -ForegroundColor White
     Write-Host "  Saída          : " -NoNewline; Write-Host $script:OutputDir -ForegroundColor White
     Write-Host ""
 
-    if (-not (Confirmar "As informações estão corretas? Deseja continuar?")) {
+    if (-not (Confirmar "As informações estão corretas? Deseja continuar?"))
+    {
         Write-Host ""
         Write-Aviso "Operação cancelada pelo usuário."
         exit 130
@@ -321,23 +372,27 @@ function Confirm-Revisao {
 # Geração manual do manifesto YAML
 # ─────────────────────────────────────────────────────────────
 
-function Get-InstallerSha256 {
+function Get-InstallerSha256
+{
     param([string]$Url)
 
     Write-Info "Baixando instalador para calcular SHA256: $Url"
 
     $tempFile = Join-Path $env:TEMP "winget-temp-$([guid]::NewGuid().ToString().Substring(0,8)).exe"
 
-    try {
+    try
+    {
         Invoke-WebRequest -Uri $Url -OutFile $tempFile -UseBasicParsing -ErrorAction Stop
         $hash = (Get-FileHash -Path $tempFile -Algorithm SHA256).Hash.ToLower()
         Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
         return $hash
-    } catch {
+    } catch
+    {
         Write-Aviso "Não foi possível baixar o instalador ($($_.Exception.Message))."
         Write-Info "Calculando SHA256 localmente..."
         $path = Read-Input -Prompt "Caminho completo do arquivo instalador" -Required
-        if (Test-Path $path) {
+        if (Test-Path $path)
+        {
             return (Get-FileHash -Path $path -Algorithm SHA256).Hash.ToLower()
         }
         Write-Erro "Arquivo não encontrado."
@@ -345,33 +400,68 @@ function Get-InstallerSha256 {
     }
 }
 
+function Get-InstallerType
+{
+    param([string]$Url)
 
-function Get-InstallerArchitecture {
+    $ext = [System.IO.Path]::GetExtension($Url.Split('?')[0]).ToLower()
+    switch ($ext)
+    {
+        '.msi'
+        { return 'msi'
+        }
+        '.msix'
+        { return 'msix'
+        }
+        '.appx'
+        { return 'appx'
+        }
+        '.exe'
+        { return 'exe'
+        }
+        default
+        { return 'exe'
+        }
+    }
+}
+
+function Get-InstallerScope
+{
+    param([string]$InstallerType)
+    if ($InstallerType -eq 'msi')
+    { return 'machine'
+    }
+    return 'user'
+}
+
+function Get-InstallerArchitecture
+{
     param([string]$Url)
     $lower = $Url.ToLower()
-    if ($lower -match 'x64|amd64|win-x64') { return 'x64' }
-    if ($lower -match 'x86|win32|win-x86')  { return 'x86' }
-    if ($lower -match 'arm64')              { return 'arm64' }
+    if ($lower -match 'x64|amd64|win-x64')
+    { return 'x64'
+    }
+    if ($lower -match 'x86|win32|win-x86')
+    { return 'x86'
+    }
+    if ($lower -match 'arm64')
+    { return 'arm64'
+    }
     return 'x64'
 }
 
-function New-ManifestYaml {
+function New-ManifestYaml
+{
     Write-Passo 5 "Gerando manifesto YAML"
 
     $versionDir = Join-Path $script:OutputDir $script:PackageVersion
-    if (-not (Test-Path $versionDir)) {
+    if (-not (Test-Path $versionDir))
+    {
         New-Item -ItemType Directory -Path $versionDir -Force | Out-Null
     }
 
     # DefaultLocale manifest
     $defaultLocalePath = Join-Path $versionDir "FurLab.CLI.locale.en-US.yaml"
-
-    $iconsSection = @"
-Icons:
-  - IconUrl: $($script:IconUrl)
-    IconFileType: $($script:IconFileType)
-"@
-
     $defaultLocaleYaml = @"
 # yaml-language-server: `$schema=https://aka.ms/winget-manifest.defaultLocale.1.12.0.schema.json
 PackageIdentifier: $($script:PackageId)
@@ -381,7 +471,6 @@ Publisher: FurLab
 PackageName: FurLab CLI
 ShortDescription: Command-line utility for database backups, Docker management, and Windows features.
 License: GPL-3.0
-$($iconsSection.TrimEnd())
 ManifestType: defaultLocale
 ManifestVersion: 1.12.0
 "@
@@ -406,15 +495,17 @@ ManifestVersion: 1.12.0
     $installerEntries = [System.Collections.Generic.List[string]]::new()
     $idx = 0
 
-    foreach ($url in $script:InstallerUrls) {
+    foreach ($url in $script:InstallerUrls)
+    {
         $idx++
+        $installerType = Get-InstallerType $url
         $architecture = Get-InstallerArchitecture $url
         $sha256 = Get-InstallerSha256 $url
 
         $entry = "  - Architecture: ${architecture}`n    InstallerType: portable`n    InstallerUrl: ${url}`n    InstallerSha256: ${sha256}`n    Commands:`n    - fur"
         $installerEntries.Add($entry)
 
-        Write-Ok "Installer ${idx}: ${architecture} / portable / SHA256: $($sha256.Substring(0,16))..."
+        Write-Ok "Installer ${idx}: ${architecture} / ${installerType} / SHA256: $($sha256.Substring(0,16))..."
     }
 
     $installerYaml = @"
@@ -437,12 +528,14 @@ ManifestVersion: 1.12.0
 # Validação do manifesto
 # ─────────────────────────────────────────────────────────────
 
-function Invoke-Validacao {
+function Invoke-Validacao
+{
     Write-Passo 6 "Validando manifesto"
 
     $manifestPath = Join-Path $script:OutputDir $script:PackageVersion
 
-    if (-not (Test-Path $manifestPath)) {
+    if (-not (Test-Path $manifestPath))
+    {
         Write-Aviso "Não foi possível localizar o manifesto gerado para validação automática."
         Write-Info "Execute manualmente: winget validate <caminho>"
         return
@@ -451,12 +544,15 @@ function Invoke-Validacao {
     Write-Info "Validando: $manifestPath"
     & winget validate $manifestPath
 
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -ne 0)
+    {
         Write-Erro "Validação falhou. Corrija os erros no manifesto e reenvie."
-        if (-not (Confirmar "Deseja continuar mesmo com erros de validação?" $false)) {
+        if (-not (Confirmar "Deseja continuar mesmo com erros de validação?" $false))
+        {
             exit 1
         }
-    } else {
+    } else
+    {
         Write-Ok "Manifesto válido."
     }
 }
@@ -465,7 +561,8 @@ function Invoke-Validacao {
 # Submissão do PR
 # ─────────────────────────────────────────────────────────────
 
-function Invoke-Submit {
+function Invoke-Submit
+{
     Write-Passo 7 "Submetendo Pull Request ao winget-pkgs"
 
     Write-Host ""
@@ -475,7 +572,8 @@ function Invoke-Submit {
     Write-Host "  3. Abrir um Pull Request" -ForegroundColor Gray
     Write-Host ""
 
-    if (-not (Confirmar "Deseja enviar o PR agora?")) {
+    if (-not (Confirmar "Deseja enviar o PR agora?"))
+    {
         Write-Aviso "Submissão cancelada. O manifesto está salvo em: $($script:OutputDir)"
         Write-Info "Para enviar manualmente: wingetcreate submit --token <TOKEN> <caminho>"
         exit 130
@@ -484,7 +582,8 @@ function Invoke-Submit {
     # Localiza manifesto gerado
     $manifestPath = Join-Path $script:OutputDir $script:PackageVersion
 
-    if (-not (Test-Path $manifestPath)) {
+    if (-not (Test-Path $manifestPath))
+    {
         Write-Erro "Manifesto não encontrado em: $manifestPath"
         exit 1
     }
@@ -492,7 +591,8 @@ function Invoke-Submit {
     Write-Info "Executando wingetcreate submit ..."
     & wingetcreate submit --token $script:GhToken $manifestPath
 
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -ne 0)
+    {
         Write-Erro "Submissão falhou (código $LASTEXITCODE)."
         Write-Info "Verifique o token e tente: wingetcreate submit --token <TOKEN> `"$manifestPath`""
         exit 1
@@ -507,7 +607,8 @@ function Invoke-Submit {
 # Sumário final
 # ─────────────────────────────────────────────────────────────
 
-function Write-Sumario {
+function Write-Sumario
+{
     Write-Host ""
     Write-Host ("=" * 60) -ForegroundColor Green
     Write-Host "  Publicacao concluida!" -ForegroundColor Green
@@ -534,11 +635,10 @@ Write-Info "Voce precisara de: URL(s) do instalador e um GitHub PAT (public_repo
 
 Test-Dependencias
 Get-InformacoesPacote
-Set-IconePadrao
 Get-GitHubToken
 Set-DiretorioSaida
 Confirm-Revisao
-    New-ManifestYaml
-    Invoke-Validacao
+New-ManifestYaml
+Invoke-Validacao
 Invoke-Submit
 Write-Sumario

@@ -1,10 +1,10 @@
-# Spec: server-auto-discover-databases
+## REMOVIDO Requirements
 
-## Purpose
+### Requirement: Validação de databases acessíveis
+**Razão**: A validação prévia de acessibilidade por database (`SELECT 1` individual) gera conexões excessivas ao servidor sem benefício real. Falhas de conexão durante a execução da query real já são capturadas e registradas no log de erros existente.
+**Migração**: Nenhuma ação necessária. Databases inacessíveis continuarão a gerar entradas de erro no log de execução, sem interromper as demais databases.
 
-Define o comportamento de auto-descoberta de databases por servidor, incluindo patterns de exclusão configuráveis e a query usada para listagem.
-
-## Requirements
+## MODIFICADO Requirements
 
 ### Requirement: Auto-descoberta de databases
 O sistema DEVE executar uma query para listar todas as databases de um servidor quando `fetchAllDatabases` está habilitado para aquele servidor.
@@ -19,22 +19,6 @@ O sistema DEVE executar uma query para listar todas as databases de um servidor 
 - **QUANDO** servidor tem `fetchAllDatabases: false` ou não especificado
 - **ENTÃO** sistema usa apenas as databases listadas no campo `databases` sem qualquer conexão ao servidor nessa fase
 - **E** se `databases` está vazio, usa a database padrão do usuário (postgres)
-
-### Requirement: Patterns de exclusão configuráveis
-O sistema DEVE permitir configurar patterns de exclusão por servidor para filtrar databases durante auto-descoberta.
-
-#### Cenário: Patterns padrão
-- **QUANDO** servidor tem `fetchAllDatabases: true` mas `excludePatterns` não especificado
-- **ENTÃO** sistema usa patterns padrão: `["template*", "postgres"]`
-
-#### Cenário: Patterns customizados
-- **QUANDO** servidor tem `excludePatterns: ["template*", "postgres", "test_*"]`
-- **ENTÃO** sistema exclui databases que match qualquer pattern
-- **E** patterns suportam wildcard `*` no final
-
-#### Cenário: Patterns vazios
-- **QUANDO** servidor tem `excludePatterns: []`
-- **ENTÃO** sistema não exclui nenhuma database (exceto templates do PostgreSQL)
 
 ### Requirement: Falha na query de listagem
 O sistema DEVE tratar falhas na query de listagem de databases com suporte a fallback.
