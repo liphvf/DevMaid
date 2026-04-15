@@ -9,8 +9,7 @@
 ---
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K41AP4RO)
-
-<a href="https://www.buymeacoffee.com/liphvf"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=liphvf&button_colour=FFDD00&font_colour=000000&font_family=Lato&outline_colour=000000&coffee_colour=ffffff" /></a>
+[![Buy Me A Coffee](https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=liphvf&button_colour=FFDD00&font_colour=000000&font_family=Lato&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/liphvf)
 
 ## Descrição
 
