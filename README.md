@@ -266,3 +266,8 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 🇺🇸 English (default)  
 🇧🇷 Portuguese: [README.pt-BR.md](./README.pt-BR.md)
+
+---
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K41AP4RO)
+[![Buy Me A Coffee](https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=liphvf&button_colour=FFDD00&font_colour=000000&font_family=Lato&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/liphvf)
