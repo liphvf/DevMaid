@@ -1,4 +1,3 @@
-
 namespace FurLab.CLI.Services.Logging;
 
 /// <summary>
