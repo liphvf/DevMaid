@@ -1,6 +1,3 @@
-
-using Microsoft.Extensions.Logging;
-
 namespace FurLab.Core.Logging;
 
 /// <summary>
@@ -67,71 +64,4 @@ public class CorrelationContext
     /// Gets the elapsed time since this context was created.
     /// </summary>
     public TimeSpan Elapsed => DateTime.UtcNow - StartTimeUtc;
-}
-
-/// <summary>
-/// Extension methods for logging with correlation context.
-/// </summary>
-public static class LoggerExtensions
-{
-    /// <summary>
-    /// Logs a message with correlation context information.
-    /// </summary>
-    /// <param name="logger">The logger instance.</param>
-    /// <param name="logLevel">The log level.</param>
-    /// <param name="message">The log message.</param>
-    /// <param name="args">Optional format arguments for the message.</param>
-    public static void LogWithCorrelation(this Microsoft.Extensions.Logging.ILogger logger, LogLevel logLevel, string message, params object[] args)
-    {
-        var correlation = CorrelationContext.Current;
-        if (correlation != null)
-        {
-            using (logger.BeginScope(new Dictionary<string, object>
-            {
-                ["CorrelationId"] = correlation.CorrelationId,
-                ["CommandName"] = correlation.CommandName
-            }))
-            {
-                logger.Log(logLevel, message, args);
-            }
-        }
-        else
-        {
-            logger.Log(logLevel, message, args);
-        }
-    }
-
-    /// <summary>
-    /// Begins a scope with correlation context information for the specified command.
-    /// </summary>
-    /// <param name="logger">The logger instance.</param>
-    /// <param name="commandName">The name of the command being executed.</param>
-    /// <returns>A disposable scope wrapper.</returns>
-    public static IDisposable BeginCorrelationScope(this Microsoft.Extensions.Logging.ILogger logger, string commandName)
-    {
-        var correlation = CorrelationContext.Current;
-        _ = (correlation?.CommandName = commandName);
-
-        var correlationId = correlation?.CorrelationId ?? "no-correlation";
-        return new CorrelationScopeWrapper(logger, correlationId, commandName);
-    }
-
-    private sealed class CorrelationScopeWrapper : IDisposable
-    {
-        private readonly Microsoft.Extensions.Logging.ILogger _logger;
-
-        public CorrelationScopeWrapper(Microsoft.Extensions.Logging.ILogger logger, string correlationId, string commandName)
-        {
-            _logger = logger;
-            _ = _logger.BeginScope(new Dictionary<string, object>
-            {
-                ["CorrelationId"] = correlationId,
-                ["CommandName"] = commandName
-            });
-        }
-
-        public void Dispose()
-        {
-        }
-    }
 }

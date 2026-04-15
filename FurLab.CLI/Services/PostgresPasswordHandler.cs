@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace FurLab.CLI.Services;
 
 /// <summary>
@@ -69,29 +67,5 @@ public static class PostgresPasswordHandler
         }
 
         return pwd;
-    }
-
-    /// <summary>
-    /// Converts a SecureString to a plain string.
-    /// </summary>
-    /// <param name="secureString">The SecureString to convert.</param>
-    /// <returns>The plain string representation of the SecureString.</returns>
-    public static string SecureStringToString(System.Security.SecureString secureString)
-    {
-        if (secureString == null)
-        {
-            throw new ArgumentNullException(nameof(secureString));
-        }
-
-        var valuePtr = IntPtr.Zero;
-        try
-        {
-            valuePtr = Marshal.SecureStringToGlobalAllocUnicode(secureString);
-            return Marshal.PtrToStringUni(valuePtr) ?? string.Empty;
-        }
-        finally
-        {
-            Marshal.ZeroFreeGlobalAllocUnicode(valuePtr);
-        }
     }
 }

@@ -509,3 +509,5 @@ CODE_REVIEW.md
 
 # Deploy
 packaging/
+
+.qwen/

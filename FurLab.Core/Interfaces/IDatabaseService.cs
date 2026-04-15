@@ -8,30 +8,6 @@ namespace FurLab.Core.Interfaces;
 public interface IDatabaseService
 {
     /// <summary>
-    /// Creates a backup of a PostgreSQL database.
-    /// </summary>
-    /// <param name="options">The backup options.</param>
-    /// <param name="progress">Optional progress reporter.</param>
-    /// <param name="cancellationToken">Optional cancellation token.</param>
-    /// <returns>A task representing the backup operation with the result.</returns>
-    Task<DatabaseBackupResult> BackupAsync(
-        DatabaseBackupOptions options,
-        IProgress<OperationProgress>? progress = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Restores a PostgreSQL database from a backup file.
-    /// </summary>
-    /// <param name="options">The restore options.</param>
-    /// <param name="progress">Optional progress reporter.</param>
-    /// <param name="cancellationToken">Optional cancellation token.</param>
-    /// <returns>A task representing the restore operation with the result.</returns>
-    Task<DatabaseRestoreResult> RestoreAsync(
-        DatabaseRestoreOptions options,
-        IProgress<OperationProgress>? progress = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Lists all databases on the PostgreSQL server.
     /// </summary>
     /// <param name="options">The connection options.</param>

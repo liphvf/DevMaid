@@ -15,8 +15,6 @@ public class DatabaseCommandTests
 {
     private static IConfigurationService? _configurationService;
     private static IDatabaseService? _databaseService;
-    private static IFileService? _fileService;
-    private static IWingetService? _wingetService;
     private static IProcessExecutor? _processExecutor;
     private static Core.Logging.ILogger? _logger;
 
@@ -29,15 +27,11 @@ public class DatabaseCommandTests
         _configurationService = new Core.Services.ConfigurationService(logger);
         _processExecutor = new Core.Services.ProcessExecutor(logger);
         _databaseService = new Core.Services.DatabaseService(_processExecutor, logger);
-        _fileService = new Core.Services.FileService(logger);
-        _wingetService = new Core.Services.WingetService(_processExecutor, logger);
 
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.AddDebug().AddConsole());
         services.AddSingleton(_configurationService);
         services.AddSingleton(_databaseService);
-        services.AddSingleton(_fileService);
-        services.AddSingleton(_wingetService);
         services.AddSingleton(_processExecutor);
         services.AddSingleton(_logger);
 

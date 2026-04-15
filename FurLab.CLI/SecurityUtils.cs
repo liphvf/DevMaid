@@ -48,22 +48,6 @@ public static partial class SecurityUtils
     }
 
     /// <summary>
-    /// Escapes a string for safe use in SQL queries.
-    /// </summary>
-    /// <param name="input">The input string to escape.</param>
-    /// <returns>The escaped string.</returns>
-    public static string EscapeSqlString(string input)
-    {
-        if (string.IsNullOrEmpty(input))
-        {
-            return input;
-        }
-
-        // Escape single quotes by doubling them
-        return input.Replace("'", "''");
-    }
-
-    /// <summary>
     /// Validates if a path is safe and doesn't contain path traversal attacks.
     /// </summary>
     /// <param name="path">The path to validate.</param>
@@ -228,82 +212,6 @@ public static partial class SecurityUtils
 
         // Allow alphanumeric, underscore, hyphen, and dot
         return UsernameRegexGenerated().IsMatch(username);
-    }
-
-    /// <summary>
-    /// Sanitizes a file path argument for command line usage.
-    /// </summary>
-    /// <param name="argument">The argument to sanitize.</param>
-    /// <returns>The sanitized argument.</returns>
-    public static string SanitizeCommandLineArgument(string argument)
-    {
-        if (string.IsNullOrEmpty(argument))
-        {
-            return argument;
-        }
-
-        // Escape special characters that could be interpreted by shell
-        // This is a basic implementation; for production, use proper argument escaping
-        return argument.Replace("\"", "\\\"").Replace("$", "\\$").Replace("`", "\\`").Replace("\\", "\\\\");
-    }
-
-    /// <summary>
-    /// Validates and resolves a safe output path within a base directory.
-    /// </summary>
-    /// <param name="outputPath">The output path to resolve.</param>
-    /// <param name="baseDirectory">The base directory.</param>
-    /// <returns>The validated and resolved output path.</returns>
-    /// <exception cref="ArgumentException">Thrown when the output path is invalid.</exception>
-    public static string GetSafeOutputPath(string outputPath, string baseDirectory)
-    {
-        if (string.IsNullOrWhiteSpace(outputPath))
-        {
-            return Path.Combine(baseDirectory, "output");
-        }
-
-        try
-        {
-            // If outputPath is a relative path, combine with baseDirectory
-            if (!Path.IsPathRooted(outputPath))
-            {
-                outputPath = Path.Combine(baseDirectory, outputPath);
-            }
-
-            // Get full path and validate
-            var fullPath = Path.GetFullPath(outputPath);
-
-            // Ensure it's within base directory
-            if (!IsValidPath(fullPath, baseDirectory))
-            {
-                throw new ArgumentException("Output path is outside the allowed directory.");
-            }
-
-            return fullPath;
-        }
-        catch (Exception ex)
-        {
-            throw new ArgumentException($"Invalid output path: {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
-    /// Validates if a database name is safe to use.
-    /// </summary>
-    /// <param name="databaseName">The database name to validate.</param>
-    /// <returns>True if the database name is valid, false otherwise.</returns>
-    public static bool IsValidDatabaseName(string databaseName)
-    {
-        return IsValidPostgreSQLIdentifier(databaseName);
-    }
-
-    /// <summary>
-    /// Validates if a table name is safe to use.
-    /// </summary>
-    /// <param name="tableName">The table name to validate.</param>
-    /// <returns>True if the table name is valid, false otherwise.</returns>
-    public static bool IsValidTableName(string tableName)
-    {
-        return IsValidPostgreSQLIdentifier(tableName);
     }
 
     [GeneratedRegex(@"^[a-zA-Z0-9_.\-]+$")]

@@ -35,7 +35,6 @@ public static class ServiceCollectionExtensions
         _ = services.AddSingleton<IConfigurationService, ConfigurationService>();
         _ = services.AddSingleton<IProcessExecutor, ProcessExecutor>();
         _ = services.AddSingleton<IDatabaseService, DatabaseService>();
-        _ = services.AddSingleton<IFileService, FileService>();
         _ = services.AddSingleton<IPgPassService, PgPassService>();
 
         services.AddSingleton<Logging.ILogger>(sp =>
