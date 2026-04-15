@@ -6,6 +6,11 @@
   A powerful .NET CLI tool to automate common development tasks.
 </div>
 
+---
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K41AP4RO)
+
+<a href="https://www.buymeacoffee.com/liphvf"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=liphvf&button_colour=FFDD00&font_colour=000000&font_family=Lato&outline_colour=000000&coffee_colour=ffffff" /></a>
+
 ## Description
 
 FurLab is a cross-platform command-line interface (CLI) built with .NET that helps developers automate repetitive development tasks. It provides commands for database operations, file management, AI tool installation (Claude Code, OpenCode), and Windows package management.
