@@ -1,4 +1,3 @@
-
 namespace FurLab.Core.Models;
 
 /// <summary>
@@ -30,40 +29,6 @@ public record OperationResult
     /// Gets or sets the duration of the operation.
     /// </summary>
     public TimeSpan Duration { get; init; }
-
-    /// <summary>
-    /// Creates a successful result.
-    /// </summary>
-    /// <param name="message">Optional success message.</param>
-    /// <param name="duration">Optional duration.</param>
-    /// <returns>A successful operation result.</returns>
-    public static OperationResult SuccessResult(string? message = null, TimeSpan? duration = null)
-    {
-        return new OperationResult
-        {
-            Success = true,
-            Message = message,
-            Duration = duration ?? TimeSpan.Zero
-        };
-    }
-
-    /// <summary>
-    /// Creates a failed result.
-    /// </summary>
-    /// <param name="errorMessage">The error message.</param>
-    /// <param name="exception">Optional exception.</param>
-    /// <param name="duration">Optional duration.</param>
-    /// <returns>A failed operation result.</returns>
-    public static OperationResult FailureResult(string errorMessage, Exception? exception = null, TimeSpan? duration = null)
-    {
-        return new OperationResult
-        {
-            Success = false,
-            ErrorMessage = errorMessage,
-            Exception = exception,
-            Duration = duration ?? TimeSpan.Zero
-        };
-    }
 }
 
 /// <summary>
@@ -76,40 +41,4 @@ public record OperationResult<T> : OperationResult
     /// Gets or sets the result data.
     /// </summary>
     public T? Data { get; init; }
-
-    /// <summary>
-    /// Creates a successful result with data.
-    /// </summary>
-    /// <param name="data">The result data.</param>
-    /// <param name="message">Optional success message.</param>
-    /// <param name="duration">Optional duration.</param>
-    /// <returns>A successful operation result with data.</returns>
-    public static OperationResult<T> SuccessResult(T data, string? message = null, TimeSpan? duration = null)
-    {
-        return new OperationResult<T>
-        {
-            Success = true,
-            Data = data,
-            Message = message,
-            Duration = duration ?? TimeSpan.Zero
-        };
-    }
-
-    /// <summary>
-    /// Creates a failed result.
-    /// </summary>
-    /// <param name="errorMessage">The error message.</param>
-    /// <param name="exception">Optional exception.</param>
-    /// <param name="duration">Optional duration.</param>
-    /// <returns>A failed operation result.</returns>
-    public static new OperationResult<T> FailureResult(string errorMessage, Exception? exception = null, TimeSpan? duration = null)
-    {
-        return new OperationResult<T>
-        {
-            Success = false,
-            ErrorMessage = errorMessage,
-            Exception = exception,
-            Duration = duration ?? TimeSpan.Zero
-        };
-    }
 }
