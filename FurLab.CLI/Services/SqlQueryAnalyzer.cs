@@ -14,11 +14,6 @@ public static partial class SqlQueryAnalyzer
         "TRUNCATE", "MERGE", "GRANT", "REVOKE"
     };
 
-    private static readonly HashSet<string> SafeKeywords = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "SELECT", "SHOW", "EXPLAIN", "DESCRIBE", "WITH"
-    };
-
     /// <summary>
     /// Regex to strip SQL comments (single-line -- and multi-line /* */).
     /// </summary>

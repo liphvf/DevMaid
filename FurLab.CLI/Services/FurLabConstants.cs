@@ -31,12 +31,7 @@ public static class FurLabConstants
     public const string PsqlExecutable = "psql";
 
     /// <summary>
-    /// The backup file extension.
-    /// </summary>
-    public const string BackupExtension = ".dump";
-
-    /// <summary>
-    /// The dump file extension.
+    /// The backup/dump file extension.
     /// </summary>
     public const string DumpExtension = ".dump";
 }

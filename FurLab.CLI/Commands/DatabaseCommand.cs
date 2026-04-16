@@ -310,7 +310,7 @@ public static class DatabaseCommand
         var outputPath = config.OutputPath;
         if (string.IsNullOrWhiteSpace(outputPath))
         {
-            outputPath = $"{config.DatabaseName}{FurLabConstants.BackupExtension}";
+            outputPath = $"{config.DatabaseName}{FurLabConstants.DumpExtension}";
         }
 
         Logger.LogInformation("Creating backup of database '{DatabaseName}'...", config.DatabaseName);
@@ -726,7 +726,6 @@ public static class DatabaseCommand
         {
             AnsiConsole.MarkupLine($"[red]Error:[/] Invalid database name: '{databaseName}'");
             Environment.Exit(2);
-            return;
         }
 
         var psqlPath = Core.Services.PostgresBinaryLocator.FindPsql();

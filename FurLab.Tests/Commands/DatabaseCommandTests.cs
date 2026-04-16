@@ -3,6 +3,7 @@ using System.Linq;
 using FurLab.CLI.Services;
 using FurLab.CLI.Services.Logging;
 using FurLab.Core.Interfaces;
+using FurLab.Core.Logging;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
