@@ -79,18 +79,6 @@ public partial class ConfigurationService(ILogger logger) : IConfigurationServic
         }
     }
 
-    /// <summary>
-    /// Reloads the configuration from disk.
-    /// </summary>
-    public void Reload()
-    {
-        lock (_lock)
-        {
-            _configuration = BuildConfiguration();
-        }
-        _logger.LogDebug("Configuration reloaded");
-    }
-
     private static bool IsValidHost(string host)
     {
         if (string.IsNullOrWhiteSpace(host))
@@ -131,13 +119,6 @@ public partial class ConfigurationService(ILogger logger) : IConfigurationServic
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables()
             .Build();
-    }
-
-    private static string GetConfigFilePath()
-    {
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var configFolder = Path.Combine(localAppData, "FurLab");
-        return Path.Combine(configFolder, "appsettings.json");
     }
 
     [GeneratedRegex(@"^(localhost|127\.\d+\.\d+\.\d+|::1|[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])*(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])*)*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]

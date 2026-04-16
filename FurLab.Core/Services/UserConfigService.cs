@@ -15,7 +15,6 @@ public partial class UserConfigService : IUserConfigService
     private readonly ILogger _logger;
     private readonly string _configFolder;
     private readonly string _configFilePath;
-    private readonly string _legacyConfigFilePath;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserConfigService"/> class.
@@ -28,7 +27,6 @@ public partial class UserConfigService : IUserConfigService
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "FurLab");
         _configFilePath = Path.Combine(_configFolder, "furlab.jsonc");
-        _legacyConfigFilePath = Path.Combine(_configFolder, "appsettings.json");
     }
 
     /// <inheritdoc/>

@@ -19,9 +19,4 @@ public interface IConfigurationService
     /// </summary>
     /// <returns>The database connection configuration.</returns>
     DatabaseConnectionConfig GetDatabaseConfig();
-
-    /// <summary>
-    /// Reloads the configuration from disk.
-    /// </summary>
-    void Reload();
 }

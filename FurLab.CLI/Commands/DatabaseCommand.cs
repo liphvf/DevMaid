@@ -318,7 +318,7 @@ public static class DatabaseCommand
         Logger.LogInformation("Username: {Username}", config.Username ?? "N/A");
         Logger.LogInformation("Output: {Output}", Path.GetFullPath(outputPath ?? "unknown"));
 
-        var pgDumpPath = PostgresBinaryLocator.FindPgDump();
+        var pgDumpPath = Core.Services.PostgresBinaryLocator.FindPgDump();
         if (pgDumpPath == null)
         {
             throw new PostgresBinaryNotFoundException(FurLabConstants.PgDumpExecutable);
@@ -448,7 +448,7 @@ public static class DatabaseCommand
 
     private static void BackupSingleDatabaseInternal(DatabaseBackupConfig config)
     {
-        var pgDumpPath = PostgresBinaryLocator.FindPgDump();
+        var pgDumpPath = Core.Services.PostgresBinaryLocator.FindPgDump();
         if (pgDumpPath == null)
         {
             throw new PostgresBinaryNotFoundException(FurLabConstants.PgDumpExecutable);
@@ -542,7 +542,7 @@ public static class DatabaseCommand
         Logger.LogInformation("Username: {Username}", config.Username ?? "N/A");
         Logger.LogInformation("Input: {FullPath}", Path.GetFullPath(fullPath));
 
-        var pgRestorePath = PostgresBinaryLocator.FindPgRestore();
+        var pgRestorePath = Core.Services.PostgresBinaryLocator.FindPgRestore();
         if (pgRestorePath == null)
         {
             throw new PostgresBinaryNotFoundException(FurLabConstants.PgRestoreExecutable);
@@ -671,7 +671,7 @@ public static class DatabaseCommand
 
     private static void RestoreSingleDatabaseInternal(DatabaseRestoreConfig config)
     {
-        var pgRestorePath = PostgresBinaryLocator.FindPgRestore();
+        var pgRestorePath = Core.Services.PostgresBinaryLocator.FindPgRestore();
         if (pgRestorePath == null)
         {
             throw new PostgresBinaryNotFoundException(FurLabConstants.PgRestoreExecutable);
@@ -729,7 +729,7 @@ public static class DatabaseCommand
             return;
         }
 
-        var psqlPath = PostgresBinaryLocator.FindPsql();
+        var psqlPath = Core.Services.PostgresBinaryLocator.FindPsql();
         if (psqlPath == null)
         {
             throw new PostgresBinaryNotFoundException(FurLabConstants.PsqlExecutable);
