@@ -21,27 +21,7 @@ public interface IConfigurationService
     DatabaseConnectionConfig GetDatabaseConfig();
 
     /// <summary>
-    /// Updates the database connection configuration.
-    /// </summary>
-    /// <param name="config">The configuration to set.</param>
-    void UpdateDatabaseConfig(DatabaseConnectionConfig config);
-
-    /// <summary>
     /// Reloads the configuration from disk.
     /// </summary>
     void Reload();
-
-    /// <summary>
-    /// Gets a configuration value.
-    /// </summary>
-    /// <param name="key">The configuration key.</param>
-    /// <returns>The configuration value, or null if not found.</returns>
-    string? GetValue(string key);
-
-    /// <summary>
-    /// Sets a configuration value.
-    /// </summary>
-    /// <param name="key">The configuration key.</param>
-    /// <param name="value">The configuration value.</param>
-    void SetValue(string key, string value);
 }

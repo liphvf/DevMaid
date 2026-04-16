@@ -46,12 +46,6 @@ public static class DockerService
     }
 
     /// <summary>
-    /// Checks if Docker is available on the system.
-    /// </summary>
-    /// <returns>True if Docker is available, false otherwise.</returns>
-    public static bool IsDockerAvailable() => GetDockerStatus() == DockerStatus.Running;
-
-    /// <summary>
     /// Checks if a container with the specified name exists.
     /// </summary>
     /// <param name="containerName">The name of the container.</param>
@@ -155,35 +149,6 @@ public static class DockerService
         }
 
         return output.Trim();
-    }
-
-    /// <summary>
-    /// Gets the container ID by name.
-    /// </summary>
-    /// <param name="containerName">The name of the container.</param>
-    /// <returns>The container ID or empty string if not found.</returns>
-    public static string GetContainerId(string containerName)
-    {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = DockerConstants.DockerExecutable,
-            Arguments = $"ps -a --filter name=^{containerName}$ --format \"{{{{.ID}}}}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(startInfo);
-        if (process == null)
-        {
-            return string.Empty;
-        }
-
-        var output = process.StandardOutput.ReadToEnd().Trim();
-        process.WaitForExit();
-
-        return output;
     }
 
     private static string BuildPostgresRunArguments()

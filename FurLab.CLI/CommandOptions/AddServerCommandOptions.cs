@@ -37,7 +37,4 @@ public class AddServerCommandOptions
 
     /// <summary>Comma-separated patterns to exclude from auto-discovery.</summary>
     public string? ExcludePatterns { get; set; }
-
-    /// <summary>Use interactive mode.</summary>
-    public bool Interactive { get; set; }
 }

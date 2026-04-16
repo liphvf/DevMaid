@@ -8,13 +8,6 @@ public class DockerOperationException : Exception
     /// <summary>
     /// Initializes a new instance of the <see cref="DockerOperationException"/> class.
     /// </summary>
-    public DockerOperationException()
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DockerOperationException"/> class.
-    /// </summary>
     /// <param name="message">The error message.</param>
     public DockerOperationException(string message) : base(message)
     {

@@ -163,60 +163,6 @@ public partial class UserConfigService : IUserConfigService
     public bool ConfigFileExists() => File.Exists(_configFilePath);
 
     /// <inheritdoc/>
-    public UserConfig? TryLoadLegacyConfig()
-    {
-        if (!File.Exists(_legacyConfigFilePath))
-        {
-            return null;
-        }
-
-        try
-        {
-            var json = File.ReadAllText(_legacyConfigFilePath);
-            var strippedJson = StripJsonComments(json);
-
-            using var doc = JsonDocument.Parse(strippedJson);
-            var root = doc.RootElement;
-
-            if (!root.TryGetProperty("Servers", out var serversSection))
-            {
-                return null;
-            }
-
-            var config = new UserConfig();
-
-            if (serversSection.TryGetProperty("ServersList", out var serversList) && serversList.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var serverJson in serversList.EnumerateArray())
-                {
-                    var server = new ServerConfigEntry
-                    {
-                        Name = serverJson.TryGetProperty("Name", out var nameProp) ? nameProp.GetString() ?? string.Empty : string.Empty,
-                        Host = serverJson.TryGetProperty("Host", out var hostProp) ? hostProp.GetString() ?? string.Empty : string.Empty,
-                        Port = serverJson.TryGetProperty("Port", out var portProp) ? portProp.GetInt32() : 5432,
-                        Username = serverJson.TryGetProperty("Username", out var userProp) ? userProp.GetString() ?? string.Empty : string.Empty,
-                        Databases = serverJson.TryGetProperty("Databases", out var dbProp) && dbProp.ValueKind == JsonValueKind.Array
-                            ? dbProp.EnumerateArray().Select(d => d.GetString() ?? string.Empty).ToList()
-                            : [],
-                        SslMode = serverJson.TryGetProperty("SslMode", out var sslProp) ? sslProp.GetString() ?? "Prefer" : "Prefer",
-                        Timeout = serverJson.TryGetProperty("Timeout", out var timeoutProp) ? timeoutProp.GetInt32() : 30,
-                        CommandTimeout = serverJson.TryGetProperty("CommandTimeout", out var cmdTimeoutProp) ? cmdTimeoutProp.GetInt32() : 300
-                    };
-
-                    config.Servers.Add(server);
-                }
-            }
-
-            _logger.LogWarning("Legacy configuration found in appsettings.json. Consider migrating to furlab.jsonc.");
-            return config;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    /// <inheritdoc/>
     public void SetEncryptedPassword(string serverName, string encryptedPassword)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(serverName);

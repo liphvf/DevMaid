@@ -54,12 +54,4 @@ public static class ConfigurationService
             Password = coreConfig.Password
         };
     }
-
-    /// <summary>
-    /// Reloads the configuration from disk.
-    /// </summary>
-    public static void Reload()
-    {
-        GetConfigurationService().Reload();
-    }
 }

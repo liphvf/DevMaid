@@ -22,12 +22,6 @@ public class PgPassAddOptions
 }
 
 /// <summary>
-/// Opções para o subcomando <c>FurLab database pgpass list</c>.
-/// Sem parâmetros adicionais.
-/// </summary>
-public class PgPassListOptions { }
-
-/// <summary>
 /// Opções para o subcomando <c>FurLab database pgpass remove</c>.
 /// </summary>
 public class PgPassRemoveOptions

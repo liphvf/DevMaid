@@ -54,12 +54,6 @@ public interface IUserConfigService
     bool ConfigFileExists();
 
     /// <summary>
-    /// Tries to load legacy appsettings.json configuration during migration period.
-    /// Returns null if no legacy config exists.
-    /// </summary>
-    UserConfig? TryLoadLegacyConfig();
-
-    /// <summary>
     /// Sets the encrypted password for a server identified by name.
     /// </summary>
     /// <param name="serverName">The server name.</param>

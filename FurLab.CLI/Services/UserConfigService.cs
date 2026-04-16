@@ -81,11 +81,6 @@ public static class UserConfigService
     public static bool ConfigFileExists() => GetUserConfigService().ConfigFileExists();
 
     /// <summary>
-    /// Tries to load legacy appsettings.json configuration during migration period.
-    /// </summary>
-    public static UserConfig? TryLoadLegacyConfig() => GetUserConfigService().TryLoadLegacyConfig();
-
-    /// <summary>
     /// Sets the encrypted password for a server identified by name.
     /// </summary>
     public static void SetEncryptedPassword(string serverName, string encryptedPassword) =>

@@ -80,25 +80,4 @@ public class DatabaseService(IProcessExecutor processExecutor, ILogger logger) :
 
         return databases;
     }
-
-    /// <summary>
-    /// Tests the connection to a PostgreSQL database.
-    /// </summary>
-    /// <param name="options">The connection options.</param>
-    /// <param name="cancellationToken">Optional cancellation token.</param>
-    /// <returns>A task representing the operation with a boolean indicating success.</returns>
-    public async Task<bool> TestConnectionAsync(
-        DatabaseConnectionOptions options,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _ = await ListDatabasesAsync(options, cancellationToken);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
 }

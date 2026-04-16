@@ -79,6 +79,18 @@ public partial class ConfigurationService(ILogger logger) : IConfigurationServic
         }
     }
 
+    /// <summary>
+    /// Reloads the configuration from disk.
+    /// </summary>
+    public void Reload()
+    {
+        lock (_lock)
+        {
+            _configuration = BuildConfiguration();
+        }
+        _logger.LogDebug("Configuration reloaded");
+    }
+
     private static bool IsValidHost(string host)
     {
         if (string.IsNullOrWhiteSpace(host))
@@ -102,117 +114,6 @@ public partial class ConfigurationService(ILogger logger) : IConfigurationServic
         }
 
         return Regex.IsMatch(username, @"^[a-zA-Z_][a-zA-Z0-9_]*$");
-    }
-
-    /// <summary>
-    /// Updates the database connection configuration.
-    /// </summary>
-    /// <param name="config">The configuration to set.</param>
-    public void UpdateDatabaseConfig(DatabaseConnectionConfig config)
-    {
-        ArgumentNullException.ThrowIfNull(config);
-
-        var configPath = GetConfigFilePath();
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var configFolder = Path.Combine(localAppData, "FurLab");
-        _ = Directory.CreateDirectory(configFolder);
-
-        var existingConfig = new Dictionary<string, string?>();
-        if (File.Exists(configPath))
-        {
-            var lines = File.ReadAllLines(configPath);
-            foreach (var line in lines)
-            {
-                var parts = line.Split(['='], 2);
-                if (parts.Length == 2)
-                {
-                    existingConfig[parts[0].Trim()] = parts[1].Trim();
-                }
-            }
-        }
-
-        existingConfig["Database:Host"] = config.Host ?? "localhost";
-        existingConfig["Database:Port"] = config.Port ?? "5432";
-        existingConfig["Database:Username"] = config.Username;
-        existingConfig["Database:Password"] = config.Password;
-
-        var configLines = existingConfig
-            .Where(kvp => kvp.Value != null)
-            .Select(kvp => $"{kvp.Key}={kvp.Value}")
-            .ToArray();
-
-        File.WriteAllLines(configPath, configLines);
-
-        _logger.LogDebug("Database configuration updated");
-
-        Reload();
-    }
-
-    /// <summary>
-    /// Reloads the configuration from disk.
-    /// </summary>
-    public void Reload()
-    {
-        lock (_lock)
-        {
-            _configuration = BuildConfiguration();
-        }
-        _logger.LogDebug("Configuration reloaded");
-    }
-
-    /// <summary>
-    /// Gets a configuration value.
-    /// </summary>
-    /// <param name="key">The configuration key.</param>
-    /// <returns>The configuration value, or null if not found.</returns>
-    public string? GetValue(string key)
-    {
-        return Configuration[key];
-    }
-
-    /// <summary>
-    /// Sets a configuration value.
-    /// </summary>
-    /// <param name="key">The configuration key.</param>
-    /// <param name="value">The configuration value.</param>
-    public void SetValue(string key, string value)
-    {
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            throw new ArgumentException("Key cannot be null or empty", nameof(key));
-        }
-
-        var configPath = GetConfigFilePath();
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var configFolder = Path.Combine(localAppData, "FurLab");
-        _ = Directory.CreateDirectory(configFolder);
-
-        var existingConfig = new Dictionary<string, string?>();
-        if (File.Exists(configPath))
-        {
-            var lines = File.ReadAllLines(configPath);
-            foreach (var line in lines)
-            {
-                var parts = line.Split(['='], 2);
-                if (parts.Length == 2)
-                {
-                    existingConfig[parts[0].Trim()] = parts[1].Trim();
-                }
-            }
-        }
-
-        existingConfig[key] = value;
-
-        var configLines = existingConfig
-            .Where(kvp => kvp.Value != null)
-            .Select(kvp => $"{kvp.Key}={kvp.Value}")
-            .ToArray();
-
-        File.WriteAllLines(configPath, configLines);
-
-        _logger.LogDebug($"Configuration value '{key}' updated");
-
-        Reload();
     }
 
     private IConfigurationRoot BuildConfiguration()

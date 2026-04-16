@@ -33,39 +33,4 @@ public static class PostgresPasswordHandler
 
         return password;
     }
-
-    /// <summary>
-    /// Creates a SecureString from console input.
-    /// </summary>
-    /// <returns>A SecureString containing the password.</returns>
-    public static System.Security.SecureString ReadSecurePasswordInteractively()
-    {
-        Console.Write("Password: ");
-        var pwd = new System.Security.SecureString();
-
-        while (true)
-        {
-            var keyInfo = Console.ReadKey(true);
-            if (keyInfo.Key == ConsoleKey.Enter)
-            {
-                break;
-            }
-
-            if (keyInfo.Key == ConsoleKey.Backspace)
-            {
-                if (pwd.Length > 0)
-                {
-                    pwd.RemoveAt(pwd.Length - 1);
-                    Console.Write("\b \b");
-                }
-            }
-            else
-            {
-                pwd.AppendChar(keyInfo.KeyChar);
-                Console.Write("*");
-            }
-        }
-
-        return pwd;
-    }
 }
