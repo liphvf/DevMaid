@@ -1,3 +1,4 @@
+using FurLab.CLI.Commands.Query;
 using FurLab.CLI.Infrastructure;
 using FurLab.Core.Services;
 
@@ -17,6 +18,7 @@ internal class Program
     {
         var services = new ServiceCollection();
         services.AddFurLabServices();
+        services.AddSingleton<CsvExporter>();
 
         var registrar = new TypeRegistrar(services);
         var app = new CommandApp(registrar);
