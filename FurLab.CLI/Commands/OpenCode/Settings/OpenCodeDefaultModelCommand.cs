@@ -32,14 +32,14 @@ public sealed class OpenCodeDefaultModelCommand : AsyncCommand<OpenCodeDefaultMo
         /// Gets the model ID to set as default. If omitted, displays interactive menu.
         /// </summary>
         [CommandArgument(0, "[model-id]")]
-        [System.ComponentModel.Description("Model ID to set as default. If omitted, displays interactive menu.")]
+        [Description("Model ID to set as default. If omitted, displays interactive menu.")]
         public string? ModelId { get; init; }
 
         /// <summary>
         /// Gets a value indicating whether to modify the global configuration instead of local.
         /// </summary>
         [CommandOption("-g|--global")]
-        [System.ComponentModel.Description("Changes the global configuration (~/.config/opencode/opencode.jsonc) instead of local.")]
+        [Description("Changes the global configuration (~/.config/opencode/opencode.jsonc) instead of local.")]
         public bool Global { get; init; }
     }
 
@@ -124,8 +124,8 @@ public sealed class OpenCodeDefaultModelCommand : AsyncCommand<OpenCodeDefaultMo
         var jsonc = Path.Combine(directory, "opencode.jsonc");
         var json = Path.Combine(directory, "opencode.json");
 
-        if (System.IO.File.Exists(jsonc)) return jsonc;
-        if (System.IO.File.Exists(json)) return json;
+        if (File.Exists(jsonc)) return jsonc;
+        if (File.Exists(json)) return json;
         return jsonc;
     }
 
@@ -144,13 +144,13 @@ public sealed class OpenCodeDefaultModelCommand : AsyncCommand<OpenCodeDefaultMo
             foreach (var dir in Directory.GetDirectories(wingetPackages, "SST.opencode_*"))
             {
                 var exe = Path.Combine(dir, "opencode.exe");
-                if (System.IO.File.Exists(exe)) return exe;
+                if (File.Exists(exe)) return exe;
             }
         }
 
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var npmPs1 = Path.Combine(appData, "npm", "opencode.ps1");
-        if (System.IO.File.Exists(npmPs1)) return npmPs1;
+        if (File.Exists(npmPs1)) return npmPs1;
 
         return "opencode";
     }
@@ -240,12 +240,12 @@ public sealed class OpenCodeDefaultModelCommand : AsyncCommand<OpenCodeDefaultMo
 
     private static JsonObject LoadConfigFile(string path)
     {
-        if (!System.IO.File.Exists(path))
+        if (!File.Exists(path))
         {
             return new JsonObject();
         }
 
-        var json = System.IO.File.ReadAllText(path);
+        var json = File.ReadAllText(path);
         if (string.IsNullOrWhiteSpace(json))
         {
             return new JsonObject();
@@ -267,6 +267,6 @@ public sealed class OpenCodeDefaultModelCommand : AsyncCommand<OpenCodeDefaultMo
     private static void SaveConfigFile(string path, JsonObject config)
     {
         var json = config.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
-        System.IO.File.WriteAllText(path, json + Environment.NewLine);
+        File.WriteAllText(path, json + Environment.NewLine);
     }
 }

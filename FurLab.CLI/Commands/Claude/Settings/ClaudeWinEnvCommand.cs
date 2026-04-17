@@ -58,7 +58,7 @@ Environment:
 - Null device in this shell is: /dev/null
 - ""nul"" is a Windows device name and must never be used as a filename.";
 
-        System.IO.File.WriteAllText(claudeMdPath, claudeMdContent);
+        File.WriteAllText(claudeMdPath, claudeMdContent);
         Console.WriteLine($"Arquivo CLAUDE.md criado: {claudeMdPath}");
 
         return Task.FromResult(0);
@@ -71,12 +71,12 @@ Environment:
 
     private static JsonObject LoadSettingsFile(string settingsPath)
     {
-        if (!System.IO.File.Exists(settingsPath))
+        if (!File.Exists(settingsPath))
         {
             return new JsonObject();
         }
 
-        var json = System.IO.File.ReadAllText(settingsPath);
+        var json = File.ReadAllText(settingsPath);
         if (string.IsNullOrWhiteSpace(json))
         {
             return new JsonObject();
@@ -98,6 +98,6 @@ Environment:
             WriteIndented = true
         });
 
-        System.IO.File.WriteAllText(settingsPath, json + Environment.NewLine);
+        File.WriteAllText(settingsPath, json + Environment.NewLine);
     }
 }

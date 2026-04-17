@@ -451,7 +451,7 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreCommand
             throw new PathTraversalException(inputPath);
         }
 
-        if (!System.IO.File.Exists(fullPath))
+        if (!File.Exists(fullPath))
         {
             throw new FurLabFileNotFoundException(fullPath);
         }

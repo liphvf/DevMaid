@@ -41,7 +41,7 @@ public sealed class WindowsFeaturesExportCommand : AsyncCommand<WindowsFeaturesE
             WriteIndented = true
         });
 
-        System.IO.File.WriteAllText(settings.Path, json);
+        File.WriteAllText(settings.Path, json);
         Console.WriteLine($"Exported {features.Count} enabled features to: {settings.Path}");
 
         return Task.FromResult(0);

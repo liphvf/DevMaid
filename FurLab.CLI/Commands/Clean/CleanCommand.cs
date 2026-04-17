@@ -24,7 +24,7 @@ public sealed class CleanCommand : AsyncCommand<CleanCommand.Settings>
     protected override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellation)
     {
         var path = settings.Directory ?? Environment.CurrentDirectory;
-        var directory = System.IO.File.Exists(path)
+        var directory = File.Exists(path)
             ? Path.GetDirectoryName(path)
             : path;
 
@@ -38,7 +38,7 @@ public sealed class CleanCommand : AsyncCommand<CleanCommand.Settings>
         Console.WriteLine($"Cleaning directory: {directory}");
 
         var removedCount = 0;
-        var directories = System.IO.Directory.GetDirectories(directory, "*", SearchOption.AllDirectories);
+        var directories = Directory.GetDirectories(directory, "*", SearchOption.AllDirectories);
 
         foreach (var dir in directories)
         {
@@ -48,7 +48,7 @@ public sealed class CleanCommand : AsyncCommand<CleanCommand.Settings>
             {
                 try
                 {
-                    System.IO.Directory.Delete(dir, true);
+                    Directory.Delete(dir, true);
                     Console.WriteLine($"Removed: {dir}");
                     removedCount++;
                 }

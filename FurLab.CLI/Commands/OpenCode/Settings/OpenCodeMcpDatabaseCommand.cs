@@ -53,12 +53,12 @@ public sealed class OpenCodeMcpDatabaseCommand : AsyncCommand<OpenCodeMcpDatabas
 
     private static JsonObject LoadConfigFile(string path)
     {
-        if (!System.IO.File.Exists(path))
+        if (!File.Exists(path))
         {
             return new JsonObject();
         }
 
-        var json = System.IO.File.ReadAllText(path);
+        var json = File.ReadAllText(path);
         if (string.IsNullOrWhiteSpace(json))
         {
             return new JsonObject();
@@ -80,6 +80,6 @@ public sealed class OpenCodeMcpDatabaseCommand : AsyncCommand<OpenCodeMcpDatabas
     private static void SaveConfigFile(string path, JsonObject config)
     {
         var json = config.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
-        System.IO.File.WriteAllText(path, json + Environment.NewLine);
+        File.WriteAllText(path, json + Environment.NewLine);
     }
 }

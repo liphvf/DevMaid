@@ -68,7 +68,7 @@ public class CsvExporter
     /// <param name="row">The query result row to append.</param>
     public void AppendToServerCsv(string outputPath, CsvRow row)
     {
-        var fileExists = System.IO.File.Exists(outputPath);
+        var fileExists = File.Exists(outputPath);
         using var writer = new StreamWriter(outputPath, append: true, Encoding.UTF8)
         {
             AutoFlush = true
@@ -111,7 +111,7 @@ public class CsvExporter
     /// <param name="error">Error message.</param>
     public void WriteErrorEntry(string outputPath, string server, string database, DateTime executedAt, string error)
     {
-        var fileExists = System.IO.File.Exists(outputPath);
+        var fileExists = File.Exists(outputPath);
         using var writer = new StreamWriter(outputPath, append: true, Encoding.UTF8)
         {
             AutoFlush = true
@@ -143,7 +143,7 @@ public class CsvExporter
     /// <param name="entry">The execution log entry to append.</param>
     public void WriteLogEntry(string outputPath, ExecutionLogEntry entry)
     {
-        var fileExists = System.IO.File.Exists(outputPath);
+        var fileExists = File.Exists(outputPath);
         using var writer = new StreamWriter(outputPath, append: true, Encoding.UTF8)
         {
             AutoFlush = true
@@ -226,7 +226,7 @@ public class CsvExporter
         foreach (var serverName in serverNames)
         {
             var serverFile = Path.Combine(outputDirectory, $"{SanitizeFilename(serverName)}_{timestamp}.csv");
-            if (!System.IO.File.Exists(serverFile)) continue;
+            if (!File.Exists(serverFile)) continue;
 
             var rows = ReadServerCsv(serverFile);
             allResults.AddRange(rows);

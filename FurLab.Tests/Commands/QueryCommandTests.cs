@@ -25,7 +25,7 @@ public class QueryCommandTests
         Directory.CreateDirectory(_testDirectory);
 
         _sqlInputFile = Path.Combine(_testDirectory, "test.sql");
-        System.IO.File.WriteAllText(_sqlInputFile, "SELECT * FROM users;");
+        File.WriteAllText(_sqlInputFile, "SELECT * FROM users;");
     }
 
     [TestCleanup]

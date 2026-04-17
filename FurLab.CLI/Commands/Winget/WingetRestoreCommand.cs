@@ -30,7 +30,7 @@ public sealed class WingetRestoreCommand : AsyncCommand<WingetRestoreCommand.Set
     {
         var inputFile = settings.Input ?? Path.Combine(Environment.CurrentDirectory, BackupFileName);
 
-        if (!System.IO.File.Exists(inputFile))
+        if (!File.Exists(inputFile))
         {
             Console.WriteLine($"Error: Backup file not found: {inputFile}");
             return Task.FromResult(2);

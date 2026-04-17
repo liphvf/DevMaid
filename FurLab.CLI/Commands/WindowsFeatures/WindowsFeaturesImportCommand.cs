@@ -26,13 +26,13 @@ public sealed class WindowsFeaturesImportCommand : AsyncCommand<WindowsFeaturesI
     /// <inheritdoc/>
     protected override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellation)
     {
-        if (!System.IO.File.Exists(settings.Path))
+        if (!File.Exists(settings.Path))
         {
             Console.WriteLine($"Error: File not found: {settings.Path}");
             return Task.FromResult(2);
         }
 
-        var json = System.IO.File.ReadAllText(settings.Path);
+        var json = File.ReadAllText(settings.Path);
         var exportData = JsonSerializer.Deserialize<WindowsFeaturesExport>(json);
 
         if (exportData?.Features == null || exportData.Features.Count == 0)

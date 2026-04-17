@@ -77,7 +77,7 @@ public sealed class FileCombineCommand : AsyncCommand<FileCombineCommand.Setting
         var allFileText = new StringBuilder();
         var currentEncoding = Encoding.UTF8;
 
-        var inputFilePaths = System.IO.Directory.GetFiles(fullDirectoryPath, pattern);
+        var inputFilePaths = Directory.GetFiles(fullDirectoryPath, pattern);
         Console.WriteLine("Number of files: {0}.", inputFilePaths.Length);
 
         if (inputFilePaths.Length == 0)
@@ -88,14 +88,14 @@ public sealed class FileCombineCommand : AsyncCommand<FileCombineCommand.Setting
 
         foreach (var inputFilePath in inputFilePaths)
         {
-            currentEncoding = FurLab.CLI.Utils.Utils.GetCurrentFileEncoding(inputFilePath);
-            allFileText.Append(System.IO.File.ReadAllText(inputFilePath, currentEncoding));
+            currentEncoding = Utils.Utils.GetCurrentFileEncoding(inputFilePath);
+            allFileText.Append(File.ReadAllText(inputFilePath, currentEncoding));
             allFileText.AppendLine();
 
             Console.WriteLine("The file {0} has been processed.", inputFilePath);
         }
 
-        System.IO.File.WriteAllText(fullOutputPath, allFileText.ToString(), currentEncoding);
+        File.WriteAllText(fullOutputPath, allFileText.ToString(), currentEncoding);
         return Task.FromResult(0);
     }
 }

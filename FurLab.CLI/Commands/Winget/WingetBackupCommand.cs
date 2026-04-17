@@ -62,7 +62,7 @@ public sealed class WingetBackupCommand : AsyncCommand<WingetBackupCommand.Setti
             Console.WriteLine($"Error: {error}");
         }
 
-        if (process.ExitCode == 0 && System.IO.File.Exists(backupPath))
+        if (process.ExitCode == 0 && File.Exists(backupPath))
         {
             Console.WriteLine($"\nBackup completed successfully!");
             Console.WriteLine($"File: {backupPath}");

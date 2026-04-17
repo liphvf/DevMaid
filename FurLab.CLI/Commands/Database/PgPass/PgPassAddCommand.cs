@@ -1,8 +1,7 @@
-using Spectre.Console;
-using Spectre.Console.Cli;
-
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
+using Spectre.Console;
+using Spectre.Console.Cli;
 
 namespace FurLab.CLI.Commands.Database.PgPass;
 

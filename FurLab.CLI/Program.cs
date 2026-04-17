@@ -103,7 +103,7 @@ internal class Program
             config.AddBranch("query", query =>
             {
                 query.SetDescription("Execute SQL queries and export results to CSV.");
-                query.AddCommand<Commands.Query.QueryRunCommand>("run");
+                query.AddCommand<QueryRunCommand>("run");
             });
 
             config.AddCommand<Commands.Clean.CleanCommand>("clean");

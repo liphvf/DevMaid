@@ -1,7 +1,6 @@
-using Spectre.Console.Cli;
-
 using FurLab.Core.Interfaces;
 using FurLab.Core.Services.Docker;
+using Spectre.Console.Cli;
 
 namespace FurLab.CLI.Commands.Docker;
 

@@ -233,13 +233,13 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunCommand.Settings>
             }
 
             var inputFullPath = Path.GetFullPath(settings.Input);
-            if (!System.IO.File.Exists(inputFullPath))
+            if (!File.Exists(inputFullPath))
             {
                 AnsiConsole.MarkupLine($"[red]Error:[/] SQL input file not found: {inputFullPath.EscapeMarkup()}");
                 return 1;
             }
 
-            sqlQuery = System.IO.File.ReadAllText(inputFullPath, Encoding.UTF8);
+            sqlQuery = File.ReadAllText(inputFullPath, Encoding.UTF8);
             querySource = inputFullPath;
         }
         else
@@ -737,12 +737,12 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunCommand.Settings>
         var consolidatedPath = Path.Combine(executionDirectory, $"consolidated_{timestamp}.csv");
         AnsiConsole.WriteLine();
 
-        if (System.IO.File.Exists(consolidatedPath))
+        if (File.Exists(consolidatedPath))
         {
             AnsiConsole.MarkupLine($"[green]✅ Consolidated →[/] {Markup.Escape(consolidatedPath)}");
         }
 
-        if (System.IO.File.Exists(errorFilePath))
+        if (File.Exists(errorFilePath))
         {
             AnsiConsole.MarkupLine($"[red]❌ Errors       →[/] {Markup.Escape(errorFilePath)}");
         }
