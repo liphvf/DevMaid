@@ -1,6 +1,5 @@
 
 using FurLab.Core.Interfaces;
-using FurLab.Core.Services;
 
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -9,9 +8,12 @@ namespace FurLab.Core.HealthChecks;
 /// <summary>
 /// Health check that verifies PostgreSQL binaries are available in the system.
 /// </summary>
-public class PostgresBinaryHealthCheck(IConfigurationService configurationService) : IHealthCheck
+public class PostgresBinaryHealthCheck(
+    IConfigurationService configurationService,
+    IPostgresBinaryLocator postgresBinaryLocator) : IHealthCheck
 {
     private readonly IConfigurationService _configurationService = configurationService;
+    private readonly IPostgresBinaryLocator _postgresBinaryLocator = postgresBinaryLocator;
 
     /// <summary>
     /// Checks the health of PostgreSQL binary availability.
@@ -22,9 +24,9 @@ public class PostgresBinaryHealthCheck(IConfigurationService configurationServic
     {
         await Task.CompletedTask;
 
-        var pgDumpPath = PostgresBinaryLocator.FindPgDump();
-        var pgRestorePath = PostgresBinaryLocator.FindPgRestore();
-        var psqlPath = PostgresBinaryLocator.FindPsql();
+        var pgDumpPath = _postgresBinaryLocator.FindPgDump();
+        var pgRestorePath = _postgresBinaryLocator.FindPgRestore();
+        var psqlPath = _postgresBinaryLocator.FindPsql();
 
         if (pgDumpPath == null || pgRestorePath == null || psqlPath == null)
         {

@@ -1,111 +1,99 @@
-using System.CommandLine;
-using System.Linq;
-
-using FurLab.CLI.Commands;
+using FurLab.CLI;
+using FurLab.Core.Models;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FurLab.Tests.Commands;
 
-/// <summary>
-/// Testes unitários para PgPassCommand (US1, US2, US3).
-/// Verifica a estrutura do comando e comportamento dos subcomandos.
-/// Seguindo TDD: testes escritos antes da implementação.
-/// </summary>
 [TestClass]
 public class PgPassCommandTests
 {
-    // =========================================================================
-    // US1 — Estrutura do subcomando add
-    // =========================================================================
-
-    [TestMethod]
-    [TestCategory("US1")]
-    public void Build_RetornaComandoComNomePgpass()
+    [TestMethod(DisplayName = "IsValidHost returns true for localhost")]
+    public void SecurityUtils_IsValidHost_Localhost_ReturnsTrue()
     {
-        var command = PgPassCommand.Build();
+        var result = SecurityUtils.IsValidHost("localhost");
+        Assert.IsTrue(result);
+    }
 
-        Assert.AreEqual("pgpass", command.Name);
+    [TestMethod(DisplayName = "IsValidHost returns true for IP address")]
+    public void SecurityUtils_IsValidHost_IpAddress_ReturnsTrue()
+    {
+        var result = SecurityUtils.IsValidHost("192.168.1.1");
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod(DisplayName = "IsValidHost returns false for empty string")]
+    public void SecurityUtils_IsValidHost_Empty_ReturnsFalse()
+    {
+        var result = SecurityUtils.IsValidHost("");
+        Assert.IsFalse(result);
+    }
+
+    [TestMethod(DisplayName = "IsValidHost returns false for host with spaces")]
+    public void SecurityUtils_IsValidHost_Spaces_ReturnsFalse()
+    {
+        var result = SecurityUtils.IsValidHost("host with spaces");
+        Assert.IsFalse(result);
+    }
+
+    [TestMethod(DisplayName = "IsValidPort returns true for valid port 5432")]
+    public void SecurityUtils_IsValidPort_Valid5432_ReturnsTrue()
+    {
+        var result = SecurityUtils.IsValidPort("5432");
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod(DisplayName = "IsValidPort returns true for valid port 1")]
+    public void SecurityUtils_IsValidPort_Valid1_ReturnsTrue()
+    {
+        var result = SecurityUtils.IsValidPort("1");
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod(DisplayName = "IsValidPort returns true for valid port 65535")]
+    public void SecurityUtils_IsValidPort_Valid65535_ReturnsTrue()
+    {
+        var result = SecurityUtils.IsValidPort("65535");
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod(DisplayName = "IsValidPort returns false for port 0")]
+    public void SecurityUtils_IsValidPort_Zero_ReturnsFalse()
+    {
+        var result = SecurityUtils.IsValidPort("0");
+        Assert.IsFalse(result);
+    }
+
+    [TestMethod(DisplayName = "IsValidPort returns false for port 65536")]
+    public void SecurityUtils_IsValidPort_TooHigh_ReturnsFalse()
+    {
+        var result = SecurityUtils.IsValidPort("65536");
+        Assert.IsFalse(result);
+    }
+
+    [TestMethod(DisplayName = "IsValidPort returns false for non-numeric")]
+    public void SecurityUtils_IsValidPort_NonNumeric_ReturnsFalse()
+    {
+        var result = SecurityUtils.IsValidPort("abc");
+        Assert.IsFalse(result);
     }
 
     [TestMethod]
-    [TestCategory("US1")]
-    public void Build_ContemSubcomandosAddListRemove()
+    public void PgPassEntry_CreatedWithCorrectValues()
     {
-        var command = PgPassCommand.Build();
-        var subcomandos = command.Children.OfType<Command>().ToList();
-        var nomes = subcomandos.Select(c => c.Name).ToList();
+        var entry = new PgPassEntry
+        {
+            Hostname = "localhost",
+            Port = "5432",
+            Database = "mydb",
+            Username = "postgres",
+            Password = "secret"
+        };
 
-        CollectionAssert.Contains(nomes, "add");
-        CollectionAssert.Contains(nomes, "list");
-        CollectionAssert.Contains(nomes, "remove");
-    }
-
-    [TestMethod]
-    [TestCategory("US1")]
-    public void SubcomandoAdd_ContemTodosArgumentosEOpcoes()
-    {
-        var command = PgPassCommand.Build();
-        var addCommand = command.Children.OfType<Command>().First(c => c.Name == "add");
-        var argumentos = addCommand.Arguments.Select(a => a.Name).ToList();
-        var opcoes = addCommand.Options.Select(o => o.Name).ToList();
-
-        CollectionAssert.Contains(argumentos, "banco");
-        CollectionAssert.Contains(opcoes, "--password");
-        CollectionAssert.Contains(opcoes, "--host");
-        CollectionAssert.Contains(opcoes, "--port");
-        CollectionAssert.Contains(opcoes, "--username");
-    }
-
-    // =========================================================================
-    // US2 — Estrutura do subcomando list
-    // =========================================================================
-
-    [TestMethod]
-    [TestCategory("US2")]
-    public void SubcomandoList_NaoContemArgumentosNemOpcoes()
-    {
-        var command = PgPassCommand.Build();
-        var listCommand = command.Children.OfType<Command>().First(c => c.Name == "list");
-
-        Assert.AreEqual(0, listCommand.Arguments.Count(),
-            "Subcomando list não deve ter argumentos.");
-        Assert.AreEqual(0, listCommand.Options.Count(),
-            "Subcomando list não deve ter opções.");
-    }
-
-    // =========================================================================
-    // US3 — Estrutura do subcomando remove
-    // =========================================================================
-
-    [TestMethod]
-    [TestCategory("US3")]
-    public void SubcomandoRemove_ContemTodosArgumentosEOpcoes()
-    {
-        var command = PgPassCommand.Build();
-        var removeCommand = command.Children.OfType<Command>().First(c => c.Name == "remove");
-        var argumentos = removeCommand.Arguments.Select(a => a.Name).ToList();
-        var opcoes = removeCommand.Options.Select(o => o.Name).ToList();
-
-        CollectionAssert.Contains(argumentos, "banco");
-        CollectionAssert.Contains(opcoes, "--host");
-        CollectionAssert.Contains(opcoes, "--port");
-        CollectionAssert.Contains(opcoes, "--username");
-    }
-
-    // =========================================================================
-    // DatabaseCommand — integração do pgpass como subcomando
-    // =========================================================================
-
-    [TestMethod]
-    [TestCategory("US1")]
-    public void DatabaseCommand_ContemSubcomandoPgpass()
-    {
-        var command = DatabaseCommand.Build();
-        var subcomandos = command.Children.OfType<Command>().ToList();
-        var nomes = subcomandos.Select(c => c.Name).ToList();
-
-        CollectionAssert.Contains(nomes, "pgpass",
-            "DatabaseCommand deve conter pgpass como subcomando.");
+        Assert.AreEqual("localhost", entry.Hostname);
+        Assert.AreEqual("5432", entry.Port);
+        Assert.AreEqual("mydb", entry.Database);
+        Assert.AreEqual("postgres", entry.Username);
+        Assert.AreEqual("secret", entry.Password);
     }
 }

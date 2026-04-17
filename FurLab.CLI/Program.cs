@@ -1,156 +1,140 @@
-using System.CommandLine;
-using System.Text.Json;
-
-using FurLab.CLI.Commands;
-using FurLab.CLI.Services;
+using FurLab.CLI.Infrastructure;
 using FurLab.Core.Services;
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+using Npgsql;
+
 using Spectre.Console;
+using Spectre.Console.Cli;
 
 namespace FurLab.CLI;
 
-internal static class Program
+internal class Program
 {
-    private static int Main(string[] args)
+    private static async Task<int> Main(string[] args)
     {
-        var host = Host.CreateDefaultBuilder(args)
-            .ConfigureServices((context, services) =>
+        var services = new ServiceCollection();
+        services.AddFurLabServices();
+
+        var registrar = new TypeRegistrar(services);
+        var app = new CommandApp(registrar);
+
+        app.Configure(config =>
+        {
+            config.SetApplicationName("fur");
+
+            config.SetExceptionHandler((ex, resolver) =>
             {
-                services.AddFurLabServices();
-            })
-            .ConfigureLogging((context, logging) =>
+                var logger = resolver?.Resolve(typeof(ILogger<Program>)) as ILogger<Program>;
+                logger?.LogError(ex, "Unhandled exception: {Message}", ex.Message);
+
+                AnsiConsole.WriteException(ex, ExceptionFormats.ShortenPaths);
+
+                return ex switch
+                {
+                    NpgsqlException { SqlState: not null } => 10,
+                    NpgsqlException => 11,
+                    DirectoryNotFoundException => 21,
+                    FileNotFoundException => 22,
+                    IOException => 20,
+                    UnauthorizedAccessException => 30,
+                    ArgumentException => 41,
+                    InvalidOperationException => 40,
+                    TimeoutException => 50,
+                    OperationCanceledException => 130,
+                    _ => 1
+                };
+            });
+
+            config.AddBranch("file", file =>
             {
-                logging.ClearProviders();
-                logging.AddConsole();
-                logging.SetMinimumLevel(LogLevel.Information);
-            })
-            .Build();
+                file.SetDescription("File utilities.");
+                file.AddCommand<Commands.FileUtils.FileCombineCommand>("combine");
+            });
 
-        using var scope = host.Services.CreateScope();
-        var serviceProvider = scope.ServiceProvider;
-
-        Services.Logging.Logger.SetServiceProvider(serviceProvider);
-        Services.ConfigurationService.SetServiceProvider(serviceProvider);
-        PostgresDatabaseLister.SetServiceProvider(serviceProvider);
-        Services.UserConfigService.SetServiceProvider(serviceProvider);
-        Services.CredentialService.SetServiceProvider(serviceProvider);
-
-        AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
-        {
-            var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("FurLab");
-            var exception = eventArgs.ExceptionObject as Exception;
-            logger.LogCritical(exception, "Unhandled exception occurred. Application will terminate.");
-            Environment.Exit(1);
-        };
-
-        TaskScheduler.UnobservedTaskException += (sender, eventArgs) =>
-        {
-            var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("FurLab");
-            logger.LogError(eventArgs.Exception, "Unobserved task exception occurred.");
-            eventArgs.SetObserved();
-        };
-
-        var rootCommand = new RootCommand("FurLab command line tools")
-        {
-            FileCommand.Build(),
-            ClaudeCodeCommand.Build(),
-            OpenCodeCommand.Build(),
-            WingetCommand.Build(),
-            DatabaseCommand.Build(),
-            QueryCommand.Build(),
-            CleanCommand.Build(),
-            WindowsFeaturesCommand.Build(),
-            DockerCommand.Build(),
-            SettingsCommand.Build()
-        };
-
-        try
-        {
-            // Disable the default exception handler so that exceptions thrown inside
-            // command handlers propagate here instead of being swallowed by
-            // System.CommandLine and printed as unformatted stack traces.
-            var invocationConfig = new InvocationConfiguration
+            config.AddBranch("claude", claude =>
             {
-                EnableDefaultExceptionHandler = false
-            };
+                claude.SetDescription("Comandos para Claude Code");
+                claude.AddCommand<Commands.Claude.ClaudeInstallCommand>("install");
+                claude.AddBranch("settings", settings =>
+                {
+                    settings.SetDescription("Configuracoes do Claude Code");
+                    settings.AddCommand<Commands.Claude.Settings.ClaudeMcpDatabaseCommand>("mcp-database");
+                    settings.AddCommand<Commands.Claude.Settings.ClaudeWinEnvCommand>("win-env");
+                });
+            });
 
-            return rootCommand.Parse(args).Invoke(invocationConfig);
-        }
-        catch (OperationCanceledException ex)
-        {
-            AnsiConsole.MarkupLine($"[yellow]Operation cancelled: {Markup.Escape(ex.Message)}[/]");
-            return 130; // standard "cancelled by user" exit code
-        }
-        catch (ArgumentException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Error: {Markup.Escape(ex.Message)}[/]");
-            return 2; // misuse of command
-        }
-        catch (FileNotFoundException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]File not found: {Markup.Escape(ex.Message)}[/]");
-            return 2;
-        }
-        catch (DirectoryNotFoundException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Directory not found: {Markup.Escape(ex.Message)}[/]");
-            return 2;
-        }
-        catch (PlatformNotSupportedException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Not supported on this platform: {Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
-        catch (JsonException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Invalid JSON: {Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
-        catch (InvalidDataException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Invalid data: {Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
-        catch (PostgresBinaryNotFoundException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]{Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
-        catch (BackupFailedException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Backup failed: {Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
-        catch (RestoreFailedException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Restore failed: {Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
-        catch (PathTraversalException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Security error: {Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
-        catch (FurLabFileNotFoundException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]File not found: {Markup.Escape(ex.Message)}[/]");
-            return 2;
-        }
-        catch (InvalidOperationException ex)
-        {
-            AnsiConsole.MarkupLine($"[red]Error: {Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
-        catch (Exception ex)
-        {
-            var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("FurLab");
-            logger.LogCritical(ex, "An unexpected error occurred: {Message}", ex.Message);
-            AnsiConsole.MarkupLine($"[red]Unexpected error: {Markup.Escape(ex.Message)}[/]");
-            return 1;
-        }
+            config.AddBranch("opencode", opencode =>
+            {
+                opencode.SetDescription("Comandos para OpenCode");
+                opencode.AddBranch("settings", settings =>
+                {
+                    settings.SetDescription("Configuracoes do OpenCode");
+                    settings.AddCommand<Commands.OpenCode.Settings.OpenCodeMcpDatabaseCommand>("mcp-database");
+                    settings.AddCommand<Commands.OpenCode.Settings.OpenCodeDefaultModelCommand>("default-model");
+                });
+            });
+
+            config.AddBranch("winget", winget =>
+            {
+                winget.SetDescription("Manage winget packages.");
+                winget.AddCommand<Commands.Winget.WingetBackupCommand>("backup");
+                winget.AddCommand<Commands.Winget.WingetRestoreCommand>("restore");
+            });
+
+            config.AddBranch("database", db =>
+            {
+                db.SetDescription("Database utilities.");
+                db.AddCommand<Commands.Database.DatabaseBackupCommand>("backup");
+                db.AddCommand<Commands.Database.DatabaseRestoreCommand>("restore");
+                db.AddBranch("pgpass", pgpass =>
+                {
+                    pgpass.SetDescription("Gerencia o arquivo pgpass.conf");
+                    pgpass.AddCommand<Commands.Database.PgPass.PgPassAddCommand>("add");
+                    pgpass.AddCommand<Commands.Database.PgPass.PgPassListCommand>("list");
+                    pgpass.AddCommand<Commands.Database.PgPass.PgPassRemoveCommand>("remove");
+                });
+            });
+
+            config.AddBranch("query", query =>
+            {
+                query.SetDescription("Execute SQL queries and export results to CSV.");
+                query.AddCommand<Commands.Query.QueryRunCommand>("run");
+            });
+
+            config.AddCommand<Commands.Clean.CleanCommand>("clean");
+
+            config.AddBranch("windowsfeatures", wf =>
+            {
+                wf.SetDescription("Export and import Windows optional features.");
+                wf.AddCommand<Commands.WindowsFeatures.WindowsFeaturesExportCommand>("export");
+                wf.AddCommand<Commands.WindowsFeatures.WindowsFeaturesImportCommand>("import");
+                wf.AddCommand<Commands.WindowsFeatures.WindowsFeaturesListCommand>("list");
+            });
+
+            config.AddBranch("docker", docker =>
+            {
+                docker.SetDescription("Docker utilities.");
+                docker.AddCommand<Commands.Docker.DockerPostgresCommand>("postgres");
+            });
+
+            config.AddBranch("settings", settings =>
+            {
+                settings.SetDescription("Manage FurLab settings and server configurations.");
+                settings.AddBranch("db-servers", dbs =>
+                {
+                    dbs.SetDescription("Manage configured database servers.");
+                    dbs.AddCommand<Commands.Settings.DbServers.DbServersListCommand>("ls");
+                    dbs.AddCommand<Commands.Settings.DbServers.DbServersAddCommand>("add");
+                    dbs.AddCommand<Commands.Settings.DbServers.DbServersRemoveCommand>("rm");
+                    dbs.AddCommand<Commands.Settings.DbServers.DbServersTestCommand>("test");
+                    dbs.AddCommand<Commands.Settings.DbServers.DbServersSetPasswordCommand>("set-password");
+                });
+            });
+        });
+
+        return await app.RunAsync(args);
     }
 }

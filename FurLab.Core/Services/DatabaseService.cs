@@ -12,10 +12,12 @@ namespace FurLab.Core.Services;
 /// </remarks>
 /// <param name="processExecutor">The process executor instance.</param>
 /// <param name="logger">The logger instance.</param>
-public class DatabaseService(IProcessExecutor processExecutor, ILogger logger) : IDatabaseService
+/// <param name="postgresBinaryLocator">The PostgreSQL binary locator instance.</param>
+public class DatabaseService(IProcessExecutor processExecutor, ILogger logger, IPostgresBinaryLocator postgresBinaryLocator) : IDatabaseService
 {
     private readonly IProcessExecutor _processExecutor = processExecutor ?? throw new ArgumentNullException(nameof(processExecutor));
     private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IPostgresBinaryLocator _postgresBinaryLocator = postgresBinaryLocator ?? throw new ArgumentNullException(nameof(postgresBinaryLocator));
 
     /// <summary>
     /// Lists all databases on the PostgreSQL server.
@@ -29,7 +31,7 @@ public class DatabaseService(IProcessExecutor processExecutor, ILogger logger) :
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var psqlPath = PostgresBinaryLocator.FindPsql() ?? throw new InvalidOperationException("psql executable not found. Please ensure PostgreSQL is installed.");
+        var psqlPath = _postgresBinaryLocator.FindPsql() ?? throw new InvalidOperationException("psql executable not found. Please ensure PostgreSQL is installed.");
         var arguments = $"-h \"{options.Host}\" -p {options.Port} -U \"{options.Username}\" -d postgres -c \"SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;\"";
         var environmentVariables = new Dictionary<string, string>
         {

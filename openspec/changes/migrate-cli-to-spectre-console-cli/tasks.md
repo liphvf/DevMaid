@@ -1,15 +1,15 @@
 ## 1. Preparação do Core — Novos Serviços e Interfaces
 
-- [ ] 1.1 Criar interface `IPostgresBinaryLocator` em `FurLab.Core/Services/` com métodos `FindPgDump()`, `FindPgRestore()`, `FindPsql()`
-- [ ] 1.2 Modificar `PostgresBinaryLocator` para implementar `IPostgresBinaryLocator` (manter lógica existente, apenas adicionar interface)
-- [ ] 1.3 Criar interface `IPostgresPasswordHandler` em `FurLab.Core/Services/` com método `ReadPasswordInteractively(string prompt)`
-- [ ] 1.4 Mover `PostgresPasswordHandler.cs` de `FurLab.CLI/Services/` para `FurLab.Core/Services/` e fazer implementar `IPostgresPasswordHandler`
-- [ ] 1.5 Criar interface `IDockerService` em `FurLab.Core/Services/Docker/` com métodos `GetDockerStatusAsync()` e `EnsurePostgresContainerAsync(...)`
-- [ ] 1.6 Mover `DockerService.cs` de `FurLab.CLI/Services/` para `FurLab.Core/Services/Docker/` e fazer implementar `IDockerService`
-- [ ] 1.7 Mover `DockerConstants.cs` de `FurLab.CLI/Services/` para `FurLab.Core/Services/Docker/`
-- [ ] 1.8 Registrar `IPostgresBinaryLocator`, `IPostgresPasswordHandler` e `IDockerService` como Singleton em `ServiceCollectionExtensions.AddFurLabServices()`
-- [ ] 1.9 Atualizar `PostgresBinaryHealthCheck` para receber `IPostgresBinaryLocator` por construtor em vez de chamar a classe estática diretamente
-- [ ] 1.10 Verificar que o projeto `FurLab.Core` compila sem erros após as mudanças
+- [x] 1.1 Criar interface `IPostgresBinaryLocator` em `FurLab.Core/Services/` com métodos `FindPgDump()`, `FindPgRestore()`, `FindPsql()`
+- [x] 1.2 Modificar `PostgresBinaryLocator` para implementar `IPostgresBinaryLocator` (manter lógica existente, apenas adicionar interface)
+- [x] 1.3 Criar interface `IPostgresPasswordHandler` em `FurLab.Core/Services/` com método `ReadPasswordInteractively(string prompt)`
+- [x] 1.4 Mover `PostgresPasswordHandler.cs` de `FurLab.CLI/Services/` para `FurLab.Core/Services/` e fazer implementar `IPostgresPasswordHandler`
+- [x] 1.5 Criar interface `IDockerService` em `FurLab.Core/Services/Docker/` com métodos `GetDockerStatusAsync()` e `EnsurePostgresContainerAsync(...)`
+- [x] 1.6 Mover `DockerService.cs` de `FurLab.CLI/Services/` para `FurLab.Core/Services/Docker/` e fazer implementar `IDockerService`
+- [x] 1.7 Mover `DockerConstants.cs` de `FurLab.CLI/Services/` para `FurLab.Core/Services/Docker/`
+- [x] 1.8 Registrar `IPostgresBinaryLocator`, `IPostgresPasswordHandler` e `IDockerService` como Singleton em `ServiceCollectionExtensions.AddFurLabServices()`
+- [x] 1.9 Atualizar `PostgresBinaryHealthCheck` para receber `IPostgresBinaryLocator` por construtor em vez de chamar a classe estática diretamente
+- [x] 1.10 Verificar que o projeto `FurLab.Core` compila sem erros após as mudanças
 
 ## 2. Infraestrutura CLI — Spectre.Console.Cli e TypeRegistrar
 

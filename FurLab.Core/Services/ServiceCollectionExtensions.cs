@@ -59,6 +59,10 @@ public static class ServiceCollectionExtensions
 
         _ = services.AddSingleton<ICredentialService, CredentialService>();
 
+        _ = services.AddSingleton<IPostgresBinaryLocator, PostgresBinaryLocator>();
+        _ = services.AddSingleton<IPostgresPasswordHandler, PostgresPasswordHandler>();
+        _ = services.AddSingleton<IDockerService, Services.Docker.DockerService>();
+
         return services;
     }
 
