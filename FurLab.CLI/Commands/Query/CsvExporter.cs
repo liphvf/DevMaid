@@ -193,7 +193,7 @@ public class CsvExporter
         return allColumnNames;
     }
 
-    private static readonly char[] s_windowsInvalidFileNameChars =
+    private static readonly char[] WindowsInvalidFileNameChars =
         ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '\0'];
 
     /// <summary>
@@ -206,7 +206,7 @@ public class CsvExporter
         var sb = new StringBuilder(name.Length);
         foreach (var c in name)
         {
-            sb.Append(s_windowsInvalidFileNameChars.Contains(c) ? '_' : c);
+            sb.Append(WindowsInvalidFileNameChars.Contains(c) ? '_' : c);
         }
         return sb.ToString();
     }
