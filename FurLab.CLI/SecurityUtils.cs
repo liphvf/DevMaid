@@ -141,7 +141,7 @@ public static partial class SecurityUtils
             return false;
         }
 
-        // Curinga pgpass: aceito como porta válida (compatível com pgpass.conf nativo)
+        // pgpass wildcard: accepted as a valid port (compatible with native pgpass.conf)
         if (port == "*")
         {
             return true;
@@ -162,7 +162,7 @@ public static partial class SecurityUtils
             return false;
         }
 
-        // Curinga pgpass: aceito como hostname válido (compatível com pgpass.conf nativo)
+        // pgpass wildcard: accepted as a valid hostname (compatible with native pgpass.conf)
         if (host == "*")
         {
             return true;
@@ -198,7 +198,7 @@ public static partial class SecurityUtils
             return false;
         }
 
-        // Curinga pgpass: aceito como usuário válido (compatível com pgpass.conf nativo)
+        // pgpass wildcard: accepted as a valid username (compatible with native pgpass.conf)
         if (username == "*")
         {
             return true;

@@ -1,28 +1,28 @@
 namespace FurLab.Core.Models;
 
 /// <summary>
-/// Representa uma única linha no arquivo pgpass.conf.
+/// Represents a single line in the pgpass.conf file.
 /// </summary>
 public record PgPassEntry
 {
-    /// <summary>Hostname ou endereço IP do servidor PostgreSQL. Padrão: "localhost". Aceita "*" como curinga.</summary>
+    /// <summary>Hostname or IP address of the PostgreSQL server. Default: "localhost". Accepts "*" as a wildcard.</summary>
     public string Hostname { get; init; } = "localhost";
 
-    /// <summary>Porta TCP do servidor PostgreSQL. Padrão: "5432". Aceita "*" como curinga.</summary>
+    /// <summary>TCP port of the PostgreSQL server. Default: "5432". Accepts "*" as a wildcard.</summary>
     public string Port { get; init; } = "5432";
 
-    /// <summary>Nome do banco de dados. Padrão: "*" (curinga). Não pode ser vazio se fornecido explicitamente.</summary>
+    /// <summary>Database name. Default: "*" (wildcard). Cannot be empty if provided explicitly.</summary>
     public string Database { get; init; } = "*";
 
-    /// <summary>Nome de usuário PostgreSQL. Padrão: "postgres". Aceita "*" como curinga.</summary>
+    /// <summary>PostgreSQL username. Default: "postgres". Accepts "*" as a wildcard.</summary>
     public string Username { get; init; } = "postgres";
 
-    /// <summary>Senha PostgreSQL. Nunca vazio. Nunca curinga. Armazenado sem escape (escape aplicado na serialização).</summary>
+    /// <summary>PostgreSQL password. Never empty. Never a wildcard. Stored without escaping (escaping applied during serialization).</summary>
     public string Password { get; init; } = string.Empty;
 
     /// <summary>
-    /// Chave de identidade para detecção de duplicatas.
-    /// Dois registros com a mesma chave são considerados duplicatas, independente da senha.
+    /// Identity key for duplicate detection.
+    /// Two records with the same key are considered duplicates, regardless of the password.
     /// </summary>
     public (string Hostname, string Port, string Database, string Username) IdentityKey
         => (Hostname, Port, Database, Username);

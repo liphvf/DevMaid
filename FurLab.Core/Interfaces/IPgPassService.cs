@@ -3,35 +3,35 @@ using FurLab.Core.Models;
 namespace FurLab.Core.Interfaces;
 
 /// <summary>
-/// Contrato do serviço de gerenciamento do arquivo pgpass.conf.
+/// Contract for the pgpass.conf file management service.
 /// </summary>
 public interface IPgPassService
 {
     /// <summary>
-    /// Adiciona uma nova entrada ao pgpass.conf.
-    /// Cria o diretório e o arquivo se necessário.
-    /// Detecta duplicatas e retorna <see cref="PgPassResult.Duplicate"/> sem modificar o arquivo.
+    /// Adds a new entry to pgpass.conf.
+    /// Creates the directory and file if necessary.
+    /// Detects duplicates and returns <see cref="PgPassResult.Duplicate"/> without modifying the file.
     /// </summary>
-    /// <param name="entry">Entrada a adicionar. Senha nunca pode ser vazia.</param>
-    /// <param name="filePath">Caminho completo do pgpass.conf. Se nulo, usa o caminho padrão do Windows.</param>
-    /// <returns>Resultado da operação.</returns>
+    /// <param name="entry">Entry to add. Password can never be empty.</param>
+    /// <param name="filePath">Full path to pgpass.conf. If null, uses the default Windows path.</param>
+    /// <returns>Operation result.</returns>
     PgPassResult AddEntry(PgPassEntry entry, string? filePath = null);
 
     /// <summary>
-    /// Lista todas as entradas do pgpass.conf.
-    /// Retorna enumerável vazio se o arquivo não existir ou estiver vazio.
-    /// Linhas de comentário (iniciadas por '#') são ignoradas.
+    /// Lists all entries from pgpass.conf.
+    /// Returns an empty enumerable if the file does not exist or is empty.
+    /// Comment lines (starting with '#') are ignored.
     /// </summary>
-    /// <param name="filePath">Caminho completo do pgpass.conf. Se nulo, usa o caminho padrão do Windows.</param>
-    /// <returns>Enumerável de entradas parseadas.</returns>
+    /// <param name="filePath">Full path to pgpass.conf. If null, uses the default Windows path.</param>
+    /// <returns>Enumerable of parsed entries.</returns>
     IEnumerable<PgPassEntry> ListEntries(string? filePath = null);
 
     /// <summary>
-    /// Remove a entrada identificada pela chave (Hostname, Port, Database, Username).
-    /// Se a entrada não for encontrada, retorna resultado informativo sem modificar o arquivo.
+    /// Removes the entry identified by the key (Hostname, Port, Database, Username).
+    /// If the entry is not found, returns an informative result without modifying the file.
     /// </summary>
-    /// <param name="key">Entrada contendo a chave de identidade para localizar e remover.</param>
-    /// <param name="filePath">Caminho completo do pgpass.conf. Se nulo, usa o caminho padrão do Windows.</param>
-    /// <returns>Resultado da operação.</returns>
+    /// <param name="key">Entry containing the identity key to locate and remove.</param>
+    /// <param name="filePath">Full path to pgpass.conf. If null, uses the default Windows path.</param>
+    /// <returns>Operation result.</returns>
     PgPassResult RemoveEntry(PgPassEntry key, string? filePath = null);
 }

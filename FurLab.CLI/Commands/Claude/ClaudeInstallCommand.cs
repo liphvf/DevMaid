@@ -24,7 +24,7 @@ public sealed class ClaudeInstallCommand : AsyncCommand<ClaudeInstallCommand.Set
     {
         if (!OperatingSystem.IsWindows())
         {
-            throw new PlatformNotSupportedException("O comando 'claude install' so eh suportado no Windows por usar winget.");
+            throw new PlatformNotSupportedException("The 'claude install' command is only supported on Windows because it uses winget.");
         }
 
         var result = RunProcess("winget", WingetInstallArguments);

@@ -60,7 +60,7 @@ public sealed class PgPassRemoveCommand : AsyncCommand<PgPassRemoveCommand.Setti
     {
         if (string.IsNullOrWhiteSpace(settings.Database))
         {
-            AnsiConsole.MarkupLine("[red]Erro: o argumento <database> é obrigatório.[/]");
+            AnsiConsole.MarkupLine("[red]Error: the <database> argument is required.[/]");
             return Task.FromResult(2);
         }
 
@@ -80,7 +80,7 @@ public sealed class PgPassRemoveCommand : AsyncCommand<PgPassRemoveCommand.Setti
             AnsiConsole.MarkupLine($"[green]{result.Message}[/]");
             return Task.FromResult(0);
         }
-        else if (result.Message.StartsWith("Entrada não encontrada"))
+        else if (result.Message.StartsWith("Entry not found"))
         {
             AnsiConsole.MarkupLine($"[yellow]{result.Message}[/]");
             return Task.FromResult(0);

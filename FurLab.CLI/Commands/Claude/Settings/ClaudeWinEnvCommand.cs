@@ -23,7 +23,7 @@ public sealed class ClaudeWinEnvCommand : AsyncCommand<ClaudeWinEnvCommand.Setti
     {
         if (!OperatingSystem.IsWindows())
         {
-            throw new PlatformNotSupportedException("O comando 'claude settings win-env' so eh suportado no Windows.");
+            throw new PlatformNotSupportedException("The 'claude settings win-env' command is only supported on Windows.");
         }
 
         var configPath = GetUserClaudeConfigPath();
@@ -59,7 +59,7 @@ Environment:
 - ""nul"" is a Windows device name and must never be used as a filename.";
 
         File.WriteAllText(claudeMdPath, claudeMdContent);
-        Console.WriteLine($"Arquivo CLAUDE.md criado: {claudeMdPath}");
+        Console.WriteLine($"CLAUDE.md file created: {claudeMdPath}");
 
         return Task.FromResult(0);
     }

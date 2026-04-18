@@ -34,7 +34,7 @@ public sealed class PgPassListCommand : AsyncCommand<PgPassListCommand.Settings>
 
         if (entries.Count == 0)
         {
-            AnsiConsole.WriteLine("Nenhuma entrada configurada em pgpass.conf.");
+            AnsiConsole.WriteLine("No entries configured in pgpass.conf.");
             return Task.FromResult(0);
         }
 
@@ -42,10 +42,10 @@ public sealed class PgPassListCommand : AsyncCommand<PgPassListCommand.Settings>
             .Border(TableBorder.Square)
             .Title("[bold]pgpass.conf[/]")
             .AddColumn(new TableColumn("[bold]HOSTNAME[/]"))
-            .AddColumn(new TableColumn("[bold]PORTA[/]"))
-            .AddColumn(new TableColumn("[bold]BANCO[/]"))
-            .AddColumn(new TableColumn("[bold]USUÁRIO[/]"))
-            .AddColumn(new TableColumn("[bold]SENHA[/]"));
+            .AddColumn(new TableColumn("[bold]PORT[/]"))
+            .AddColumn(new TableColumn("[bold]DATABASE[/]"))
+            .AddColumn(new TableColumn("[bold]USERNAME[/]"))
+            .AddColumn(new TableColumn("[bold]PASSWORD[/]"));
 
         foreach (var entry in entries)
         {

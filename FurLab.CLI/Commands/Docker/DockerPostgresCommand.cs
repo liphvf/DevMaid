@@ -34,13 +34,13 @@ public sealed class DockerPostgresCommand : AsyncCommand<DockerPostgresCommand.S
 
         if (dockerStatus == DockerStatus.NotInstalled)
         {
-            Console.WriteLine("Error: Docker não encontrado. Instale o Docker Desktop: https://www.docker.com/products/docker-desktop");
+            Console.WriteLine("Error: Docker not found. Install Docker Desktop: https://www.docker.com/products/docker-desktop");
             return Task.FromResult(1);
         }
 
         if (dockerStatus == DockerStatus.NotRunning)
         {
-            Console.WriteLine("Error: Docker está instalado mas não está em execução. Inicie o Docker Desktop e tente novamente.");
+            Console.WriteLine("Error: Docker is installed but not running. Start Docker Desktop and try again.");
             return Task.FromResult(1);
         }
 
@@ -49,16 +49,16 @@ public sealed class DockerPostgresCommand : AsyncCommand<DockerPostgresCommand.S
 
         if (exists)
         {
-            Console.WriteLine($"Container '{containerName}' já existe (Status: {status ?? ""}). Iniciando...");
+            Console.WriteLine($"Container '{containerName}' already exists (Status: {status ?? ""}). Starting...");
             _dockerService.StartContainer(containerName);
             DisplayConnectionInfo();
         }
         else
         {
-            Console.WriteLine("Criando container PostgreSQL...");
+            Console.WriteLine("Creating PostgreSQL container...");
             var containerId = _dockerService.CreatePostgresContainer();
-            Console.WriteLine("Container criado com sucesso!");
-            Console.WriteLine($"ID do container: {containerId ?? "unknown"}");
+            Console.WriteLine("Container created successfully!");
+            Console.WriteLine($"Container ID: {containerId ?? "unknown"}");
             DisplayConnectionInfo();
         }
 
@@ -69,13 +69,13 @@ public sealed class DockerPostgresCommand : AsyncCommand<DockerPostgresCommand.S
     {
         Console.WriteLine();
         Console.WriteLine("========================================");
-        Console.WriteLine("PostgreSQL está pronto!");
+        Console.WriteLine("PostgreSQL is ready!");
         Console.WriteLine("========================================");
         Console.WriteLine();
-        Console.WriteLine("String de conexão:");
+        Console.WriteLine("Connection string:");
         Console.WriteLine($"  Host=localhost;Port={DockerConstants.PostgresPort};Database={DockerConstants.PostgresDatabase};Username={DockerConstants.PostgresUsername};Password={DockerConstants.PostgresPassword}");
         Console.WriteLine();
-        Console.WriteLine("Ou via psql:");
+        Console.WriteLine("Or via psql:");
         Console.WriteLine($"  psql -h localhost -p {DockerConstants.PostgresPort} -U {DockerConstants.PostgresUsername} -d {DockerConstants.PostgresDatabase}");
         Console.WriteLine();
     }

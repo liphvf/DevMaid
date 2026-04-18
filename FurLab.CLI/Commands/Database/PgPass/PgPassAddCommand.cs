@@ -70,21 +70,21 @@ public sealed class PgPassAddCommand : AsyncCommand<PgPassAddCommand.Settings>
     {
         if (string.IsNullOrWhiteSpace(settings.Database))
         {
-            AnsiConsole.MarkupLine("[red]Erro: o argumento --database é obrigatório.[/]");
+            AnsiConsole.MarkupLine("[red]Error: the --database argument is required.[/]");
             return Task.FromResult(2);
         }
 
         var host = settings.Host ?? "localhost";
         if (!SecurityUtils.IsValidHost(host))
         {
-            AnsiConsole.MarkupLine($"[red]Erro: formato de host inválido: \"{host}\".[/]");
+            AnsiConsole.MarkupLine($"[red]Error: invalid host format: \"{host}\".[/]");
             return Task.FromResult(2);
         }
 
         var port = settings.Port ?? "5432";
         if (!SecurityUtils.IsValidPort(port))
         {
-            AnsiConsole.MarkupLine("[red]Erro: porta deve ser um número entre 1 e 65535.[/]");
+            AnsiConsole.MarkupLine("[red]Error: port must be a number between 1 and 65535.[/]");
             return Task.FromResult(2);
         }
 
@@ -93,12 +93,12 @@ public sealed class PgPassAddCommand : AsyncCommand<PgPassAddCommand.Settings>
         var password = settings.Password;
         if (string.IsNullOrEmpty(password))
         {
-            password = _passwordHandler.ReadPasswordInteractively("Senha: ");
+            password = _passwordHandler.ReadPasswordInteractively("Password: ");
         }
 
         if (string.IsNullOrEmpty(password))
         {
-            AnsiConsole.MarkupLine("[red]Erro: a senha não pode ser vazia.[/]");
+            AnsiConsole.MarkupLine("[red]Error: password cannot be empty.[/]");
             return Task.FromResult(2);
         }
 

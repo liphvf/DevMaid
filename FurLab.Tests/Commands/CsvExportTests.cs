@@ -57,7 +57,7 @@ public class CsvExportTests
         ];
     }
 
-    [TestMethod(DisplayName = "CSV consolidado tem cabeçalho Server, Database, <query cols>")]
+    [TestMethod(DisplayName = "Consolidated CSV has Server, Database, <query cols> header")]
     public void ConsolidatedCsv_HasCorrectHeader()
     {
         var results = CreateSuccessResults();
@@ -69,7 +69,7 @@ public class CsvExportTests
         Assert.AreEqual("Server,Database,id,name", lines[0]);
     }
 
-    [TestMethod(DisplayName = "CSV consolidado tem uma linha por resultado de query com Server e Database")]
+    [TestMethod(DisplayName = "Consolidated CSV has one row per query result with Server and Database")]
     public void ConsolidatedCsv_HasDataRowsWithServerAndDatabase()
     {
         var results = CreateSuccessResults();
@@ -84,7 +84,7 @@ public class CsvExportTests
         Assert.IsTrue(lines[3].StartsWith("dev2,db1,"));
     }
 
-    [TestMethod(DisplayName = "CSV consolidado não inclui colunas de metadados de execução")]
+    [TestMethod(DisplayName = "Consolidated CSV does not include execution metadata columns")]
     public void ConsolidatedCsv_DoesNotIncludeExecutionMetadata()
     {
         var results = CreateSuccessResults();
@@ -99,7 +99,7 @@ public class CsvExportTests
         Assert.IsFalse(header.Contains("Error"));
     }
 
-    [TestMethod(DisplayName = "BuildColumnList retorna colunas em ordem de primeira aparição")]
+    [TestMethod(DisplayName = "BuildColumnList returns columns in first appearance order")]
     public void BuildColumnList_ReturnsColumnsInFirstAppearanceOrder()
     {
         var results = new List<CsvRow>
@@ -113,7 +113,7 @@ public class CsvExportTests
         CollectionAssert.AreEqual(new[] { "b", "a", "c" }, columns);
     }
 
-    [TestMethod(DisplayName = "BuildColumnList deduplica colunas entre result sets")]
+    [TestMethod(DisplayName = "BuildColumnList deduplicates columns across result sets")]
     public void BuildColumnList_DeduplicatesColumns()
     {
         var results = new List<CsvRow>
@@ -127,7 +127,7 @@ public class CsvExportTests
         CollectionAssert.AreEqual(new[] { "id", "name", "email" }, columns);
     }
 
-    [TestMethod(DisplayName = "CSV consolidado preenche coluna ausente com string vazia")]
+    [TestMethod(DisplayName = "Consolidated CSV fills missing column with empty string")]
     public void ConsolidatedCsv_MissingColumnFilledWithEmpty()
     {
         var results = new List<CsvRow>
@@ -148,7 +148,7 @@ public class CsvExportTests
         Assert.IsTrue(lastDataLine.EndsWith(","), $"Expected trailing comma for empty name column but got: {lastDataLine}");
     }
 
-    [TestMethod(DisplayName = "AppendToServerCsv cria arquivo com header na primeira escrita")]
+    [TestMethod(DisplayName = "AppendToServerCsv creates file with header on first write")]
     public void AppendToServerCsv_FirstWrite_CreatesHeaderAndData()
     {
         var row = CreateSuccessRow("prod", "db1", ["id", "name"],
@@ -165,7 +165,7 @@ public class CsvExportTests
         Assert.IsTrue(lines[1].StartsWith("prod,db1,"));
     }
 
-    [TestMethod(DisplayName = "AppendToServerCsv faz append sem reescrever header")]
+    [TestMethod(DisplayName = "AppendToServerCsv appends without rewriting header")]
     public void AppendToServerCsv_SubsequentWrite_AppendsWithoutHeader()
     {
         var row1 = CreateSuccessRow("prod", "db1", ["id", "name"],
@@ -188,7 +188,7 @@ public class CsvExportTests
         Assert.IsTrue(lines[2].StartsWith("prod,db2,"));
     }
 
-    [TestMethod(DisplayName = "AppendToServerCsv com colunas diferentes gera header inconsistente (aceitável)")]
+    [TestMethod(DisplayName = "AppendToServerCsv with different columns results in inconsistent header (acceptable)")]
     public void AppendToServerCsv_DifferentColumns_HeaderInconsistent()
     {
         var row1 = CreateSuccessRow("prod", "db1", ["id", "name"],
@@ -211,7 +211,7 @@ public class CsvExportTests
         Assert.IsTrue(lines[2].Contains("bob@test.com"));
     }
 
-    [TestMethod(DisplayName = "WriteErrorEntry cria arquivo de erros com header e append")]
+    [TestMethod(DisplayName = "WriteErrorEntry creates error file with header and appends")]
     public void WriteErrorEntry_CreatesAndAppendsErrors()
     {
         var outputPath = IO.Combine(_testDirectory, "errors.csv");
@@ -227,7 +227,7 @@ public class CsvExportTests
         Assert.IsTrue(lines[2].Contains("timeout"));
     }
 
-    [TestMethod(DisplayName = "WriteLogEntry cria log de execução com header e append")]
+    [TestMethod(DisplayName = "WriteLogEntry creates execution log with header and appends")]
     public void WriteLogEntry_CreatesAndAppendsLog()
     {
         var outputPath = IO.Combine(_testDirectory, "log.csv");
@@ -244,7 +244,7 @@ public class CsvExportTests
         Assert.IsTrue(lines[2].Contains("timeout"));
     }
 
-    [TestMethod(DisplayName = "SanitizeFilename substitui caracteres inválidos por underscore")]
+    [TestMethod(DisplayName = "SanitizeFilename replaces invalid characters with underscores")]
     public void SanitizeFilename_ReplacesInvalidChars()
     {
         var result = _exporter.SanitizeFilename("my/server:db*test");
@@ -254,14 +254,14 @@ public class CsvExportTests
         Assert.IsTrue(result.Contains("_"));
     }
 
-    [TestMethod(DisplayName = "SanitizeFilename mantém nome válido inalterado")]
+    [TestMethod(DisplayName = "SanitizeFilename keeps valid name unchanged")]
     public void SanitizeFilename_ValidName_Unchanged()
     {
         var result = _exporter.SanitizeFilename("prod-pg-01");
         Assert.AreEqual("prod-pg-01", result);
     }
 
-    [TestMethod(DisplayName = "MergeServerCsvsToConsolidated gera CSV consolidado com header unificado")]
+    [TestMethod(DisplayName = "MergeServerCsvsToConsolidated generates consolidated CSV with unified header")]
     public void MergeServerCsvs_GeneratesConsolidatedWithUnifiedHeader()
     {
         var timestamp = "2026-04-13_143022";
@@ -290,7 +290,7 @@ public class CsvExportTests
         Assert.AreEqual("Server,Database,id,name,email", lines[0]);
     }
 
-    [TestMethod(DisplayName = "Flush imediato — dados persistidos após cada escrita")]
+    [TestMethod(DisplayName = "Immediate flush — data persisted after each write")]
     public void AppendToServerCsv_FlushImmediate_DataOnDisk()
     {
         var row = CreateSuccessRow("prod", "db1", ["id"],

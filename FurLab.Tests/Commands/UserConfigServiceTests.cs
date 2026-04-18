@@ -34,7 +34,7 @@ public class UserConfigServiceTests
         }
     }
 
-    [TestMethod(DisplayName = "LoadConfig cria arquivo default quando não existe")]
+    [TestMethod(DisplayName = "LoadConfig creates default file when it does not exist")]
     public void LoadConfig_NoFile_CreatesDefault()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -46,7 +46,7 @@ public class UserConfigServiceTests
         Assert.IsTrue(File.Exists(service.GetConfigFilePath()));
     }
 
-    [TestMethod(DisplayName = "SaveConfig e LoadConfig round-trip preserva dados")]
+    [TestMethod(DisplayName = "SaveConfig and LoadConfig round-trip preserves data")]
     public void SaveAndLoad_RoundTrip_PreservesData()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -82,7 +82,7 @@ public class UserConfigServiceTests
         Assert.AreEqual(8, loaded.Defaults.MaxParallelism);
     }
 
-    [TestMethod(DisplayName = "LoadConfig com JSONC (comentários) parseia corretamente")]
+    [TestMethod(DisplayName = "LoadConfig with JSONC (comments) parses correctly")]
     public void LoadConfig_WithJsoncComments_ParsesCorrectly()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -108,7 +108,7 @@ public class UserConfigServiceTests
         Assert.AreEqual("dev", config.Servers[0].Name);
     }
 
-    [TestMethod(DisplayName = "LoadConfig com JSON inválido lança InvalidOperationException")]
+    [TestMethod(DisplayName = "LoadConfig with invalid JSON throws InvalidOperationException")]
     public void LoadConfig_InvalidJson_ThrowsInvalidOperationException()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -121,7 +121,7 @@ public class UserConfigServiceTests
         Assert.IsTrue(threwExpected);
     }
 
-    [TestMethod(DisplayName = "AddOrUpdateServer adiciona novo servidor")]
+    [TestMethod(DisplayName = "AddOrUpdateServer adds new server")]
     public void AddOrUpdateServer_NewServer_AddsToList()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -140,7 +140,7 @@ public class UserConfigServiceTests
         Assert.AreEqual("new-server", servers[0].Name);
     }
 
-    [TestMethod(DisplayName = "AddOrUpdateServer atualiza servidor existente")]
+    [TestMethod(DisplayName = "AddOrUpdateServer updates existing server")]
     public void AddOrUpdateServer_ExistingServer_UpdatesInPlace()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -154,7 +154,7 @@ public class UserConfigServiceTests
         Assert.AreEqual("admin", server.Username);
     }
 
-    [TestMethod(DisplayName = "RemoveServer remove servidor existente")]
+    [TestMethod(DisplayName = "RemoveServer removes existing server")]
     public void RemoveServer_ExistingServer_RemovesAndReturnsTrue()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -165,7 +165,7 @@ public class UserConfigServiceTests
         Assert.AreEqual(0, service.GetServers().Count);
     }
 
-    [TestMethod(DisplayName = "RemoveServer retorna false para servidor inexistente")]
+    [TestMethod(DisplayName = "RemoveServer returns false for non-existent server")]
     public void RemoveServer_NonexistentServer_ReturnsFalse()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -173,7 +173,7 @@ public class UserConfigServiceTests
         Assert.IsFalse(result);
     }
 
-    [TestMethod(DisplayName = "GetServer retorna servidor por nome case-insensitive")]
+    [TestMethod(DisplayName = "GetServer returns server by name case-insensitive")]
     public void GetServer_CaseInsensitive_ReturnsServer()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -184,7 +184,7 @@ public class UserConfigServiceTests
         Assert.AreEqual("MyServer", server.Name);
     }
 
-    [TestMethod(DisplayName = "ValidateAndApplyDefaults aplica defaults para campos omitidos")]
+    [TestMethod(DisplayName = "ValidateAndApplyDefaults applies defaults for omitted fields")]
     public void LoadConfig_MissingDefaults_AppliesDefaults()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -200,7 +200,7 @@ public class UserConfigServiceTests
         Assert.AreEqual(4, config.Servers[0].MaxParallelism);
     }
 
-    [TestMethod(DisplayName = "GetDefaults retorna defaults quando configurados")]
+    [TestMethod(DisplayName = "GetDefaults returns defaults when configured")]
     public void GetDefaults_WhenConfigured_ReturnsValues()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -212,14 +212,14 @@ public class UserConfigServiceTests
         Assert.AreEqual(8, defaults.MaxParallelism);
     }
 
-    [TestMethod(DisplayName = "ConfigFileExists retorna false quando arquivo não existe")]
+    [TestMethod(DisplayName = "ConfigFileExists returns false when file does not exist")]
     public void ConfigFileExists_NoFile_ReturnsFalse()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
         Assert.IsFalse(service.ConfigFileExists());
     }
 
-    [TestMethod(DisplayName = "ConfigFileExists retorna true após LoadConfig")]
+    [TestMethod(DisplayName = "ConfigFileExists returns true after LoadConfig")]
     public void ConfigFileExists_AfterLoad_ReturnsTrue()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -227,7 +227,7 @@ public class UserConfigServiceTests
         Assert.IsTrue(service.ConfigFileExists());
     }
 
-    [TestMethod(DisplayName = "TryLoadLegacyConfig retorna null quando arquivo não existe")]
+    [TestMethod(DisplayName = "TryLoadLegacyConfig returns null when file does not exist")]
     public void TryLoadLegacyConfig_NoFile_ReturnsNull()
     {
         var service = new TestableUserConfigService(_logger, _testDirectory);
@@ -235,7 +235,7 @@ public class UserConfigServiceTests
         Assert.IsNull(result);
     }
 
-    [TestMethod(DisplayName = "TryLoadLegacyConfig migra servidores do appsettings.json legado")]
+    [TestMethod(DisplayName = "TryLoadLegacyConfig migrates servers from legacy appsettings.json")]
     public void TryLoadLegacyConfig_ValidLegacyFile_MigratesServers()
     {
         var legacyJson = @"{
@@ -278,7 +278,7 @@ public class UserConfigServiceTests
         Assert.AreEqual(600, server.CommandTimeout);
     }
 
-    [TestMethod(DisplayName = "TryLoadLegacyConfig retorna null quando appsettings.json não tem seção Servers")]
+    [TestMethod(DisplayName = "TryLoadLegacyConfig returns null when appsettings.json does not have Servers section")]
     public void TryLoadLegacyConfig_NoServersSection_ReturnsNull()
     {
         var legacyJson = @"{ ""OtherSection"": {} }";
@@ -291,7 +291,7 @@ public class UserConfigServiceTests
         Assert.IsNull(result);
     }
 
-    [TestMethod(DisplayName = "TryLoadLegacyConfig retorna null quando appsettings.json tem JSON inválido")]
+    [TestMethod(DisplayName = "TryLoadLegacyConfig returns null when appsettings.json has invalid JSON")]
     public void TryLoadLegacyConfig_InvalidJson_ReturnsNull()
     {
         var legacyPath = Path.Combine(_testDirectory, "appsettings.json");

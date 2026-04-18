@@ -21,11 +21,11 @@ public class CredentialServiceTests
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
     }
 
-    [TestMethod(DisplayName = "Encrypt retorna string não vazia e diferente do plaintext")]
+    [TestMethod(DisplayName = "Encrypt returns non-empty string different from plaintext")]
     public void Encrypt_ReturnsNonEmptyDifferentFromPlaintext()
     {
         var service = new CredentialService(_provider);
-        var plaintext = "minha-senha-secreta";
+        var plaintext = "my-secret-password";
 
         var encrypted = service.Encrypt(plaintext);
 
@@ -33,11 +33,11 @@ public class CredentialServiceTests
         Assert.AreNotEqual(plaintext, encrypted);
     }
 
-    [TestMethod(DisplayName = "TryDecrypt retorna o plaintext original após Encrypt")]
+    [TestMethod(DisplayName = "TryDecrypt returns original plaintext after Encrypt")]
     public void TryDecrypt_AfterEncrypt_ReturnsOriginalPlaintext()
     {
         var service = new CredentialService(_provider);
-        var plaintext = "minha-senha-secreta";
+        var plaintext = "my-secret-password";
 
         var encrypted = service.Encrypt(plaintext);
         var decrypted = service.TryDecrypt(encrypted);
@@ -65,7 +65,7 @@ public class CredentialServiceTests
         Assert.IsNull(result);
     }
 
-    [TestMethod(DisplayName = "TryDecrypt retorna null para blob corrompido (não lança exceção)")]
+    [TestMethod(DisplayName = "TryDecrypt returns null for corrupted blob (does not throw exception)")]
     public void TryDecrypt_CorruptedBlob_ReturnsNullWithoutThrowing()
     {
         var service = new CredentialService(_provider);
@@ -75,13 +75,13 @@ public class CredentialServiceTests
         Assert.IsNull(result);
     }
 
-    [TestMethod(DisplayName = "Encrypt é determinístico (diferentes blobs para mesma senha — DataProtection usa IV randômico)")]
+    [TestMethod(DisplayName = "Encrypt is non-deterministic (different blobs for same password — DataProtection uses random IV)")]
     public void Encrypt_SamePlaintext_ProducesDifferentBlobs()
     {
         // DataProtection uses random IV so each call produces a different blob,
         // both decryptable to the same value
         var service = new CredentialService(_provider);
-        var plaintext = "minha-senha";
+        var plaintext = "my-password";
 
         var blob1 = service.Encrypt(plaintext);
         var blob2 = service.Encrypt(plaintext);
@@ -94,7 +94,7 @@ public class CredentialServiceTests
         Assert.AreEqual(plaintext, service.TryDecrypt(blob2));
     }
 
-    [TestMethod(DisplayName = "Encrypt com senha vazia funciona (não lança exceção)")]
+    [TestMethod(DisplayName = "Encrypt with empty password works (does not throw exception)")]
     public void Encrypt_EmptyPassword_EncryptsSuccessfully()
     {
         var service = new CredentialService(_provider);

@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 namespace FurLab.Core.Services;
 
 /// <summary>
-/// Serviço de gerenciamento do arquivo pgpass.conf no Windows.
-/// Implementa AddEntry, ListEntries e RemoveEntry para as US1, US2 e US3.
+/// Service for managing the pgpass.conf file on Windows.
+/// Implements AddEntry, ListEntries, and RemoveEntry for US1, US2, and US3.
 /// </summary>
 public class PgPassService(ILogger<PgPassService>? logger = null) : IPgPassService
 {
@@ -22,54 +22,54 @@ public class PgPassService(ILogger<PgPassService>? logger = null) : IPgPassServi
     {
         filePath ??= ResolveDefaultPath();
 
-        // Validação: senha não pode ser vazia (RF-011)
+        // Validation: password cannot be empty (RF-011)
         if (string.IsNullOrEmpty(entry.Password))
         {
-            return PgPassResult.Fail("Erro: a senha não pode ser vazia.");
+            return PgPassResult.Fail("Error: password cannot be empty.");
         }
 
         try
         {
-            // Garantir que o diretório existe (RF-002)
+            // Ensure directory exists (RF-002)
             var directory = Path.GetDirectoryName(filePath)!;
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
-                _logger?.LogInformation("Diretório criado: {Directory}", directory);
+                _logger?.LogInformation("Directory created: {Directory}", directory);
             }
 
-            // Ler entradas existentes para verificar duplicata (RF-006)
-            var entradasExistentes = ReadAllEntries(filePath).ToList();
-            if (entradasExistentes.Any(e => e.IdentityKey == entry.IdentityKey))
+            // Read existing entries to check for duplicates (RF-006)
+            var existingEntries = ReadAllEntries(filePath).ToList();
+            if (existingEntries.Any(e => e.IdentityKey == entry.IdentityKey))
             {
-                var chave = FormatKey(entry);
-                _logger?.LogInformation("Entrada já existe: {Chave}", chave);
-                return PgPassResult.Duplicate($"Entrada já existe: {chave}");
+                var key = FormatKey(entry);
+                _logger?.LogInformation("Entry already exists: {Key}", key);
+                return PgPassResult.Duplicate($"Entry already exists: {key}");
             }
 
-            // Serializar e acrescentar ao arquivo (RF-003, RF-010)
-            var linha = SerializeEntry(entry);
-            File.AppendAllText(filePath, linha + Environment.NewLine);
+            // Serialize and append to the file (RF-003, RF-010)
+            var line = SerializeEntry(entry);
+            File.AppendAllText(filePath, line + Environment.NewLine);
 
-            var chaveAdicionada = FormatKey(entry);
-            _logger?.LogInformation("Entrada adicionada: {Chave}", chaveAdicionada);
-            return PgPassResult.Ok($"Entrada adicionada: {chaveAdicionada}");
+            var addedKey = FormatKey(entry);
+            _logger?.LogInformation("Entry added: {Key}", addedKey);
+            return PgPassResult.Ok($"Entry added: {addedKey}");
         }
         catch (UnauthorizedAccessException ex)
         {
-            // RF-012: permissão negada
-            _logger?.LogError(ex, "Permissão negada ao acessar {Path}", filePath);
+            // RF-012: permission denied
+            _logger?.LogError(ex, "Permission denied while accessing {Path}", filePath);
             return PgPassResult.Fail(
-                $"Erro: sem permissão para gravar em {Path.GetDirectoryName(filePath)}. " +
-                "Execute o comando em um terminal com privilégios de administrador.");
+                $"Error: no permission to write to {Path.GetDirectoryName(filePath)}. " +
+                "Run the command in a terminal with administrator privileges.");
         }
         catch (IOException ex)
         {
-            // RF-013: arquivo somente-leitura ou travado
-            _logger?.LogError(ex, "Erro de I/O ao gravar em {Path}", filePath);
+            // RF-013: read-only or locked file
+            _logger?.LogError(ex, "I/O error while writing to {Path}", filePath);
             return PgPassResult.Fail(
-                "Erro: não foi possível gravar em pgpass.conf — o arquivo pode estar " +
-                "somente-leitura ou em uso por outro processo.");
+                "Error: could not write to pgpass.conf — the file may be " +
+                "read-only or in use by another process.");
         }
     }
 
@@ -93,73 +93,73 @@ public class PgPassService(ILogger<PgPassService>? logger = null) : IPgPassServi
     {
         filePath ??= ResolveDefaultPath();
 
-        // Arquivo não existe: nada a remover
+        // File does not exist: nothing to remove
         if (!File.Exists(filePath))
         {
-            var chave = FormatKey(key);
-            return PgPassResult.Fail($"Entrada não encontrada: {chave}");
+            var keyStr = FormatKey(key);
+            return PgPassResult.Fail($"Entry not found: {keyStr}");
         }
 
         try
         {
-            var linhasOriginais = File.ReadAllLines(filePath);
-            var linhasFiltradas = new List<string>();
-            var encontrada = false;
+            var originalLines = File.ReadAllLines(filePath);
+            var filteredLines = new List<string>();
+            var found = false;
 
-            foreach (var linha in linhasOriginais)
+            foreach (var line in originalLines)
             {
-                if (linha.StartsWith('#') || string.IsNullOrWhiteSpace(linha))
+                if (line.StartsWith('#') || string.IsNullOrWhiteSpace(line))
                 {
-                    // Preservar comentários e linhas em branco
-                    linhasFiltradas.Add(linha);
+                    // Preserve comments and blank lines
+                    filteredLines.Add(line);
                     continue;
                 }
 
-                var entrada = ParseLine(linha);
-                if (entrada != null && entrada.IdentityKey == key.IdentityKey)
+                var entry = ParseLine(line);
+                if (entry != null && entry.IdentityKey == key.IdentityKey)
                 {
-                    encontrada = true;
-                    // Não adicionar a linha removida
+                    found = true;
+                    // Do not add the removed line
                 }
                 else
                 {
-                    linhasFiltradas.Add(linha);
+                    filteredLines.Add(line);
                 }
             }
 
-            if (!encontrada)
+            if (!found)
             {
-                var chave = FormatKey(key);
-                return PgPassResult.Fail($"Entrada não encontrada: {chave}");
+                var keyStr = FormatKey(key);
+                return PgPassResult.Fail($"Entry not found: {keyStr}");
             }
 
-            File.WriteAllLines(filePath, linhasFiltradas);
-            var chaveRemovida = FormatKey(key);
-            _logger?.LogInformation("Entrada removida: {Chave}", chaveRemovida);
-            return PgPassResult.Ok($"Entrada removida: {chaveRemovida}");
+            File.WriteAllLines(filePath, filteredLines);
+            var removedKey = FormatKey(key);
+            _logger?.LogInformation("Entry removed: {Key}", removedKey);
+            return PgPassResult.Ok($"Entry removed: {removedKey}");
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger?.LogError(ex, "Permissão negada ao acessar {Path}", filePath);
+            _logger?.LogError(ex, "Permission denied while accessing {Path}", filePath);
             return PgPassResult.Fail(
-                $"Erro: sem permissão para gravar em {Path.GetDirectoryName(filePath)}. " +
-                "Execute o comando em um terminal com privilégios de administrador.");
+                $"Error: no permission to write to {Path.GetDirectoryName(filePath)}. " +
+                "Run the command in a terminal with administrator privileges.");
         }
         catch (IOException ex)
         {
-            _logger?.LogError(ex, "Erro de I/O ao gravar em {Path}", filePath);
+            _logger?.LogError(ex, "I/O error while writing to {Path}", filePath);
             return PgPassResult.Fail(
-                "Erro: não foi possível gravar em pgpass.conf — o arquivo pode estar " +
-                "somente-leitura ou em uso por outro processo.");
+                "Error: could not write to pgpass.conf — the file may be " +
+                "read-only or in use by another process.");
         }
     }
 
     // =========================================================================
-    // Métodos privados — serialização, parse, escape, path
+    // Private methods — serialization, parse, escape, path
     // =========================================================================
 
     /// <summary>
-    /// Resolve o caminho padrão do pgpass.conf no Windows.
+    /// Resolves the default pgpass.conf path on Windows.
     /// %APPDATA%\postgresql\pgpass.conf
     /// </summary>
     private static string ResolveDefaultPath()
@@ -169,8 +169,8 @@ public class PgPassService(ILogger<PgPassService>? logger = null) : IPgPassServi
     }
 
     /// <summary>
-    /// Lê todas as entradas válidas do arquivo. Retorna vazio se o arquivo não existir.
-    /// Ignora linhas de comentário (iniciadas por '#') e linhas em branco.
+    /// Reads all valid entries from the file. Returns empty if the file does not exist.
+    /// Ignores comment lines (starting with '#') and blank lines.
     /// </summary>
     private static IEnumerable<PgPassEntry> ReadAllEntries(string filePath)
     {
@@ -179,143 +179,143 @@ public class PgPassService(ILogger<PgPassService>? logger = null) : IPgPassServi
             yield break;
         }
 
-        foreach (var linha in File.ReadAllLines(filePath))
+        foreach (var line in File.ReadAllLines(filePath))
         {
-            if (string.IsNullOrWhiteSpace(linha) || linha.StartsWith('#'))
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
             {
                 continue;
             }
 
-            var entrada = ParseLine(linha);
-            if (entrada != null)
+            var entry = ParseLine(line);
+            if (entry != null)
             {
-                yield return entrada;
+                yield return entry;
             }
         }
     }
 
     /// <summary>
-    /// Serializa uma <see cref="PgPassEntry"/> para o formato pgpass.
-    /// Aplica escape na senha antes de gravar: ':' → '\:' e '\' → '\\'
+    /// Serializes a <see cref="PgPassEntry"/> to the pgpass format.
+    /// Applies escaping to the password before writing: ':' → '\:' and '\' → '\\'
     /// </summary>
     internal static string SerializeEntry(PgPassEntry entry)
     {
-        var senhaCom = EscapePassword(entry.Password);
-        return $"{entry.Hostname}:{entry.Port}:{entry.Database}:{entry.Username}:{senhaCom}";
+        var escapedPassword = EscapePassword(entry.Password);
+        return $"{entry.Hostname}:{entry.Port}:{entry.Database}:{entry.Username}:{escapedPassword}";
     }
 
     /// <summary>
-    /// Faz parse de uma linha pgpass para <see cref="PgPassEntry"/>.
-    /// Aplica unescape na senha: '\:' → ':' e '\\' → '\'
-    /// Retorna null se a linha for inválida (menos de 5 campos).
+    /// Parses a pgpass line into a <see cref="PgPassEntry"/>.
+    /// Applies unescaping to the password: '\:' → ':' and '\\' → '\'
+    /// Returns null if the line is invalid (fewer than 5 fields).
     /// </summary>
-    internal static PgPassEntry? ParseLine(string linha)
+    internal static PgPassEntry? ParseLine(string line)
     {
-        // O formato pgpass usa ':' como separador mas ':' pode ser escapado como '\:'
-        // Precisamos dividir apenas pelos ':' não escapados
-        var campos = SplitEscaped(linha);
-        if (campos.Count < 5)
+        // The pgpass format uses ':' as a separator but ':' can be escaped as '\:'
+        // We need to split only by unescaped ':'
+        var fields = SplitEscaped(line);
+        if (fields.Count < 5)
         {
             return null;
         }
 
         return new PgPassEntry
         {
-            Hostname = campos[0],
-            Port = campos[1],
-            Database = campos[2],
-            Username = campos[3],
-            Password = UnescapePassword(string.Join(":", campos.Skip(4)))
+            Hostname = fields[0],
+            Port = fields[1],
+            Database = fields[2],
+            Username = fields[3],
+            Password = UnescapePassword(string.Join(":", fields.Skip(4)))
         };
     }
 
     /// <summary>
-    /// Divide uma linha pgpass pelos ':' não escapados.
-    /// Respeita o escape '\:' para não dividir no separador escapado.
+    /// Splits a pgpass line by unescaped ':'.
+    /// Respects the '\:' escape to not split at the escaped separator.
     /// </summary>
-    private static List<string> SplitEscaped(string linha)
+    private static List<string> SplitEscaped(string line)
     {
-        var campos = new List<string>();
-        var campoAtual = new System.Text.StringBuilder();
+        var fields = new List<string>();
+        var currentField = new System.Text.StringBuilder();
 
-        for (var i = 0; i < linha.Length; i++)
+        for (var i = 0; i < line.Length; i++)
         {
-            if (linha[i] == '\\' && i + 1 < linha.Length)
+            if (line[i] == '\\' && i + 1 < line.Length)
             {
-                // Sequência de escape: consumir os dois caracteres
-                campoAtual.Append(linha[i]);
-                campoAtual.Append(linha[i + 1]);
+                // Escape sequence: consume both characters
+                currentField.Append(line[i]);
+                currentField.Append(line[i + 1]);
                 i++;
             }
-            else if (linha[i] == ':')
+            else if (line[i] == ':')
             {
-                campos.Add(campoAtual.ToString());
-                campoAtual.Clear();
+                fields.Add(currentField.ToString());
+                currentField.Clear();
             }
             else
             {
-                campoAtual.Append(linha[i]);
+                currentField.Append(line[i]);
             }
         }
 
-        campos.Add(campoAtual.ToString());
-        return campos;
+        fields.Add(currentField.ToString());
+        return fields;
     }
 
     /// <summary>
-    /// Aplica escape na senha conforme especificação pgpass:
-    /// '\' → '\\' (deve ser feito ANTES de escapar ':')
+    /// Applies escaping to the password according to the pgpass specification:
+    /// '\' → '\\' (must be done BEFORE escaping ':')
     /// ':' → '\:'
     /// </summary>
     internal static string EscapePassword(string password)
     {
-        // Ordem importa: escapar '\' primeiro para não re-escapar '\:'
+        // Order matters: escape '\' first to avoid re-escaping '\:'
         return password
             .Replace(@"\", @"\\")
             .Replace(":", @"\:");
     }
 
     /// <summary>
-    /// Remove escape da senha lida do arquivo pgpass:
+    /// Removes escaping from the password read from the pgpass file:
     /// '\:' → ':'
     /// '\\' → '\'
     /// </summary>
     internal static string UnescapePassword(string escaped)
     {
-        // Processar caracter a caracter para ordem correta
-        var resultado = new System.Text.StringBuilder();
+        // Process character by character for correct order
+        var result = new System.Text.StringBuilder();
         for (var i = 0; i < escaped.Length; i++)
         {
             if (escaped[i] == '\\' && i + 1 < escaped.Length)
             {
-                var proximo = escaped[i + 1];
-                if (proximo == ':')
+                var next = escaped[i + 1];
+                if (next == ':')
                 {
-                    resultado.Append(':');
+                    result.Append(':');
                     i++;
                 }
-                else if (proximo == '\\')
+                else if (next == '\\')
                 {
-                    resultado.Append('\\');
+                    result.Append('\\');
                     i++;
                 }
                 else
                 {
-                    resultado.Append(escaped[i]);
+                    result.Append(escaped[i]);
                 }
             }
             else
             {
-                resultado.Append(escaped[i]);
+                result.Append(escaped[i]);
             }
         }
 
-        return resultado.ToString();
+        return result.ToString();
     }
 
     /// <summary>
-    /// Formata a chave de identidade de uma entrada para exibição.
-    /// Exemplo: "localhost:5432:meu_banco:postgres"
+    /// Formats an entry's identity key for display.
+    /// Example: "localhost:5432:my_db:postgres"
     /// </summary>
     private static string FormatKey(PgPassEntry entry)
         => $"{entry.Hostname}:{entry.Port}:{entry.Database}:{entry.Username}";
