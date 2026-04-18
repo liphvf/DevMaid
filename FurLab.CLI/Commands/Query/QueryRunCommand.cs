@@ -95,7 +95,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunCommand.Settings>
         /// <summary>
         /// Gets the database host address. Overrides the server config host when provided.
         /// </summary>
-        [CommandOption("-h|--host")]
+        [CommandOption("-H|--host")]
         [System.ComponentModel.Description("Database host address. Overrides the configured server host.")]
         public string? Host { get; init; }
 

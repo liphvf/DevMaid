@@ -69,7 +69,7 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupCommand.S
         /// <summary>
         /// Gets the database host address.
         /// </summary>
-        [CommandOption("-h|--host")]
+        [CommandOption("-H|--host")]
         [System.ComponentModel.Description("Database host address.")]
         public string? Host { get; init; }
 

@@ -138,7 +138,7 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreCommand
         /// <summary>
         /// Gets the database host address.
         /// </summary>
-        [CommandOption("-h|--host")]
+        [CommandOption("-H|--host")]
         [System.ComponentModel.Description("Database host address.")]
         public string? Host { get; init; }
 
