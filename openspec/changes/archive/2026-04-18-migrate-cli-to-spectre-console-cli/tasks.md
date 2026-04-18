@@ -74,7 +74,7 @@
 
 - [x] 6.1 Executar `dotnet build` — zero erros e zero warnings de compilação ✅
 - [x] 6.2 Testar `fur --help` — verificar que todos os 10 grupos de commands aparecem listados
-- [ ] 6.3 Testar `fur file combine --help` — verificar opções `--input` e `--output`
+- [x] 6.3 Testar `fur file combine --help` — verificar opções `--input` e `--output`
 - [x] 6.4 Testar `fur database backup --help` — verificar todas as opções incluindo `--all` e `--exclude-table-data`
 - [x] 6.5 Testar `fur database pgpass list` — verificar que o bug do `new PgPassService()` foi eliminado (logs aparecem)
 - [x] 6.6 Testar `fur query run --help` — verificar que todas as 20+ opções aparecem
