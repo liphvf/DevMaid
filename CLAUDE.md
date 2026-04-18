@@ -51,7 +51,6 @@ FurLab/
 │   │   ├── PgPassCommand.cs       ← Subcomando de DatabaseCommand (pgpass add/list/remove)
 │   │   ├── DockerCommand.cs       ← Docker utilities (postgres container)
 │   │   ├── QueryCommand.cs
-│   │   ├── CleanCommand.cs
 │   │   └── WindowsFeaturesCommand.cs
 │   ├── CommandOptions/            ← Strongly-typed options DTOs per command
 │   ├── Services/                  ← Static facade wrappers (ConfigurationService, Logger,
@@ -120,7 +119,6 @@ FurLab database pgpass remove <banco> [--host] [--port] [--username]
 FurLab docker postgres
 FurLab file combine -i "<glob>" -o <output>
 FurLab query run -f <sql-file> -d <db> [--all] [--servers]
-FurLab clean [path]
 FurLab winget backup -o <dir>
 FurLab winget restore -i <json-file>
 FurLab claude install
@@ -191,7 +189,6 @@ Skills disponíveis em `.opencode/skills/`:
 - pgpass-cli-setup (2026-04-04): Added `PgPassCommand` — gerenciamento de `pgpass.conf` com subcomandos `add`, `list`, `remove`; `IPgPassService` + `PgPassService`
 - opencode-default-model (2026-04-07): Added `opencode settings default-model` — define modelo padrão via argumento ou menu interativo (Spectre.Console); suporte a `--global`
 - 009-windows-features-manager: Added `WindowsFeaturesCommand` — dism.exe wrapper for export/import/list of Windows optional features
-- 008-project-cleaner: Added `CleanCommand` — recursive `bin/` and `obj/` directory deletion
 - 007-sql-query-csv-export: Added `QueryCommand` — SQL file execution with CSV export, multi-server support
 
 ## Guard Rails

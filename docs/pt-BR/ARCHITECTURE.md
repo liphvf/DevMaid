@@ -23,7 +23,6 @@ A arquitetura é construída sobre System.CommandLine para parsing de argumentos
 │  ├── OpenCodeCommand                                           │
 │  ├── WingetCommand                                             │
 │  ├── QueryCommand                                              │
-│  ├── CleanCommand                                              │
 │  └── WindowsFeaturesCommand                                    │
 ├─────────────────────────────────────────────────────────────────┤
 │  Camadas de Suporte                                            │
@@ -79,11 +78,6 @@ Cada comando segue o padrão builder com um método estático `Build()` que reto
 - Executa consultas SQL e exporta os resultados para CSV
 - Suporta múltiplos bancos de dados e servidores via configuração
 - Integrado ao appsettings.json para servidores remotos
-
-#### CleanCommand
-- Exclui diretórios bin e obj do projeto ou solução selecionada
-- Útil para debugar problemas de compilação ou economizar espaço
-- Busca recursivamente os subdiretórios
 
 #### WindowsFeaturesCommand
 - Exporta as features opcionais do Windows atualmente ativadas em um JSON

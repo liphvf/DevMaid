@@ -108,8 +108,6 @@ internal class Program
                 query.AddCommand<QueryRunCommand>("run");
             });
 
-            config.AddCommand<Commands.Clean.CleanCommand>("clean");
-
             config.AddBranch("windowsfeatures", wf =>
             {
                 wf.SetDescription("Export and import Windows optional features.");
