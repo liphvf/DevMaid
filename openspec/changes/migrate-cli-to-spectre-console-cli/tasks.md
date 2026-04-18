@@ -81,6 +81,6 @@
 - [x] 6.7 Testar `fur settings db-servers add` sem argumentos — verificar que o wizard interativo funciona
 - [x] 6.8 Testar `fur settings db-servers ls` — verificar saída em tabela Spectre.Console
 - [x] 6.9 Testar `fur docker postgres` — verificar integração com `IDockerService` injetado
-- [ ] 6.10 Simular erro de banco (host inválido) e verificar que o exit code retornado é `10` ou `11`
+- [x] 6.10 Simular erro de banco (host inválido) e verificar que o exit code retornado é `10` ou `11`
 - [x] 6.11 Testar `fur clean` — verificar remoção de pastas `bin`/`obj`
 - [x] 6.12 Executar `dotnet test` no projeto `FurLab.Tests` — 124 testes passam ✅
