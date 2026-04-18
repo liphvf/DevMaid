@@ -25,7 +25,7 @@ public static class ServiceCollectionExtensions
         _ = services.AddLogging(builder =>
         {
             _ = builder.AddConsole();
-            _ = builder.SetMinimumLevel(LogLevel.Information);
+            _ = builder.SetMinimumLevel(LogLevel.Warning);
         });
 
         _ = services.AddHealthChecks()

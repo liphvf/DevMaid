@@ -3,7 +3,6 @@ using FurLab.CLI.Infrastructure;
 using FurLab.Core.Services;
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 using Npgsql;
 
@@ -29,10 +28,13 @@ internal class Program
 
             config.SetExceptionHandler((ex, resolver) =>
             {
-                var logger = resolver?.Resolve(typeof(ILogger<Program>)) as ILogger<Program>;
-                logger?.LogError(ex, "Unhandled exception: {Message}", ex.Message);
+                // Display only the clean error message to the user.
+                AnsiConsole.MarkupLine($"[red]Error:[/] {ex.Message.EscapeMarkup()}");
 
+#if DEBUG
+                // In debug mode, we still want to see the stack trace for development.
                 AnsiConsole.WriteException(ex, ExceptionFormats.ShortenPaths);
+#endif
 
                 return ex switch
                 {
