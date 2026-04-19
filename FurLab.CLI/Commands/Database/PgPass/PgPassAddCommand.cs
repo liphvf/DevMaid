@@ -1,5 +1,6 @@
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
+using FurLab.Core.Utils;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -74,14 +75,14 @@ public sealed class PgPassAddCommand : AsyncCommand<PgPassAddCommand.Settings>
             return Task.FromResult(2);
         }
 
-        var host = settings.Host ?? "localhost";
+        var host = settings.Host ?? FurLabConstants.DefaultHost;
         if (!SecurityUtils.IsValidHost(host))
         {
             AnsiConsole.MarkupLine($"[red]Error: invalid host format: \"{host}\".[/]");
             return Task.FromResult(2);
         }
 
-        var port = settings.Port ?? "5432";
+        var port = settings.Port ?? FurLabConstants.DefaultPort;
         if (!SecurityUtils.IsValidPort(port))
         {
             AnsiConsole.MarkupLine("[red]Error: port must be a number between 1 and 65535.[/]");

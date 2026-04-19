@@ -1,3 +1,5 @@
+using FurLab.Core.Utils;
+
 namespace FurLab.Core.Models;
 
 /// <summary>
@@ -6,10 +8,10 @@ namespace FurLab.Core.Models;
 public record PgPassEntry
 {
     /// <summary>Hostname or IP address of the PostgreSQL server. Default: "localhost". Accepts "*" as a wildcard.</summary>
-    public string Hostname { get; init; } = "localhost";
+    public string Hostname { get; init; } = FurLabConstants.DefaultHost;
 
     /// <summary>TCP port of the PostgreSQL server. Default: "5432". Accepts "*" as a wildcard.</summary>
-    public string Port { get; init; } = "5432";
+    public string Port { get; init; } = FurLabConstants.DefaultPort;
 
     /// <summary>Database name. Default: "*" (wildcard). Cannot be empty if provided explicitly.</summary>
     public string Database { get; init; } = "*";

@@ -1,3 +1,5 @@
+using FurLab.Core.Utils;
+
 namespace FurLab.Core.Models;
 
 /// <summary>
@@ -8,12 +10,12 @@ public record DatabaseConnectionOptions
     /// <summary>
     /// Gets or sets the database host address.
     /// </summary>
-    public string Host { get; init; } = "localhost";
+    public string Host { get; init; } = FurLabConstants.DefaultHost;
 
     /// <summary>
     /// Gets or sets the database port.
     /// </summary>
-    public string Port { get; init; } = "5432";
+    public string Port { get; init; } = FurLabConstants.DefaultPort;
 
     /// <summary>
     /// Gets or sets the database username.

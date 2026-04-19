@@ -1,5 +1,6 @@
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
+using FurLab.Core.Utils;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -66,8 +67,8 @@ public sealed class PgPassRemoveCommand : AsyncCommand<PgPassRemoveCommand.Setti
 
         var key = new PgPassEntry
         {
-            Hostname = settings.Host ?? "localhost",
-            Port = settings.Port ?? "5432",
+            Hostname = settings.Host ?? FurLabConstants.DefaultHost,
+            Port = settings.Port ?? FurLabConstants.DefaultPort,
             Database = settings.Database,
             Username = settings.Username ?? "postgres",
             Password = "placeholder"

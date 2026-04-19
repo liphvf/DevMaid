@@ -1,4 +1,4 @@
-namespace FurLab.CLI.Utils;
+namespace FurLab.Core.Utils;
 
 /// <summary>
 /// Contains constant values used throughout the FurLab application.

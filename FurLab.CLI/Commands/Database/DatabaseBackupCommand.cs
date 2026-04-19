@@ -1,12 +1,10 @@
 using System.Diagnostics;
 using System.Text;
-
 using FurLab.CLI.Utils;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
-
+using FurLab.Core.Utils;
 using Microsoft.Extensions.Logging;
-
 using Spectre.Console;
 using Spectre.Console.Cli;
 

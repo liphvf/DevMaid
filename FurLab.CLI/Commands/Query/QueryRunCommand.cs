@@ -3,11 +3,10 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Channels;
-
 using FurLab.CLI.Utils;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
-
+using FurLab.Core.Utils;
 using Npgsql;
 using Polly;
 using Polly.Retry;
@@ -396,7 +395,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunCommand.Settings>
         return new ServerConfigEntry
         {
             Name = builder.Host ?? "ad-hoc",
-            Host = builder.Host ?? "localhost",
+            Host = builder.Host ?? FurLabConstants.DefaultHost,
             Port = builder.Port,
             Username = builder.Username ?? string.Empty,
             EncryptedPassword = null,
