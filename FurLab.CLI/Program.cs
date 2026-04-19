@@ -55,18 +55,18 @@ internal class Program
             config.AddBranch("file", file =>
             {
                 file.SetDescription("File utilities.");
-                file.AddCommand<Commands.Files.FileCombineCommand>("combine");
+                file.AddCommand<Commands.Files.Combine.FileCombineCommand>("combine");
             });
 
             config.AddBranch("claude", claude =>
             {
                 claude.SetDescription("Comandos para Claude Code");
-                claude.AddCommand<Commands.Claude.ClaudeInstallCommand>("install");
+                claude.AddCommand<Commands.Claude.Install.ClaudeInstallCommand>("install");
                 claude.AddBranch("settings", settings =>
                 {
                     settings.SetDescription("Configuracoes do Claude Code");
-                    settings.AddCommand<Commands.Claude.Settings.ClaudeMcpDatabaseCommand>("mcp-database");
-                    settings.AddCommand<Commands.Claude.Settings.ClaudeWinEnvCommand>("win-env");
+                    settings.AddCommand<Commands.Claude.Settings.McpDatabase.ClaudeSettingsMcpDatabaseCommand>("mcp-database");
+                    settings.AddCommand<Commands.Claude.Settings.WinEnv.ClaudeSettingsWinEnvCommand>("win-env");
                 });
             });
 
@@ -76,50 +76,50 @@ internal class Program
                 opencode.AddBranch("settings", settings =>
                 {
                     settings.SetDescription("Configuracoes do OpenCode");
-                    settings.AddCommand<Commands.OpenCode.Settings.OpenCodeMcpDatabaseCommand>("mcp-database");
-                    settings.AddCommand<Commands.OpenCode.Settings.OpenCodeDefaultModelCommand>("default-model");
+                    settings.AddCommand<Commands.OpenCode.Settings.McpDatabase.OpenCodeSettingsMcpDatabaseCommand>("mcp-database");
+                    settings.AddCommand<Commands.OpenCode.Settings.DefaultModel.OpenCodeSettingsDefaultModelCommand>("default-model");
                 });
             });
 
             config.AddBranch("winget", winget =>
             {
                 winget.SetDescription("Manage winget packages.");
-                winget.AddCommand<Commands.Winget.WingetBackupCommand>("backup");
-                winget.AddCommand<Commands.Winget.WingetRestoreCommand>("restore");
+                winget.AddCommand<Commands.Winget.Backup.WingetBackupCommand>("backup");
+                winget.AddCommand<Commands.Winget.Restore.WingetRestoreCommand>("restore");
             });
 
             config.AddBranch("database", db =>
             {
                 db.SetDescription("Database utilities.");
-                db.AddCommand<Commands.Database.DatabaseBackupCommand>("backup");
-                db.AddCommand<Commands.Database.DatabaseRestoreCommand>("restore");
+                db.AddCommand<Commands.Database.Backup.DatabaseBackupCommand>("backup");
+                db.AddCommand<Commands.Database.Restore.DatabaseRestoreCommand>("restore");
                 db.AddBranch("pgpass", pgpass =>
                 {
                     pgpass.SetDescription("Gerencia o arquivo pgpass.conf");
-                    pgpass.AddCommand<Commands.Database.PgPass.PgPassAddCommand>("add");
-                    pgpass.AddCommand<Commands.Database.PgPass.PgPassListCommand>("list");
-                    pgpass.AddCommand<Commands.Database.PgPass.PgPassRemoveCommand>("remove");
+                    pgpass.AddCommand<Commands.Database.PgPass.Add.PgPassAddCommand>("add");
+                    pgpass.AddCommand<Commands.Database.PgPass.List.PgPassListCommand>("list");
+                    pgpass.AddCommand<Commands.Database.PgPass.Remove.PgPassRemoveCommand>("remove");
                 });
             });
 
             config.AddBranch("query", query =>
             {
                 query.SetDescription("Execute SQL queries and export results to CSV.");
-                query.AddCommand<QueryRunCommand>("run");
+                query.AddCommand<Commands.Query.Run.QueryRunCommand>("run");
             });
 
             config.AddBranch("windowsfeatures", wf =>
             {
                 wf.SetDescription("Export and import Windows optional features.");
-                wf.AddCommand<Commands.WindowsFeatures.WindowsFeaturesExportCommand>("export");
-                wf.AddCommand<Commands.WindowsFeatures.WindowsFeaturesImportCommand>("import");
-                wf.AddCommand<Commands.WindowsFeatures.WindowsFeaturesListCommand>("list");
+                wf.AddCommand<Commands.WindowsFeatures.Export.WindowsFeaturesExportCommand>("export");
+                wf.AddCommand<Commands.WindowsFeatures.Import.WindowsFeaturesImportCommand>("import");
+                wf.AddCommand<Commands.WindowsFeatures.List.WindowsFeaturesListCommand>("list");
             });
 
             config.AddBranch("docker", docker =>
             {
                 docker.SetDescription("Docker utilities.");
-                docker.AddCommand<Commands.Docker.DockerPostgresCommand>("postgres");
+                docker.AddCommand<Commands.Docker.Postgres.DockerPostgresCommand>("postgres");
             });
 
             config.AddBranch("settings", settings =>
@@ -128,11 +128,11 @@ internal class Program
                 settings.AddBranch("db-servers", dbs =>
                 {
                     dbs.SetDescription("Manage configured database servers.");
-                    dbs.AddCommand<Commands.Settings.DbServers.DbServersListCommand>("ls");
-                    dbs.AddCommand<Commands.Settings.DbServers.DbServersAddCommand>("add");
-                    dbs.AddCommand<Commands.Settings.DbServers.DbServersRemoveCommand>("rm");
-                    dbs.AddCommand<Commands.Settings.DbServers.DbServersTestCommand>("test");
-                    dbs.AddCommand<Commands.Settings.DbServers.DbServersSetPasswordCommand>("set-password");
+                    dbs.AddCommand<Commands.Settings.DbServers.List.DbServersListCommand>("ls");
+                    dbs.AddCommand<Commands.Settings.DbServers.Add.DbServersAddCommand>("add");
+                    dbs.AddCommand<Commands.Settings.DbServers.Remove.DbServersRemoveCommand>("rm");
+                    dbs.AddCommand<Commands.Settings.DbServers.Test.DbServersTestCommand>("test");
+                    dbs.AddCommand<Commands.Settings.DbServers.SetPassword.DbServersSetPasswordCommand>("set-password");
                 });
             });
         });

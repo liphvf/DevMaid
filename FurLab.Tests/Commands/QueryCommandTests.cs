@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-using FurLab.CLI.Commands.Query;
+using FurLab.CLI.Commands.Query.Run;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Services;
 

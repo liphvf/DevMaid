@@ -3,6 +3,7 @@ using System.Text;
 
 using FurLab.Core.Interfaces;
 using FurLab.Core.Logging;
+using FurLab.Core.Models;
 
 namespace FurLab.Core.Services;
 

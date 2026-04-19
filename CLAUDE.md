@@ -42,16 +42,87 @@ FurLab/
 ├── FurLab.CLI/                   ← CLI executable (depends on FurLab.Core)
 │   ├── Program.cs                 ← Host builder, DI setup, CommandApp configuration
 │   ├── Infrastructure/            ← TypeRegistrar and TypeResolver for Spectre.Console.Cli
-│   ├── Commands/                  ← Command classes inheriting from Command<T> or AsyncCommand<T>
-│   │   ├── File/                  ← FileCombineCommand
-│   │   ├── Claude/                ← ClaudeInstallCommand, ClaudeMcpDatabaseCommand
-│   │   ├── OpenCode/              ← OpenCodeMcpDatabaseCommand, OpenCodeDefaultModelCommand
-│   │   ├── Winget/                ← WingetBackupCommand, WingetRestoreCommand
-│   │   ├── Database/              ← DatabaseBackupCommand, DatabaseRestoreCommand, PgPass/
-│   │   ├── Docker/                ← DockerPostgresCommand
-│   │   ├── Query/                 ← QueryRunCommand
-│   │   ├── WindowsFeatures/       ← Export, Import, List commands
-│   │   └── Settings/              ← DbServers/ (List, Add, Remove, Test, SetPassword)
+│   ├── Commands/                  ← Command classes - each subcommand has its own folder
+│   │   ├── Files/
+│   │   │   └── Combine/
+│   │   │       ├── CombineCommand.cs
+│   │   │       └── CombineSettings.cs
+│   │   ├── Claude/
+│   │   │   ├── Install/
+│   │   │   │   ├── InstallCommand.cs
+│   │   │   │   └── InstallSettings.cs
+│   │   │   └── Settings/
+│   │   │       ├── McpDatabaseCommand.cs
+│   │   │       ├── McpDatabaseSettings.cs
+│   │   │       ├── WinEnvCommand.cs
+│   │   │       └── WinEnvSettings.cs
+│   │   ├── OpenCode/
+│   │   │   └── Settings/
+│   │   │       ├── McpDatabaseCommand.cs
+│   │   │       ├── McpDatabaseSettings.cs
+│   │   │       ├── DefaultModelCommand.cs
+│   │   │       └── DefaultModelSettings.cs
+│   │   ├── Winget/
+│   │   │   ├── Backup/
+│   │   │   │   ├── BackupCommand.cs
+│   │   │   │   └── BackupSettings.cs
+│   │   │   └── Restore/
+│   │   │       ├── RestoreCommand.cs
+│   │   │       └── RestoreSettings.cs
+│   │   ├── Database/
+│   │   │   ├── Backup/
+│   │   │   │   ├── BackupCommand.cs
+│   │   │   │   ├── BackupSettings.cs
+│   │   │   │   └── BackupConfig.cs
+│   │   │   ├── Restore/
+│   │   │   │   ├── RestoreCommand.cs
+│   │   │   │   ├── RestoreSettings.cs
+│   │   │   │   └── RestoreConfig.cs
+│   │   │   └── PgPass/
+│   │   │       ├── Add/
+│   │   │       │   ├── AddCommand.cs
+│   │   │       │   └── AddSettings.cs
+│   │   │       ├── List/
+│   │   │       │   ├── ListCommand.cs
+│   │   │       │   └── ListSettings.cs
+│   │   │       └── Remove/
+│   │   │           ├── RemoveCommand.cs
+│   │   │           └── RemoveSettings.cs
+│   │   ├── Docker/
+│   │   │   └── Postgres/
+│   │   │       ├── PostgresCommand.cs
+│   │   │       └── PostgresSettings.cs
+│   │   ├── Query/
+│   │   │   └── Run/
+│   │   │       ├── RunCommand.cs
+│   │   │       └── RunSettings.cs
+│   │   ├── WindowsFeatures/
+│   │   │   ├── Export/
+│   │   │   │   ├── ExportCommand.cs
+│   │   │   │   └── ExportSettings.cs
+│   │   │   ├── Import/
+│   │   │   │   ├── ImportCommand.cs
+│   │   │   │   └── ImportSettings.cs
+│   │   │   └── List/
+│   │   │       ├── ListCommand.cs
+│   │   │       └── ListSettings.cs
+│   │   └── Settings/
+│   │       └── DbServers/
+│   │           ├── List/
+│   │           │   ├── ListCommand.cs
+│   │           │   └── ListSettings.cs
+│   │           ├── Add/
+│   │           │   ├── AddCommand.cs
+│   │           │   └── AddSettings.cs
+│   │           ├── Remove/
+│   │           │   ├── RemoveCommand.cs
+│   │           │   └── RemoveSettings.cs
+│   │           ├── Test/
+│   │           │   ├── TestCommand.cs
+│   │           │   └── TestSettings.cs
+│   │           └── SetPassword/
+│   │               ├── SetPasswordCommand.cs
+│   │               └── SetPasswordSettings.cs
 │   └── SecurityUtils.cs           ← Input validation (path traversal, PostgreSQL identifiers,
 │                                     host/port, wildcard *)
 │
@@ -73,6 +144,50 @@ FurLab/
 │   └── en/                        ← Secondary documentation (English)
 │
 └── opencode.json                  ← Configuração local do OpenCode (modelo padrão, etc.)
+```
+
+### Command File Organization Convention
+
+**Every subcommand has its own folder.** Commands and their settings follow a strict one-class-per-file structure:
+
+```
+Commands/
+├── CommandName/                           ← Command group folder (e.g., "Database")
+│   ├── SubCommand/                        ← Each subcommand gets its own folder
+│   │   ├── {Prefix}Command.cs             ← Command implementation with hierarchy prefix
+│   │   ├── {Prefix}Settings.cs            ← Settings class with hierarchy prefix
+│   │   └── {Prefix}Config.cs              ← Optional: config class with hierarchy prefix
+│   └── SharedHelper.cs                    ← Shared classes across subcommands stay in parent folder
+```
+
+**Naming Rules:**
+- **Folder structure**: `Commands/{Group}/{Subcommand}/` - every subcommand has its own folder
+- **File naming**: Files are prefixed with the hierarchy path (without "Commands" prefix)
+  - ✅ `Claude/Install/ClaudeInstallCommand.cs`
+  - ✅ `Claude/Install/ClaudeInstallSettings.cs`
+  - ✅ `Database/Backup/DatabaseBackupCommand.cs`
+  - ✅ `Database/Backup/DatabaseBackupSettings.cs`
+  - ✅ `Database/PgPass/Add/PgPassAddCommand.cs`
+  - ✅ `Database/PgPass/Add/PgPassAddSettings.cs`
+  - ✅ `Settings/DbServers/List/DbServersListCommand.cs`
+- **Class naming**: Classes use short names (implied by folder structure)
+  - ✅ `class InstallCommand` (in `ClaudeInstallCommand.cs`)
+  - ✅ `class BackupSettings` (in `DatabaseBackupSettings.cs`)
+  - ✅ `class AddCommand` (in `PgPassAddCommand.cs`)
+- **Config files**: Optional config records for internal use
+  - ✅ `Database/Backup/DatabaseBackupConfig.cs` → class `BackupConfig`
+- **Shared files**: Files used by multiple subcommands of the same group stay in the parent folder
+  - ✅ `Database/SharedHelper.cs` - shared across Database subcommands only
+
+**Examples:**
+```
+Commands/Database/Backup/DatabaseBackupCommand.cs       → class BackupCommand
+Commands/Database/Backup/DatabaseBackupSettings.cs      → class BackupSettings
+Commands/Database/Backup/DatabaseBackupConfig.cs        → class BackupConfig
+Commands/Claude/Settings/McpDatabase/ClaudeSettingsMcpDatabaseCommand.cs   → class McpDatabaseCommand
+Commands/Claude/Settings/McpDatabase/ClaudeSettingsMcpDatabaseSettings.cs  → class McpDatabaseSettings
+Commands/Settings/DbServers/List/DbServersListCommand.cs → class ListCommand
+Commands/Settings/DbServers/List/DbServersListSettings.cs → class ListSettings
 ```
 
 ## Commands
@@ -133,7 +248,8 @@ FurLab settings db-servers set-password <name>
 - **Language**: C# 13, `<Nullable>enable</Nullable>`, `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`
 - **Primary constructors**: Use primary constructors in classes and records whenever possible (e.g., `public class Foo(ILogger logger) { }`)
 - **Naming**: PascalCase for types/methods/properties; camelCase for locals and parameters
-- **Command classes**: Inherit from `Command<TSettings>` or `AsyncCommand<TSettings>`. Define `Settings` as a nested `public sealed class` inheriting from `CommandSettings`.
+- **Command classes**: Inherit from `Command<TSettings>` or `AsyncCommand<TSettings>`.
+- **Command settings**: Define `Settings` classes in separate files within the same directory as the command, naming them `[CommandName]Settings.cs` (e.g., `DatabaseBackupSettings.cs`).
 - **Dependency Injection**: Use constructor injection in command classes. All services must be registered in `ServiceCollectionExtensions.cs`.
 - **Service classes**: Always implement a `IXxxService` interface in `FurLab.Core/Interfaces/`; concrete implementation in `FurLab.Core/Services/`
 - **No business logic in commands**: Commands parse input via `Settings`, then call the service method. Never put logic inside the `Execute` or `ExecuteAsync` method.
