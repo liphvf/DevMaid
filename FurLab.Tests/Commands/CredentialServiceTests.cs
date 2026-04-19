@@ -15,13 +15,24 @@ public class CredentialServiceTests
     public void Setup()
     {
         // Use in-memory ephemeral DataProtection for tests
-        // This ensures consistent behavior across all platforms (Windows, Linux, macOS)
         var services = new ServiceCollection();
         services.AddDataProtection()
             .SetApplicationName("FurLab.Tests")
             .UseEphemeralDataProtectionProvider();
 
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
+    }
+
+    [TestMethod(DisplayName = "DataProtection roundtrip works directly")]
+    public void DataProtection_DirectRoundtrip_Works()
+    {
+        var protector = _provider.CreateProtector("TestPurpose");
+        var plaintext = "test-password";
+
+        var encrypted = protector.Protect(plaintext);
+        var decrypted = protector.Unprotect(encrypted);
+
+        Assert.AreEqual(plaintext, decrypted);
     }
 
     [TestMethod(DisplayName = "Encrypt returns non-empty string different from plaintext")]
@@ -43,8 +54,18 @@ public class CredentialServiceTests
         var plaintext = "my-secret-password";
 
         var encrypted = service.Encrypt(plaintext);
+        
+        // Debug: check if encrypted is valid
+        Assert.IsFalse(string.IsNullOrEmpty(encrypted), "Encrypted should not be empty");
+        
         var decrypted = service.TryDecrypt(encrypted);
-
+        
+        // Debug: show what we got
+        if (decrypted == null)
+        {
+            Assert.Fail($"Decryption returned null. Encrypted value: {encrypted}");
+        }
+        
         Assert.AreEqual(plaintext, decrypted);
     }
 
@@ -81,8 +102,6 @@ public class CredentialServiceTests
     [TestMethod(DisplayName = "Encrypt is non-deterministic (different blobs for same password — DataProtection uses random IV)")]
     public void Encrypt_SamePlaintext_ProducesDifferentBlobs()
     {
-        // DataProtection uses random IV so each call produces a different blob,
-        // both decryptable to the same value
         var service = new CredentialService(_provider);
         var plaintext = "my-password";
 
@@ -93,8 +112,16 @@ public class CredentialServiceTests
         Assert.AreNotEqual(blob1, blob2);
 
         // But both decrypt to the same plaintext
-        Assert.AreEqual(plaintext, service.TryDecrypt(blob1));
-        Assert.AreEqual(plaintext, service.TryDecrypt(blob2));
+        var decrypted1 = service.TryDecrypt(blob1);
+        var decrypted2 = service.TryDecrypt(blob2);
+        
+        if (decrypted1 == null)
+            Assert.Fail($"Failed to decrypt blob1: {blob1}");
+        if (decrypted2 == null)
+            Assert.Fail($"Failed to decrypt blob2: {blob2}");
+            
+        Assert.AreEqual(plaintext, decrypted1);
+        Assert.AreEqual(plaintext, decrypted2);
     }
 
     [TestMethod(DisplayName = "Encrypt with empty password works (does not throw exception)")]
@@ -106,6 +133,10 @@ public class CredentialServiceTests
         var decrypted = service.TryDecrypt(encrypted);
 
         Assert.IsNotNull(encrypted);
+        
+        if (decrypted == null)
+            Assert.Fail($"Failed to decrypt empty password. Encrypted: {encrypted}");
+            
         Assert.AreEqual(string.Empty, decrypted);
     }
 }
