@@ -3,7 +3,7 @@ using System.Text;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace FurLab.CLI.Commands.FileUtils;
+namespace FurLab.CLI.Commands.Files;
 
 /// <summary>
 /// Combines files matching a pattern into a single output file.
@@ -88,7 +88,7 @@ public sealed class FileCombineCommand : AsyncCommand<FileCombineCommand.Setting
 
         foreach (var inputFilePath in inputFilePaths)
         {
-            currentEncoding = Utils.Utils.GetCurrentFileEncoding(inputFilePath);
+            currentEncoding = FileEncodingHelper.DetectEncoding(inputFilePath);
             allFileText.Append(File.ReadAllText(inputFilePath, currentEncoding));
             allFileText.AppendLine();
 

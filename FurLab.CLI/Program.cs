@@ -55,7 +55,7 @@ internal class Program
             config.AddBranch("file", file =>
             {
                 file.SetDescription("File utilities.");
-                file.AddCommand<Commands.FileUtils.FileCombineCommand>("combine");
+                file.AddCommand<Commands.Files.FileCombineCommand>("combine");
             });
 
             config.AddBranch("claude", claude =>
