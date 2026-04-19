@@ -82,7 +82,6 @@ internal record DatabaseRestoreConfig
 /// </summary>
 public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreCommand.Settings>
 {
-    private readonly IConfigurationService _configurationService;
     private readonly IPostgresBinaryLocator _binaryLocator;
     private readonly IPostgresPasswordHandler _passwordHandler;
     private readonly IUserConfigService _userConfigService;
@@ -92,21 +91,18 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreCommand
     /// <summary>
     /// Initializes a new instance of the <see cref="DatabaseRestoreCommand"/> class.
     /// </summary>
-    /// <param name="configurationService">The configuration service.</param>
     /// <param name="binaryLocator">The PostgreSQL binary locator service.</param>
     /// <param name="passwordHandler">The PostgreSQL password handler service.</param>
     /// <param name="userConfigService">The user configuration service.</param>
     /// <param name="credentialService">The credential encryption service.</param>
     /// <param name="logger">The logger instance.</param>
     public DatabaseRestoreCommand(
-        IConfigurationService configurationService,
         IPostgresBinaryLocator binaryLocator,
         IPostgresPasswordHandler passwordHandler,
         IUserConfigService userConfigService,
         ICredentialService credentialService,
         ILogger<DatabaseRestoreCommand> logger)
     {
-        _configurationService = configurationService;
         _binaryLocator = binaryLocator;
         _passwordHandler = passwordHandler;
         _userConfigService = userConfigService;
@@ -307,12 +303,10 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreCommand
     /// <returns>A tuple containing the validated config or null, and an error code if validation failed.</returns>
     private (DatabaseRestoreConfig? Config, int ErrorCode) LoadAndValidateRestoreConfiguration(Settings settings)
     {
-        var dbConfig = _configurationService.GetDatabaseConfig();
-
-        var host = settings.Host ?? dbConfig.Host ?? FurLabConstants.DefaultHost;
-        var port = settings.Port ?? dbConfig.Port ?? FurLabConstants.DefaultPort;
-        var username = settings.Username ?? dbConfig.Username;
-        var password = settings.Password ?? ResolvePasswordFromUserConfig(host, port) ?? dbConfig.Password;
+        var host = settings.Host ?? FurLabConstants.DefaultHost;
+        var port = settings.Port ?? FurLabConstants.DefaultPort;
+        var username = settings.Username;
+        var password = settings.Password ?? ResolvePasswordFromUserConfig(host, port);
 
         if (!SecurityUtils.IsValidHost(host))
         {

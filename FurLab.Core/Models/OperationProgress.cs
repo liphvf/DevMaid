@@ -21,17 +21,7 @@ public record OperationProgress
     public string? CurrentOperation { get; init; }
 
     /// <summary>
-    /// Gets or sets the percentage complete (0-100).
-    /// </summary>
-    public double Percentage { get; init; }
-
-    /// <summary>
     /// Gets or sets additional progress information.
     /// </summary>
     public string? Details { get; init; }
-
-    /// <summary>
-    /// Gets or sets whether the operation is complete.
-    /// </summary>
-    public bool IsComplete => TotalSteps > 0 && CurrentStep >= TotalSteps;
 }

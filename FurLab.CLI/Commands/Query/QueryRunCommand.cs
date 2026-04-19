@@ -404,7 +404,6 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunCommand.Settings>
             FetchAllDatabases = settings.All,
             SslMode = builder.SslMode.ToString(),
             Timeout = builder.Timeout,
-            CommandTimeout = builder.CommandTimeout,
             MaxParallelism = 4
         };
     }
@@ -684,7 +683,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunCommand.Settings>
                             var connectionString = BuildConnectionStringForServer(server, database, settings);
                             var executedAt = DateTime.UtcNow;
                             var sw = Stopwatch.StartNew();
-                            var queryResult = await ExecuteQueryWithRetryAsync(connectionString, sqlQuery, ResolveCommandTimeout(server, settings), dbCt);
+                            var queryResult = await ExecuteQueryWithRetryAsync(connectionString, sqlQuery, settings?.CommandTimeout ?? 300, dbCt);
                             sw.Stop();
 
                             var row = new CsvRow(server.Name, database, executedAt, "Success", queryResult.Data.Count, string.Empty, sw.Elapsed.TotalMilliseconds, queryResult.ColumnNames, queryResult.Data);
@@ -755,15 +754,6 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunCommand.Settings>
         {
             throw new InvalidOperationException("No server responded successfully. Please check the connections.");
         }
-    }
-
-    /// <summary>
-    /// Resolves the command timeout by applying any <c>--command-timeout</c> setting override
-    /// on top of the server configuration default.
-    /// </summary>
-    private static int ResolveCommandTimeout(ServerConfigEntry server, Settings settings)
-    {
-        return settings.CommandTimeout ?? server.CommandTimeout;
     }
 
     /// <summary>
@@ -923,7 +913,6 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunCommand.Settings>
             Password = password,
             SslMode = ParseSslMode(ResolveSetting(settings?.SslMode, server.SslMode)),
             Timeout = settings?.Timeout ?? server.Timeout,
-            CommandTimeout = settings?.CommandTimeout ?? server.CommandTimeout,
             Pooling = settings?.Pooling ?? true,
             MinPoolSize = settings?.MinPoolSize ?? 1,
             MaxPoolSize = settings?.MaxPoolSize ?? 100

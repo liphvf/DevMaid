@@ -196,7 +196,6 @@ public partial class UserConfigService : IUserConfigService
             if (server.Port == 0) server.Port = 5432;
             if (string.IsNullOrWhiteSpace(server.SslMode)) server.SslMode = "Prefer";
             if (server.Timeout == 0) server.Timeout = 30;
-            if (server.CommandTimeout == 0) server.CommandTimeout = 300;
             if (server.MaxParallelism == 0) server.MaxParallelism = 4;
             if (server.ExcludePatterns == null || server.ExcludePatterns.Count == 0)
             {

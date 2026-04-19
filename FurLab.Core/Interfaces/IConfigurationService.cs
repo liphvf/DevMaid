@@ -1,5 +1,3 @@
-using FurLab.Core.Models;
-
 using Microsoft.Extensions.Configuration;
 
 namespace FurLab.Core.Interfaces;
@@ -13,10 +11,4 @@ public interface IConfigurationService
     /// Gets the application configuration.
     /// </summary>
     IConfiguration Configuration { get; }
-
-    /// <summary>
-    /// Gets the database connection configuration.
-    /// </summary>
-    /// <returns>The database connection configuration.</returns>
-    DatabaseConnectionConfig GetDatabaseConfig();
 }

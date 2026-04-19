@@ -86,13 +86,6 @@ public sealed class DbServersAddCommand : AsyncCommand<DbServersAddCommand.Setti
         public int? Timeout { get; init; }
 
         /// <summary>
-        /// Gets the command timeout in seconds.
-        /// </summary>
-        [CommandOption("--command-timeout")]
-        [System.ComponentModel.Description("Command timeout in seconds.")]
-        public int? CommandTimeout { get; init; }
-
-        /// <summary>
         /// Gets the max degree of parallelism.
         /// </summary>
         [CommandOption("--max-parallelism")]
@@ -219,7 +212,6 @@ public sealed class DbServersAddCommand : AsyncCommand<DbServersAddCommand.Setti
                 .AddChoices("Disable", "Allow", "Prefer", "Require", "VerifyCA", "VerifyFull"));
 
         var timeout = AnsiConsole.Ask("Connection timeout [[30s]]: ", 30);
-        var commandTimeout = AnsiConsole.Ask("Command timeout [[300s]]: ", 300);
         var maxParallelism = AnsiConsole.Ask("Max Parallelism [[4]]: ", 4);
 
         var server = new ServerConfigEntry
@@ -233,7 +225,6 @@ public sealed class DbServersAddCommand : AsyncCommand<DbServersAddCommand.Setti
             ExcludePatterns = excludePatterns,
             SslMode = sslMode,
             Timeout = timeout,
-            CommandTimeout = commandTimeout,
             MaxParallelism = maxParallelism
         };
 
@@ -304,7 +295,6 @@ public sealed class DbServersAddCommand : AsyncCommand<DbServersAddCommand.Setti
             ExcludePatterns = excludePatterns,
             SslMode = settings.SslMode ?? "Prefer",
             Timeout = settings.Timeout ?? 30,
-            CommandTimeout = settings.CommandTimeout ?? 300,
             MaxParallelism = settings.MaxParallelism ?? 4
         };
     }

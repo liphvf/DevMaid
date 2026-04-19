@@ -196,7 +196,6 @@ public class UserConfigServiceTests
         Assert.AreEqual(5432, config.Servers[0].Port);
         Assert.AreEqual("Prefer", config.Servers[0].SslMode);
         Assert.AreEqual(30, config.Servers[0].Timeout);
-        Assert.AreEqual(300, config.Servers[0].CommandTimeout);
         Assert.AreEqual(4, config.Servers[0].MaxParallelism);
     }
 
@@ -275,7 +274,6 @@ public class UserConfigServiceTests
         Assert.AreEqual("analytics", server.Databases[1]);
         Assert.AreEqual("Require", server.SslMode);
         Assert.AreEqual(60, server.Timeout);
-        Assert.AreEqual(600, server.CommandTimeout);
     }
 
     [TestMethod(DisplayName = "TryLoadLegacyConfig returns null when appsettings.json does not have Servers section")]
@@ -425,8 +423,7 @@ public class UserConfigServiceTests
                                 ? dbProp.EnumerateArray().Select(d => d.GetString() ?? string.Empty).ToList()
                                 : [],
                             SslMode = serverJson.TryGetProperty("SslMode", out var sslProp) ? sslProp.GetString() ?? "Prefer" : "Prefer",
-                            Timeout = serverJson.TryGetProperty("Timeout", out var timeoutProp) ? timeoutProp.GetInt32() : 30,
-                            CommandTimeout = serverJson.TryGetProperty("CommandTimeout", out var cmdTimeoutProp) ? cmdTimeoutProp.GetInt32() : 300
+                            Timeout = serverJson.TryGetProperty("Timeout", out var timeoutProp) ? timeoutProp.GetInt32() : 30
                         };
 
                         config.Servers.Add(server);
@@ -449,7 +446,6 @@ public class UserConfigServiceTests
                 if (server.Port == 0) server.Port = 5432;
                 if (string.IsNullOrWhiteSpace(server.SslMode)) server.SslMode = "Prefer";
                 if (server.Timeout == 0) server.Timeout = 30;
-                if (server.CommandTimeout == 0) server.CommandTimeout = 300;
                 if (server.MaxParallelism == 0) server.MaxParallelism = 4;
                 if (server.ExcludePatterns == null || server.ExcludePatterns.Count == 0)
                     server.ExcludePatterns = ["template*", "postgres"];

@@ -17,7 +17,6 @@ namespace FurLab.CLI.Commands.Database;
 /// </summary>
 public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupCommand.Settings>
 {
-    private readonly IConfigurationService _configurationService;
     private readonly IPostgresBinaryLocator _binaryLocator;
     private readonly IPostgresPasswordHandler _passwordHandler;
     private readonly IUserConfigService _userConfigService;
@@ -28,7 +27,6 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupCommand.S
     /// <summary>
     /// Initializes a new instance of the <see cref="DatabaseBackupCommand"/> class.
     /// </summary>
-    /// <param name="configurationService">The configuration service.</param>
     /// <param name="binaryLocator">The PostgreSQL binary locator service.</param>
     /// <param name="passwordHandler">The PostgreSQL password handler service.</param>
     /// <param name="userConfigService">The user configuration service.</param>
@@ -36,7 +34,6 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupCommand.S
     /// <param name="databaseService">The database service for listing databases.</param>
     /// <param name="logger">The logger instance.</param>
     public DatabaseBackupCommand(
-        IConfigurationService configurationService,
         IPostgresBinaryLocator binaryLocator,
         IPostgresPasswordHandler passwordHandler,
         IUserConfigService userConfigService,
@@ -44,7 +41,6 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupCommand.S
         IDatabaseService databaseService,
         ILogger<DatabaseBackupCommand> logger)
     {
-        _configurationService = configurationService;
         _binaryLocator = binaryLocator;
         _passwordHandler = passwordHandler;
         _userConfigService = userConfigService;
@@ -203,12 +199,10 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupCommand.S
 
     private (DatabaseBackupConfig? Config, int ErrorCode) LoadAndValidateBackupConfiguration(Settings settings)
     {
-        var dbConfig = _configurationService.GetDatabaseConfig();
-
-        var host = settings.Host ?? dbConfig.Host ?? FurLabConstants.DefaultHost;
-        var port = settings.Port ?? dbConfig.Port ?? FurLabConstants.DefaultPort;
-        var username = settings.Username ?? dbConfig.Username;
-        var password = settings.Password ?? ResolvePasswordFromUserConfig(host, port) ?? dbConfig.Password;
+        var host = settings.Host ?? FurLabConstants.DefaultHost;
+        var port = settings.Port ?? FurLabConstants.DefaultPort;
+        var username = settings.Username;
+        var password = settings.Password ?? ResolvePasswordFromUserConfig(host, port);
 
         if (!SecurityUtils.IsValidHost(host))
         {
