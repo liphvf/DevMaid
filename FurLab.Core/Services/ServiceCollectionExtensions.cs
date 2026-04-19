@@ -31,7 +31,6 @@ public static class ServiceCollectionExtensions
         _ = services.AddHealthChecks()
             .AddCheck<PostgresBinaryHealthCheck>("postgres_binaries", tags: ["infrastructure"]);
 
-        _ = services.AddSingleton<IConfigurationService, ConfigurationService>();
         _ = services.AddSingleton<IProcessExecutor, ProcessExecutor>();
         _ = services.AddSingleton<IDatabaseService, DatabaseService>();
         _ = services.AddSingleton<IPgPassService, PgPassService>();

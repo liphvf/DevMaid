@@ -9,10 +9,8 @@ namespace FurLab.Core.HealthChecks;
 /// Health check that verifies PostgreSQL binaries are available in the system.
 /// </summary>
 public class PostgresBinaryHealthCheck(
-    IConfigurationService configurationService,
     IPostgresBinaryLocator postgresBinaryLocator) : IHealthCheck
 {
-    private readonly IConfigurationService _configurationService = configurationService;
     private readonly IPostgresBinaryLocator _postgresBinaryLocator = postgresBinaryLocator;
 
     /// <summary>
