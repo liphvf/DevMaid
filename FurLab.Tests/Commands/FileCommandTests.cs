@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 
-using FurLab.CLI.Utils;
+using FurLab.CLI.Commands.Files;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -47,7 +47,7 @@ public class FileCommandTests
 
         foreach (var inputFilePath in inputFilePaths)
         {
-            currentEncoding = Utils.GetCurrentFileEncoding(inputFilePath);
+            currentEncoding = FileEncodingHelper.DetectEncoding(inputFilePath);
             allFileText.Append(File.ReadAllText(inputFilePath, currentEncoding));
             allFileText.AppendLine();
         }
@@ -67,7 +67,7 @@ public class FileCommandTests
         var filePath = Path.Combine(_testDirectory, "utf8test.txt");
         File.WriteAllText(filePath, "áéíóúãõû", Encoding.UTF8);
 
-        var encoding = Utils.GetCurrentFileEncoding(filePath);
+        var encoding = FileEncodingHelper.DetectEncoding(filePath);
         Assert.IsNotNull(encoding);
     }
 
@@ -86,7 +86,7 @@ public class FileCommandTests
 
         foreach (var inputFilePath in inputFilePaths)
         {
-            currentEncoding = Utils.GetCurrentFileEncoding(inputFilePath);
+            currentEncoding = FileEncodingHelper.DetectEncoding(inputFilePath);
             allFileText.Append(File.ReadAllText(inputFilePath, currentEncoding));
             allFileText.AppendLine();
         }
@@ -118,7 +118,7 @@ public class FileCommandTests
 
         foreach (var inputFilePath in inputFilePaths)
         {
-            currentEncoding = Utils.GetCurrentFileEncoding(inputFilePath);
+            currentEncoding = FileEncodingHelper.DetectEncoding(inputFilePath);
             allFileText.Append(File.ReadAllText(inputFilePath, currentEncoding));
             allFileText.AppendLine();
         }
