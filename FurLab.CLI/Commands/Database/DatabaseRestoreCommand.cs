@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Text;
-using FurLab.CLI.Utils;
+using FurLab.CLI.Exceptions.Database;
+using FurLab.CLI.Exceptions.File;
+using FurLab.CLI.Exceptions.Security;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Utils;
 using Microsoft.Extensions.Logging;

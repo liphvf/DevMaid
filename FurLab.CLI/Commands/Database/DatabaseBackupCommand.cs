@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text;
-using FurLab.CLI.Utils;
+using FurLab.CLI.Exceptions.Database;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
 using FurLab.Core.Utils;
