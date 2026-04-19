@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+
 using FurLab.Core.Services;
 
 using Microsoft.AspNetCore.DataProtection;
@@ -11,16 +14,32 @@ public class CredentialServiceTests
 {
     private IDataProtectionProvider _provider = null!;
 
+    private string _testKeysDirectory = null!;
+
     [TestInitialize]
     public void Setup()
     {
-        // Use an in-memory DataProtection provider for tests (no filesystem keys)
-        // Must use same ApplicationName as the real app for encryption/decryption to work
+        // Create a temporary directory for test keys
+        _testKeysDirectory = Path.Combine(Path.GetTempPath(), $"FurLabTestKeys_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(_testKeysDirectory);
+
+        // Configure DataProtection with temp directory and same settings as the real app
         var services = new ServiceCollection();
         services.AddDataProtection()
             .SetApplicationName("FurLab")
-            .UseEphemeralDataProtectionProvider(); // Use in-memory keys for tests
+            .PersistKeysToFileSystem(new DirectoryInfo(_testKeysDirectory));
+
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        // Clean up temp keys directory
+        if (Directory.Exists(_testKeysDirectory))
+        {
+            Directory.Delete(_testKeysDirectory, recursive: true);
+        }
     }
 
     [TestMethod(DisplayName = "Encrypt returns non-empty string different from plaintext")]
