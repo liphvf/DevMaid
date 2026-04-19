@@ -1,63 +1,61 @@
 # Multi-Server Query Execution
 
-O comando `query` suporta execução em múltiplos servidores PostgreSQL com seleção interativa, execução paralela e exportação CSV.
+O comando `query run` suporta execução em múltiplos servidores PostgreSQL com seleção interativa, execução paralela e exportação CSV consolidada.
 
 ## Configuração
 
-### Usando `settings db-servers`
+### Gerenciamento via CLI
 
-Servidores são gerenciados via CLI (armazenados em `%LocalAppData%\FurLab\furlab.jsonc`):
+Servidores são gerenciados via comando `settings db-servers`. As configurações são armazenadas em `%LocalAppData%\FurLab\furlab.jsonc`.
+
+**Importante**: Por segurança, as senhas não são armazenadas em texto plano no arquivo JSON. Elas são criptografadas e gerenciadas pelo `ICredentialService`.
 
 ```bash
 # Adicionar servidor interativamente
-FurLab settings db-servers add -i
+fur settings db-servers add -i
 
 # Adicionar servidor com flags
-FurLab settings db-servers add -n dev -h localhost -p 5432 -U postgres -W mypass \
-    -d mydb,app_dev --ssl Prefer --timeout 30 --command-timeout 300
+fur settings db-servers add dev --host localhost --port 5432 --username postgres --database mydb
 
 # Adicionar com auto-descoberta de databases
-FurLab settings db-servers add -n prod -h prod-db.com -U readonly -W secret \
-    --fetch-all --exclude-patterns "template*,postgres"
+fur settings db-servers prod --host prod-db.com --username readonly --fetch-all --exclude-patterns "template*,postgres"
+
+# Definir/Atualizar senha (armazenamento seguro criptografado)
+fur settings db-servers set-password dev
 
 # Listar servidores
-FurLab settings db-servers ls
+fur settings db-servers ls
 
 # Testar conexão
-FurLab settings db-servers test -n dev
+fur settings db-servers test dev
 
 # Remover servidor
-FurLab settings db-servers rm -n dev
+fur settings db-servers rm dev
 ```
 
 ### Estrutura do furlab.jsonc
 
-O arquivo `furlab.jsonc` em `%LocalAppData%\FurLab\` suporta comentários:
+O arquivo `furlab.jsonc` suporta comentários e segue esta estrutura:
 
 ```jsonc
 {
-  // Servidores PostgreSQL
   "servers": [
     {
-      "name": "dev",               // Identificador único (obrigatório)
-      "host": "localhost",          // Host (obrigatório)
-      "port": 5432,                 // Porta (default: 5432)
-      "username": "postgres",       // Usuário (obrigatório)
-      "password": "mypassword",     // Senha (opcional)
-      "databases": ["mydb"],        // Databases específicas
-      "fetchAllDatabases": false,   // Auto-descoberta (default: false)
-      "excludePatterns": ["template*", "postgres"],  // Patterns de exclusão
-      "sslMode": "Prefer",          // SSL (default: Prefer)
-      "timeout": 30,                // Timeout de conexão (default: 30)
-      "commandTimeout": 300,        // Timeout do comando (default: 300)
-      "maxParallelism": 4           // Paralelismo por servidor (default: 4)
+      "name": "dev",
+      "host": "localhost",
+      "port": 5432,
+      "username": "postgres",
+      "encryptedPassword": "AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA...", // Senha criptografada
+      "databases": ["mydb"],
+      "fetchAllDatabases": false,
+      "excludePatterns": ["template*", "postgres"],
+      "sslMode": "Prefer",
+      "timeout": 30,
+      "maxParallelism": 4
     }
   ],
-  // Defaults
   "defaults": {
-    "outputFormat": "csv",
     "outputDirectory": "./results",
-    "fetchAllDatabases": false,
     "requireConfirmation": true,
     "maxParallelism": 4
   }
@@ -68,78 +66,53 @@ O arquivo `furlab.jsonc` em `%LocalAppData%\FurLab\` suporta comentários:
 
 ### 1. Seleção Interativa de Servidores
 
-Ao executar `query run`, todos os servidores configurados são exibidos num prompt de seleção múltipla (todos pré-selecionados). Você pode desmarcar servidores que não deseja usar.
+Ao executar `query run`, se você não fornecer uma string de conexão direta, o FurLab exibe um menu de seleção múltipla com todos os servidores cadastrados. Por padrão, todos vêm pré-selecionados.
 
 ### 2. Detecção de Queries Destrutivas
 
-Se a query contém keywords destrutivas (INSERT, UPDATE, DELETE, ALTER, DROP, CREATE, TRUNCATE, MERGE, GRANT, REVOKE, SET ROLE), uma confirmação é exibida antes de prosseguir.
+O FurLab analisa o SQL em busca de comandos que alteram dados ou estrutura. Se detectados, um alerta vermelho é exibido com um resumo do impacto e uma solicitação de confirmação.
 
-### 3. Execução Paralela
+### 3. Execução Paralela e Resiliência
 
-Queries executam em paralelo em todos os servidores/databases selecionados, com:
-- `MaxDegreeOfParallelism` configurável por servidor
-- Polly retries automáticos (3 tentativas, backoff exponencial) para falhas transitórias
-- Tolerância a falhas: se um servidor falha, os outros continuam
+As queries rodam em paralelo:
+- **Entre Servidores**: Múltiplos servidores são processados simultaneamente.
+- **Entre Databases**: Se um servidor tem múltiplas databases, elas também podem ser processadas em paralelo (respeitando o `maxParallelism` do servidor).
+- **Retry**: Falhas de conexão transientes são tratadas automaticamente com 3 tentativas e backoff exponencial.
 
-### 4. Log e Exportação
+### 4. Resultados Progressivos
 
-- **Terminal**: Log por database (`✓ dev/db1 — Success — 5 rows (14:30:22)`)
-- **Terminal**: Tabela resumo final (Server, Database, Status, Rows, ExecutedAt, Error)
-- **CSV**: Apenas resultados de sucesso (colunas: `Server, Database, <query cols>`)
+Diferente de ferramentas tradicionais que esperam tudo terminar, o FurLab:
+1. Cria uma pasta com timestamp para a execução.
+2. Grava arquivos CSV parciais para cada servidor assim que os dados chegam.
+3. Exibe uma tabela live no terminal com o status de cada database.
+4. Gera um arquivo `consolidated_<timestamp>.csv` ao final com todos os resultados de sucesso.
 
-## Exemplos
+## Exemplos de Uso
 
-### Query em servidores selecionados
+### Execução Simples
 
 ```bash
-FurLab query run -i audit.sql -o ./results
+fur query run -i audit.sql
 ```
 
-### Query inline
+### Forçar execução em todas as databases (Auto-discovery)
 
 ```bash
-FurLab query run -c "SELECT count(*) FROM users" -o ./results
+fur query run -c "SELECT version()" --all
 ```
 
-### CSV por servidor
+### Pular confirmação (Útil para automação)
 
 ```bash
-FurLab query run -i query.sql --separate-files -o ./results
-```
-
-Gera: `dev_20260412_143022.csv`, `prod_20260412_143022.csv`
-
-### Auto-descoberta de databases
-
-```bash
-# Servidor com fetchAllDatabases: true no furlab.jsonc
-FurLab query run -i query.sql -o ./results
+fur query run -i script.sql --no-confirm
 ```
 
 ## Saída CSV
 
-### Consolidado (padrão)
+O arquivo consolidado possui as colunas originais da sua query acrescidas de:
+- `Server`: Nome do servidor configurado.
+- `Database`: Nome da database onde a linha foi lida.
 
-```
-Server,Database,id,name
-dev,mydb,1,Alice
-dev,mydb,2,Bob
-prod,mydb,1,Alice
-```
+### Tratamento de Erros
 
-### Separado (`--separate-files`)
-
-Um arquivo por servidor: `<server>_<timestamp>.csv`
-
-### Comportamento com Erros
-
-- Erros são logados no terminal (não no CSV)
-- Se todos os servidores falham, exibe: "Nenhum servidor respondeu com sucesso. Verifique as conexões." (exit code 1)
-
-## Migração do appsettings.json
-
-Se você usava `appsettings.json` para configurar servidores:
-
-1. Use `settings db-servers add` para recriar servidores no novo formato
-2. O `appsettings.json` ainda funciona como fallback durante transição
-3. Quando ambos existem, `furlab.jsonc` tem precedência
+Se uma database falhar, o erro é registrado no arquivo `_erros.csv` daquela execução, mas o processo continua para as demais databases/servidores.

@@ -1,101 +1,85 @@
 # Query Command
 
-O comando `query` permite executar queries SQL em múltiplos servidores PostgreSQL e exportar os resultados para CSV.
+O comando `query run` permite executar queries SQL em um ou mais servidores PostgreSQL e exportar os resultados para CSV. Ele suporta execução paralela, tratamento de falhas transientes (retry) e detecção de queries destrutivas.
 
 ## Uso
 
 ```bash
-FurLab query run -i <arquivo.sql> [opções]
-FurLab query run -c "SELECT * FROM users" [opções]
+# Executar script em arquivo
+fur query run -i <arquivo.sql>
+
+# Executar query inline
+fur query run -c "SELECT * FROM users"
+
+# Executar em todos os servidores configurados ignorando confirmação
+fur query run -i script.sql --all --no-confirm
 ```
 
 ## Fluxo de Execução
 
-1. **Query**: Forneça via `-i` (arquivo) ou `-c` (inline)
-2. **Seleção de Servidores**: Prompt interativo mostra servidores configurados (todos pré-selecionados)
-3. **Confirmação**: Se a query for destrutiva, exibe confirmação com detalhes
-4. **Execução Paralela**: Queries executam em paralelo com tolerância a falhas
-5. **Exportação CSV**: Resultados são exportados para CSV
+1. **Seleção de Query**: Forneça via `-i` (arquivo) ou `-c` (inline).
+2. **Seleção de Servidores**: 
+   - Se `--npgsql-connection-string` for fornecido, conecta-se diretamente.
+   - Caso contrário, mostra um menu interativo com os servidores configurados em `settings db-servers`.
+3. **Descoberta de Databases**: Se o servidor estiver configurado com `FetchAllDatabases` ou se `-a/--all` for usado, o FurLab descobre todas as databases acessíveis no servidor.
+4. **Análise de Risco**: Detecta se a query contém comandos destrutivos (INSERT, UPDATE, DELETE, etc.).
+5. **Confirmação**: Se a query for destrutiva, exibe um resumo dos alvos e pede confirmação (pode ser pulado com `--no-confirm`).
+6. **Execução Paralela**: As queries são executadas em paralelo respeitando o limite de concorrência configurado. Usa **Polly** para tentar novamente em caso de falhas de rede.
+7. **Saída Progressiva**: Os resultados são gravados em arquivos CSV parciais por servidor enquanto a query executa e consolidados ao final.
 
 ## Opções
 
-### Query
+### Entrada (Query)
 
-| Opção | Descrição |
-|-------|-----------|
-| `-i, --input <arquivo>` | Caminho para arquivo SQL (mutuamente exclusivo com `-c`) |
-| `-c, --command <sql>` | Query SQL inline (mutuamente exclusivo com `-i`) |
+| Opção | Atalho | Descrição |
+|-------|--------|-----------|
+| `--input` | `-i` | Caminho para arquivo SQL (mutuamente exclusivo com `-c`). |
+| `--command` | `-c` | Query SQL inline (mutuamente exclusivo com `-i`). |
+
+### Conexão (Overrides)
+
+Estas opções sobrescrevem as configurações dos servidores selecionados ou definem uma conexão ad-hoc.
+
+| Opção | Atalho | Descrição |
+|-------|--------|-----------|
+| `--npgsql-connection-string` | - | String de conexão completa. Pula seleção de servidor. |
+| `--host` | `-H` | Host do banco de dados. |
+| `--port` | `-p` | Porta do banco de dados. |
+| `--database` | `-d` | Nome do banco de dados. |
+| `--username` | `-U` | Usuário do banco de dados. |
+| `--password` | `-W` | Senha (solicitada interativamente se não fornecida). |
+| `--ssl-mode` | - | Modo SSL (Disable, Allow, Prefer, Require, VerifyCA, VerifyFull). |
+| `--timeout` | - | Timeout de conexão em segundos (padrão: 30). |
+| `--command-timeout` | - | Timeout da query em segundos (padrão: 300). |
 
 ### Output
 
-| Opção | Descrição |
-|-------|-----------|
-| `-o, --output <caminho>` | Arquivo CSV ou diretório de saída |
-| `--separate-files` | Gera um CSV por servidor ao invés de consolidado |
+| Opção | Atalho | Descrição |
+|-------|--------|-----------|
+| `--output` | `-o` | Diretório de saída para os CSVs (padrão: configurado em defaults). |
 
-### Multi-Database
+### Filtros e Comportamento
 
-| Opção | Descrição |
-|-------|-----------|
-| `-a, --all` | Executa em todas as databases do servidor |
-| `--exclude <dbs>` | Databases para excluir (separadas por vírgula) |
+| Opção | Atalho | Descrição |
+|-------|--------|-----------|
+| `--all` | `-a` | Executa em todas as databases descobertas em cada servidor. |
+| `--exclude` | - | Lista de databases para excluir (ex: `temp_*, archive`). Aceita curingas. |
+| `--no-confirm` | - | Pula confirmação para queries destrutivas. |
 
-### Confirmação
+## Resultados e Logs
 
-| Opção | Descrição |
-|-------|-----------|
-| `--no-confirm` | Pula confirmação de queries destrutivas |
+Os resultados são salvos em um diretório com timestamp dentro do caminho de output:
 
-## Formato do CSV
-
-### Consolidado (padrão)
-
-Arquivo único com colunas: `Server, Database, <colunas da query>`
-
-```
-Server,Database,id,name
-dev,mydb,1,Alice
-dev,mydb,2,Bob
-prod,mydb,1,Alice
-```
-
-### Arquivos Separados (`--separate-files`)
-
-Um CSV por servidor: `<server>_<timestamp>.csv`
-
-Cada arquivo mantém o mesmo formato com colunas `Server, Database, <colunas da query>`.
-
-### Notas
-
-- Falhas NÃO geram linhas no CSV — são logadas no terminal
-- O terminal exibe uma tabela resumo com: Server, Database, Status, Rows, ExecutedAt, Error
+- **Consolidado**: `consolidated_<timestamp>.csv` — Contém Server, Database e as colunas da query.
+- **Por Servidor**: `<server>_<timestamp>.csv` — Resultados específicos de cada servidor.
+- **Erros**: `<timestamp>_erros.csv` — Detalhes de falhas (Server, Database, Erro).
+- **Log**: `<timestamp>_log.csv` — Histórico completo da execução com métricas de tempo e linhas.
 
 ## Detecção de Queries Destrutivas
 
-Antes da execução, FurLab analisa a query para detectar comandos destrutivos:
-
-**Keywords destrutivas**: INSERT, UPDATE, DELETE, ALTER, DROP, CREATE, TRUNCATE, MERGE, GRANT, REVOKE, SET ROLE
-
-Quando detectada:
-- Exibe tipo de query, servidores/databases afetados, preview
-- Pede confirmação antes de prosseguir
-- Use `--no-confirm` para pular em CI/scripts
-
-Comentários SQL (`--`, `/* */`) e CTEs (`WITH ... AS`) são ignorados na análise.
+Keywords que disparam o alerta:
+`INSERT`, `UPDATE`, `DELETE`, `ALTER`, `DROP`, `CREATE`, `TRUNCATE`, `MERGE`, `GRANT`, `REVOKE`, `SET ROLE`.
 
 ## Configuração de Servidores
 
-Servidores são configurados via `settings db-servers`:
-
-```bash
-# Adicionar servidor
-FurLab settings db-servers add -n dev -h localhost -p 5432 -U postgres -W mypass
-
-# Listar servidores
-FurLab settings db-servers ls
-
-# Testar conexão
-FurLab settings db-servers test -n dev
-```
-
-Veja [MULTI_SERVER.md](MULTI_SERVER.md) para documentação completa.
+Use o comando `settings db-servers` para gerenciar seus servidores. As senhas são armazenadas de forma criptografada e segura.
