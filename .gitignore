@@ -240,8 +240,6 @@ Generated_Code/
 # because we have git ;-)
 _UpgradeReport_Files/
 # Exception: Don't ignore source code folders named Backup
-!FurLab.CLI/Commands/**/Backup/
-Backup*/
 UpgradeLog*.XML
 UpgradeLog*.htm
 ServiceFabricBackup/
