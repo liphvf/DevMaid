@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-
 using FurLab.Core.Services;
 
 using Microsoft.AspNetCore.DataProtection;
@@ -14,20 +11,15 @@ public class CredentialServiceTests
 {
     private IDataProtectionProvider _provider = null!;
 
-    private string _testKeysDirectory = null!;
-
     [TestInitialize]
     public void Setup()
     {
-        // Create a temporary directory for test keys
-        _testKeysDirectory = Path.Combine(Path.GetTempPath(), $"FurLabTestKeys_{Guid.NewGuid():N}");
-        Directory.CreateDirectory(_testKeysDirectory);
-
-        // Configure DataProtection with temp directory and same settings as the real app
+        // Use in-memory ephemeral DataProtection for tests
+        // This ensures consistent behavior across all platforms (Windows, Linux, macOS)
         var services = new ServiceCollection();
         services.AddDataProtection()
-            .SetApplicationName("FurLab")
-            .PersistKeysToFileSystem(new DirectoryInfo(_testKeysDirectory));
+            .SetApplicationName("FurLab.Tests")
+            .UseEphemeralDataProtectionProvider();
 
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
     }
