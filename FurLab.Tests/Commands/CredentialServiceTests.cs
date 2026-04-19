@@ -18,7 +18,8 @@ public class CredentialServiceTests
         // Must use same ApplicationName as the real app for encryption/decryption to work
         var services = new ServiceCollection();
         services.AddDataProtection()
-            .SetApplicationName("FurLab");
+            .SetApplicationName("FurLab")
+            .UseEphemeralDataProtectionProvider(); // Use in-memory keys for tests
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
     }
 
