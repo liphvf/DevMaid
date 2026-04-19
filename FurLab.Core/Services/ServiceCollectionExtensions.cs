@@ -1,6 +1,5 @@
 using System.Runtime.Versioning;
 
-using FurLab.Core.HealthChecks;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Logging;
 
@@ -27,9 +26,6 @@ public static class ServiceCollectionExtensions
             _ = builder.AddConsole();
             _ = builder.SetMinimumLevel(LogLevel.Warning);
         });
-
-        _ = services.AddHealthChecks()
-            .AddCheck<PostgresBinaryHealthCheck>("postgres_binaries", tags: ["infrastructure"]);
 
         _ = services.AddSingleton<IProcessExecutor, ProcessExecutor>();
         _ = services.AddSingleton<IDatabaseService, DatabaseService>();
