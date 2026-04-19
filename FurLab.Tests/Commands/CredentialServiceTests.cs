@@ -1,3 +1,5 @@
+using System.IO;
+
 using FurLab.Core.Services;
 
 using Microsoft.AspNetCore.DataProtection;
@@ -10,17 +12,39 @@ namespace FurLab.Tests.Commands;
 public class CredentialServiceTests
 {
     private IDataProtectionProvider _provider = null!;
+    private string _testKeysDirectory = null!;
 
     [TestInitialize]
     public void Setup()
     {
-        // Use in-memory ephemeral DataProtection for tests
+        // Create a temporary directory for test keys
+        _testKeysDirectory = Path.Combine(Path.GetTempPath(), $"FurLabTestKeys_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(_testKeysDirectory);
+
+        // Configure DataProtection with temp directory
         var services = new ServiceCollection();
         services.AddDataProtection()
             .SetApplicationName("FurLab.Tests")
-            .UseEphemeralDataProtectionProvider();
+            .PersistKeysToFileSystem(new DirectoryInfo(_testKeysDirectory))
+            .DisableAutomaticKeyGeneration(); // Disable auto-generation for tests
 
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        try
+        {
+            if (Directory.Exists(_testKeysDirectory))
+            {
+                Directory.Delete(_testKeysDirectory, recursive: true);
+            }
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
     }
 
     [TestMethod(DisplayName = "DataProtection roundtrip works directly")]
@@ -54,18 +78,8 @@ public class CredentialServiceTests
         var plaintext = "my-secret-password";
 
         var encrypted = service.Encrypt(plaintext);
-        
-        // Debug: check if encrypted is valid
-        Assert.IsFalse(string.IsNullOrEmpty(encrypted), "Encrypted should not be empty");
-        
         var decrypted = service.TryDecrypt(encrypted);
-        
-        // Debug: show what we got
-        if (decrypted == null)
-        {
-            Assert.Fail($"Decryption returned null. Encrypted value: {encrypted}");
-        }
-        
+
         Assert.AreEqual(plaintext, decrypted);
     }
 
@@ -112,16 +126,8 @@ public class CredentialServiceTests
         Assert.AreNotEqual(blob1, blob2);
 
         // But both decrypt to the same plaintext
-        var decrypted1 = service.TryDecrypt(blob1);
-        var decrypted2 = service.TryDecrypt(blob2);
-        
-        if (decrypted1 == null)
-            Assert.Fail($"Failed to decrypt blob1: {blob1}");
-        if (decrypted2 == null)
-            Assert.Fail($"Failed to decrypt blob2: {blob2}");
-            
-        Assert.AreEqual(plaintext, decrypted1);
-        Assert.AreEqual(plaintext, decrypted2);
+        Assert.AreEqual(plaintext, service.TryDecrypt(blob1));
+        Assert.AreEqual(plaintext, service.TryDecrypt(blob2));
     }
 
     [TestMethod(DisplayName = "Encrypt with empty password works (does not throw exception)")]
@@ -133,10 +139,6 @@ public class CredentialServiceTests
         var decrypted = service.TryDecrypt(encrypted);
 
         Assert.IsNotNull(encrypted);
-        
-        if (decrypted == null)
-            Assert.Fail($"Failed to decrypt empty password. Encrypted: {encrypted}");
-            
         Assert.AreEqual(string.Empty, decrypted);
     }
 }
