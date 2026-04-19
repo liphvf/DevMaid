@@ -15,9 +15,10 @@ public class CredentialServiceTests
     public void Setup()
     {
         // Use an in-memory DataProtection provider for tests (no filesystem keys)
+        // Must use same ApplicationName as the real app for encryption/decryption to work
         var services = new ServiceCollection();
         services.AddDataProtection()
-            .SetApplicationName("FurLab.Tests");
+            .SetApplicationName("FurLab");
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
     }
 
