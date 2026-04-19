@@ -24,15 +24,7 @@ public class CredentialServiceTests
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
     }
 
-    [TestCleanup]
-    public void Cleanup()
-    {
-        // Clean up temp keys directory
-        if (Directory.Exists(_testKeysDirectory))
-        {
-            Directory.Delete(_testKeysDirectory, recursive: true);
-        }
-    }
+
 
     [TestMethod(DisplayName = "Encrypt returns non-empty string different from plaintext")]
     public void Encrypt_ReturnsNonEmptyDifferentFromPlaintext()
