@@ -24,8 +24,6 @@ public class CredentialServiceTests
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
     }
 
-
-
     [TestMethod(DisplayName = "Encrypt returns non-empty string different from plaintext")]
     public void Encrypt_ReturnsNonEmptyDifferentFromPlaintext()
     {

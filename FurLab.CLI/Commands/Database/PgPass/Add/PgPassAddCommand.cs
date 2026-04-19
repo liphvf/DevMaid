@@ -1,6 +1,6 @@
+using FurLab.Core.Constants;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
-using FurLab.Core.Constants;
 using Spectre.Console;
 using Spectre.Console.Cli;
 

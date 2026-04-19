@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Text;
 using FurLab.CLI.Exceptions.Database;
+using FurLab.Core.Constants;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
-using FurLab.Core.Constants;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
