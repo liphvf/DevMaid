@@ -1,9 +1,9 @@
-using System;
 using System.IO;
 
 using FurLab.Core.Services;
 
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -22,12 +22,17 @@ public class CredentialServiceTests
         _testKeysDirectory = Path.Combine(Path.GetTempPath(), $"FurLabTestKeys_{Guid.NewGuid():N}");
         Directory.CreateDirectory(_testKeysDirectory);
 
-        // Configure DataProtection with temp directory
-        // Allow automatic key generation - it will create a key in the temp directory
+        // Configure DataProtection with temp directory and explicit managed algorithms
+        // This ensures consistent behavior across Windows and Linux
         var services = new ServiceCollection();
         services.AddDataProtection()
             .SetApplicationName("FurLab.Tests")
-            .PersistKeysToFileSystem(new DirectoryInfo(_testKeysDirectory));
+            .PersistKeysToFileSystem(new DirectoryInfo(_testKeysDirectory))
+            .UseCryptographicAlgorithms(new AuthenticatedEncryptorConfiguration
+            {
+                EncryptionAlgorithm = EncryptionAlgorithm.AES_256_CBC,
+                ValidationAlgorithm = ValidationAlgorithm.HMACSHA256
+            });
 
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
     }
