@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 using FurLab.Core.Services;
@@ -22,11 +23,11 @@ public class CredentialServiceTests
         Directory.CreateDirectory(_testKeysDirectory);
 
         // Configure DataProtection with temp directory
+        // Allow automatic key generation - it will create a key in the temp directory
         var services = new ServiceCollection();
         services.AddDataProtection()
             .SetApplicationName("FurLab.Tests")
-            .PersistKeysToFileSystem(new DirectoryInfo(_testKeysDirectory))
-            .DisableAutomaticKeyGeneration(); // Disable auto-generation for tests
+            .PersistKeysToFileSystem(new DirectoryInfo(_testKeysDirectory));
 
         _provider = services.BuildServiceProvider().GetRequiredService<IDataProtectionProvider>();
     }
