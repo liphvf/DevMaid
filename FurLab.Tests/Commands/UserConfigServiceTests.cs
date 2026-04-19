@@ -226,81 +226,6 @@ public class UserConfigServiceTests
         Assert.IsTrue(service.ConfigFileExists());
     }
 
-    [TestMethod(DisplayName = "TryLoadLegacyConfig returns null when file does not exist")]
-    public void TryLoadLegacyConfig_NoFile_ReturnsNull()
-    {
-        var service = new TestableUserConfigService(_logger, _testDirectory);
-        var result = service.TryLoadLegacyConfig();
-        Assert.IsNull(result);
-    }
-
-    [TestMethod(DisplayName = "TryLoadLegacyConfig migrates servers from legacy appsettings.json")]
-    public void TryLoadLegacyConfig_ValidLegacyFile_MigratesServers()
-    {
-        var legacyJson = @"{
-  ""Servers"": {
-    ""ServersList"": [
-      {
-        ""Name"": ""legacy-server"",
-        ""Host"": ""db.legacy.com"",
-        ""Port"": 5433,
-        ""Username"": ""admin"",
-        ""Password"": ""secret"",
-        ""Databases"": [""app"", ""analytics""],
-        ""SslMode"": ""Require"",
-        ""Timeout"": 60,
-        ""CommandTimeout"": 600
-      }
-    ]
-  }
-}";
-        var legacyPath = Path.Combine(_testDirectory, "appsettings.json");
-        File.WriteAllText(legacyPath, legacyJson);
-
-        var service = new TestableUserConfigService(_logger, _testDirectory);
-        var config = service.TryLoadLegacyConfig();
-
-        Assert.IsNotNull(config);
-        Assert.AreEqual(1, config.Servers.Count);
-
-        var server = config.Servers[0];
-        Assert.AreEqual("legacy-server", server.Name);
-        Assert.AreEqual("db.legacy.com", server.Host);
-        Assert.AreEqual(5433, server.Port);
-        Assert.AreEqual("admin", server.Username);
-        Assert.IsNull(server.EncryptedPassword); // password field removed; legacy migration no longer maps it
-        Assert.AreEqual(2, server.Databases.Count);
-        Assert.AreEqual("app", server.Databases[0]);
-        Assert.AreEqual("analytics", server.Databases[1]);
-        Assert.AreEqual("Require", server.SslMode);
-        Assert.AreEqual(60, server.Timeout);
-    }
-
-    [TestMethod(DisplayName = "TryLoadLegacyConfig returns null when appsettings.json does not have Servers section")]
-    public void TryLoadLegacyConfig_NoServersSection_ReturnsNull()
-    {
-        var legacyJson = @"{ ""OtherSection"": {} }";
-        var legacyPath = Path.Combine(_testDirectory, "appsettings.json");
-        File.WriteAllText(legacyPath, legacyJson);
-
-        var service = new TestableUserConfigService(_logger, _testDirectory);
-        var result = service.TryLoadLegacyConfig();
-
-        Assert.IsNull(result);
-    }
-
-    [TestMethod(DisplayName = "TryLoadLegacyConfig returns null when appsettings.json has invalid JSON")]
-    public void TryLoadLegacyConfig_InvalidJson_ReturnsNull()
-    {
-        var legacyPath = Path.Combine(_testDirectory, "appsettings.json");
-        File.WriteAllText(legacyPath, "{ not valid json");
-
-        var service = new TestableUserConfigService(_logger, _testDirectory);
-        var result = service.TryLoadLegacyConfig();
-
-        Assert.IsNull(result);
-    }
-
     private sealed class TestLogger : Core.Logging.ILogger
     {
         public void LogInformation(string message, params object[] args) { }
@@ -313,7 +238,6 @@ public class UserConfigServiceTests
     {
         private readonly Core.Logging.ILogger _logger = logger;
         private readonly string _configFilePath = Path.Combine(configFolder, "furlab.jsonc");
-        private readonly string _legacyConfigFilePath = Path.Combine(configFolder, "appsettings.json");
         private readonly string _configFolder = configFolder;
 
         public UserConfig LoadConfig()
@@ -388,54 +312,6 @@ public class UserConfigServiceTests
             if (server == null) throw new ArgumentException($"Server '{serverName}' not found.", nameof(serverName));
             server.EncryptedPassword = encryptedPassword;
             SaveConfig(config);
-        }
-
-        public UserConfig? TryLoadLegacyConfig()
-        {
-            if (!File.Exists(_legacyConfigFilePath)) return null;
-
-            try
-            {
-                var json = File.ReadAllText(_legacyConfigFilePath);
-                var strippedJson = StripJsonComments(json);
-
-                using var doc = JsonDocument.Parse(strippedJson);
-                var root = doc.RootElement;
-
-                if (!root.TryGetProperty("Servers", out var serversSection))
-                {
-                    return null;
-                }
-
-                var config = new UserConfig();
-
-                if (serversSection.TryGetProperty("ServersList", out var serversList) && serversList.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var serverJson in serversList.EnumerateArray())
-                    {
-                        var server = new ServerConfigEntry
-                        {
-                            Name = serverJson.TryGetProperty("Name", out var nameProp) ? nameProp.GetString() ?? string.Empty : string.Empty,
-                            Host = serverJson.TryGetProperty("Host", out var hostProp) ? hostProp.GetString() ?? string.Empty : string.Empty,
-                            Port = serverJson.TryGetProperty("Port", out var portProp) ? portProp.GetInt32() : 5432,
-                            Username = serverJson.TryGetProperty("Username", out var userProp) ? userProp.GetString() ?? string.Empty : string.Empty,
-                            Databases = serverJson.TryGetProperty("Databases", out var dbProp) && dbProp.ValueKind == JsonValueKind.Array
-                                ? dbProp.EnumerateArray().Select(d => d.GetString() ?? string.Empty).ToList()
-                                : [],
-                            SslMode = serverJson.TryGetProperty("SslMode", out var sslProp) ? sslProp.GetString() ?? "Prefer" : "Prefer",
-                            Timeout = serverJson.TryGetProperty("Timeout", out var timeoutProp) ? timeoutProp.GetInt32() : 30
-                        };
-
-                        config.Servers.Add(server);
-                    }
-                }
-
-                return config;
-            }
-            catch
-            {
-                return null;
-            }
         }
 
         private static void ApplyDefaults(UserConfig config)

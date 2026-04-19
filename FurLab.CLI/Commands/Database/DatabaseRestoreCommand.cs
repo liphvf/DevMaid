@@ -57,11 +57,6 @@ internal record DatabaseRestoreConfig
     public string? OutputPath { get; init; }
 
     /// <summary>
-    /// Gets an optional Npgsql connection string override.
-    /// </summary>
-    public string? NpgsqlConnectionString { get; init; }
-
-    /// <summary>
     /// Gets the SSL mode for the connection.
     /// </summary>
     public string? SslMode { get; init; }
@@ -159,13 +154,6 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreCommand
         [CommandOption("-W|--password")]
         [System.ComponentModel.Description("Database password. If not provided, will be resolved from user config or prompted interactively.")]
         public string? Password { get; init; }
-
-        /// <summary>
-        /// Gets an Npgsql connection string to use instead of individual connection parameters.
-        /// </summary>
-        [CommandOption("--npgsql-connection-string")]
-        [System.ComponentModel.Description("An Npgsql connection string to use instead of individual connection parameters.")]
-        public string? NpgsqlConnectionString { get; init; }
 
         /// <summary>
         /// Gets the SSL mode for the database connection.
@@ -334,13 +322,6 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreCommand
             return (null, 2);
         }
 
-        if (!string.IsNullOrWhiteSpace(settings.NpgsqlConnectionString) &&
-            !SecurityUtils.IsValidPath(settings.NpgsqlConnectionString))
-        {
-            AnsiConsole.MarkupLine("[red]Error:[/] Invalid connection string.");
-            return (null, 2);
-        }
-
         if (!string.IsNullOrWhiteSpace(settings.SslMode))
         {
             var validSslModes = new[] { "Disable", "Prefer", "Require", "VerifyCA", "VerifyFull" };
@@ -373,7 +354,6 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreCommand
             RestoreAll = settings.All,
             InputFile = settings.InputFile,
             OutputPath = settings.Directory,
-            NpgsqlConnectionString = settings.NpgsqlConnectionString,
             SslMode = settings.SslMode,
             Timeout = settings.Timeout,
             CommandTimeout = settings.CommandTimeout

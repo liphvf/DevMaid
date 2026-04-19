@@ -11,11 +11,6 @@ public record OperationProgress
     public int CurrentStep { get; init; }
 
     /// <summary>
-    /// Gets or sets the total number of steps.
-    /// </summary>
-    public int TotalSteps { get; init; }
-
-    /// <summary>
     /// Gets or sets a description of the current operation.
     /// </summary>
     public string? CurrentOperation { get; init; }

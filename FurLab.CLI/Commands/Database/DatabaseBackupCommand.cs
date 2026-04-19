@@ -92,13 +92,6 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupCommand.S
         public string? Password { get; init; }
 
         /// <summary>
-        /// Gets the complete Npgsql connection string.
-        /// </summary>
-        [CommandOption("--npgsql-connection-string")]
-        [System.ComponentModel.Description("Complete Npgsql connection string.")]
-        public string? NpgsqlConnectionString { get; init; }
-
-        /// <summary>
         /// Gets the SSL mode for the connection.
         /// </summary>
         [CommandOption("--ssl-mode")]
