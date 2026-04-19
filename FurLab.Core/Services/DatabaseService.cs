@@ -1,5 +1,4 @@
 using FurLab.Core.Interfaces;
-using FurLab.Core.Logging;
 using FurLab.Core.Models;
 
 namespace FurLab.Core.Services;
@@ -11,12 +10,10 @@ namespace FurLab.Core.Services;
 /// Initializes a new instance of the <see cref="DatabaseService"/> class.
 /// </remarks>
 /// <param name="processExecutor">The process executor instance.</param>
-/// <param name="logger">The logger instance.</param>
 /// <param name="postgresBinaryLocator">The PostgreSQL binary locator instance.</param>
-public class DatabaseService(IProcessExecutor processExecutor, ILogger logger, IPostgresBinaryLocator postgresBinaryLocator) : IDatabaseService
+public class DatabaseService(IProcessExecutor processExecutor, IPostgresBinaryLocator postgresBinaryLocator) : IDatabaseService
 {
     private readonly IProcessExecutor _processExecutor = processExecutor ?? throw new ArgumentNullException(nameof(processExecutor));
-    private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IPostgresBinaryLocator _postgresBinaryLocator = postgresBinaryLocator ?? throw new ArgumentNullException(nameof(postgresBinaryLocator));
 
     /// <summary>

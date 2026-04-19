@@ -1,4 +1,4 @@
-using FurLab.Core.Utils;
+using FurLab.Core.Constants;
 
 namespace FurLab.Core.Models;
 

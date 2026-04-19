@@ -4,7 +4,7 @@ using FurLab.CLI.Exceptions.Database;
 using FurLab.CLI.Exceptions.File;
 using FurLab.CLI.Exceptions.Security;
 using FurLab.Core.Interfaces;
-using FurLab.Core.Utils;
+using FurLab.Core.Constants;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;

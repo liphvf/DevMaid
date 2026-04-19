@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Channels;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
-using FurLab.Core.Utils;
+using FurLab.Core.Constants;
 using Npgsql;
 using Polly;
 using Polly.Retry;
