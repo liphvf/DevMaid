@@ -1,4 +1,4 @@
-namespace FurLab.CLI.Utils;
+namespace FurLab.CLI.Commands.Query;
 
 /// <summary>
 /// Types of SQL queries classified by their potential impact.

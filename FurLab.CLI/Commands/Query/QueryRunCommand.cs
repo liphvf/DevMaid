@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Channels;
-using FurLab.CLI.Utils;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
 using FurLab.Core.Utils;

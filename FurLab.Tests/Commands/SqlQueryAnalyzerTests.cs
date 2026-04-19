@@ -1,4 +1,4 @@
-using FurLab.CLI.Utils;
+using FurLab.CLI.Commands.Query;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

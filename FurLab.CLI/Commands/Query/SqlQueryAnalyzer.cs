@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace FurLab.CLI.Utils;
+namespace FurLab.CLI.Commands.Query;
 
 /// <summary>
 /// Analyzes SQL queries to detect potentially destructive operations.
