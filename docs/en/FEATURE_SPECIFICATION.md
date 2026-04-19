@@ -8,168 +8,64 @@ FurLab is a .NET-based CLI tool designed to automate common development tasks. I
 
 ### Core Features
 
-2. **Database Utilities**
-3. **File Utilities (Combine)**
-4. **Claude Code Integration**
-5. **OpenCode Integration**
-6. **Winget Package Manager**
-7. **SQL Query & CSV Exportation**
-8. **Project Cleaner (.NET Clean)**
-9. **Windows Features Manager**
+1. **Database Utilities** (Backup, Restore, PgPass)
+2. **File Utilities** (Combine)
+3. **Claude Code Integration**
+4. **OpenCode Integration**
+5. **Winget Package Manager**
+6. **SQL Query & Export** (Multi-server & Multi-database)
+7. **Docker Utilities** (Postgres)
+8. **Windows Features Manager**
+9. **Settings Management** (Database Servers)
 
 ---
 
+## Feature 1: Database Utilities
 
 ### Objective
 
-Parse PostgreSQL database tables and automatically generate C# class definitions with properties matching table columns.
+Provide utilities for backup, restore, and credential management for PostgreSQL databases.
 
 ### Detailed Description
 
-
-### Usage Flow
-
-```bash
-```
-
-1. User provides database connection parameters
-2. Tool connects to PostgreSQL database
-3. Tool queries table metadata (column names, types, nullable)
-4. Tool generates C# class with appropriate property types
-5. Output is saved to file
-
-### Business Rules
-
-- Database connection requires valid credentials
-- Table must exist in the specified database
-- Column types are mapped to equivalent C# types:
-  - `int` → `int`
-  - `varchar(n)` → `string`
-  - `timestamp` → `DateTime`
-  - `boolean` → `bool`
-  - `numeric` → `decimal`
-  - etc.
-- Nullable columns generate nullable C# properties (`int?`, `string?`, etc.)
-- Primary key detection for potential Id property
-
-### Edge Cases and Error Handling
-
-| Scenario | Handling |
-|----------|----------|
-| Invalid database credentials | Display error message, exit with code 1 |
-| Table not found | Display "Table not found" error |
-| Connection timeout | Display timeout error with retry suggestion |
-| Unsupported column type | Use `object` type with warning comment |
-| Empty table | Generate empty class with comment |
-
-### Options
-
-| Option | Required | Default | Description |
-|--------|----------|---------|-------------|
-| `-d`, `--database` | Yes | - | Database name |
-| `-t`, `--table` | No | - | Table name |
-| `-u`, `--user` | No | postgres | Database user |
-| `-p`, `--password` | No | - | Database password (prompted if not provided) |
-| `-H`, `--host` | No | localhost | Database host |
-| `-o`, `--output` | No | ./table.class | Output file path |
-
----
-
-## Feature 2: Database Utilities
-
-### Objective
-
-Provide utilities for backing up and restoring PostgreSQL databases.
-
-### Detailed Description
-
-The database command provides functionality to create backups and restore PostgreSQL databases using pg_dump and pg_restore.
+The `database` command provides functionality to create backups and restore PostgreSQL databases using `pg_dump` and `pg_restore`, as well as managing the `pgpass.conf` file.
 
 ### Sub-Features
 
-#### 2.1 Database Backup
+#### 1.1 Database Backup
 
-Creates backups of PostgreSQL databases using pg_dump.
+Creates backups of PostgreSQL databases using `pg_dump`.
 
-#### 2.2 Database Restore
+#### 1.2 Database Restore
 
-Restores PostgreSQL databases using pg_restore from .dump files.
+Restores PostgreSQL databases using `pg_restore` from `.dump` files.
+
+#### 1.3 PgPass Management
+
+Manages the `pgpass.conf` file to allow passwordless connections. Supports the use of wildcards (`*`) for host, port, and user.
 
 ### Usage Flow
 
 ```bash
 # Backup a single database
-FurLab database backup mydb -h localhost -U postgres
+fur database backup mydb -H localhost -U postgres
 
 # Backup all databases
-FurLab database backup --all -h localhost -U postgres -o "C:\backups"
+fur database backup --all -H localhost -U postgres -o "C:\backups"
 
 # Restore a specific database
-FurLab database restore mydb "C:\backups\mydb.dump"
+fur database restore mydb "C:\backups\mydb.dump"
 
-# Restore all databases from a directory
-FurLab database restore --all "C:\backups"
+# Add entry to pgpass
+fur database pgpass add mydb --host localhost --username postgres --password mypassword
 
-# Restore all databases from current directory
-FurLab database restore --all
+# List pgpass entries
+fur database pgpass list
 ```
-
-### Business Rules
-
-- **Backup**:
-  - Uses pg_dump to create custom format backups
-  - Supports single database or all databases backup
-  - Backup files are created with .dump extension
-  - Uses current directory for output if not specified
-
-- **Restore**:
-  - Uses pg_restore to restore backups
-  - Automatically creates database if it doesn't exist
-  - Supports single database or all databases restore
-  - Searches for .dump files in current directory if not specified
-  - Uses filename (without extension) as database name
-
-### Edge Cases and Error Handling
-
-| Scenario | Handling |
-|----------|----------|
-| pg_dump/pg_restore not found | Display error with PostgreSQL installation instructions |
-| Invalid credentials | Display error message, exit with code 1 |
-| Dump file not found | Display "File not found" error |
-| Database already exists on restore | Display warning, continue with restore |
-| Restore directory not found | Display "Directory not found" error |
-| No .dump files found | Display warning "No .dump files found" |
-
-### Options
-
-#### Backup
-
-| Option | Required | Default | Description |
-|--------|----------|---------|-------------|
-| `<database>` | No* | - | Database name (required without --all) |
-| `-a`, `--all` | No | false | Backup all databases |
-| `-h`, `--host` | No | localhost | Database host |
-| `-p`, `--port` | No | 5432 | Database port |
-| `-U`, `--username` | No | - | Database username |
-| `-W`, `--password` | No | - | Password (prompted if not provided) |
-| `-o`, `--output` | No | current directory | Output path |
-
-#### Restore
-
-| Option | Required | Default | Description |
-|--------|----------|---------|-------------|
-| `<database>` | No* | - | Database name (required without --all) |
-| `<file>` | No | `<database>.dump` | Dump file to restore |
-| `-a`, `--all` | No | false | Restore all databases |
-| `-d`, `--directory` | No | current directory | Directory with .dump files |
-| `-h`, `--host` | No | localhost | Database host |
-| `-p`, `--port` | No | 5432 | Database port |
-| `-U`, `--username` | No | - | Database username |
-| `-W`, `--password` | No | - | Password (prompted if not provided) |
 
 ---
 
-## Feature 3: File Utilities (Combine)
+## Feature 2: File Utilities (Combine)
 
 ### Objective
 
@@ -177,337 +73,157 @@ Combine multiple files into a single output file.
 
 ### Detailed Description
 
-The Combine feature takes multiple input files matching a pattern and combines them into a single output file. This is useful for consolidating SQL files files, or any, log text-based files.
+The `file combine` command takes multiple input files matching a glob pattern and combines them into a single output file.
 
 ### Usage Flow
 
 ```bash
 # Combine all SQL files in a directory
-FurLab file combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
-
-# Combine with default output name
-FurLab file combine -i "C:\temp\*.txt"
+fur file combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
 ```
-
-### Business Rules
-
-- Input must be a valid file pattern (e.g., `*.sql`, `*.txt`)
-- Output file is created or overwritten
-- If no output is specified, creates `CombineFiles.<extension>` in the same directory
-- Files are processed in alphabetical order
-- UTF-8 encoding is used for output
-
-### Edge Cases and Error Handling
-
-| Scenario | Handling |
-|----------|----------|
-| No files match pattern | Throw "Files not Found" error |
-| Invalid pattern | Throw "Input pattern is invalid" error |
-| Empty pattern | Throw "Input pattern is required" error |
 
 ---
 
-## Feature 4: Claude Code Integration
+## Feature 3: Claude Code Integration
 
 ### Objective
 
-Install and configure Claude Code CLI for development assistance.
-
-### Detailed Description
-
-Simplifies the installation and configuration of Anthropic's Claude Code AI assistant.
-
-### Sub-Features
-
-#### 3.1 Install Claude Code
-
-Install Claude Code via Windows Package Manager (winget).
-
-#### 3.2 Configure MCP Database
-
-Add MCP (Model Context Protocol) database tool configuration.
-
-#### 3.3 Configure Windows Environment
-
-Update Claude settings for Windows environment (shell, permissions).
+Install and configure the Claude Code CLI.
 
 ### Usage Flow
 
 ```bash
 # Install Claude Code
-FurLab claude install
+fur claude install
 
-# Check status
-FurLab claude status
-
-# Configure MCP database
-FurLab claude settings mcp-database
+# Configure MCP database settings
+fur claude settings mcp-database
 
 # Configure Windows environment
-FurLab claude settings win-env
+fur claude settings win-env
 ```
-
-### Business Rules
-
-- Requires Windows operating system
-- Requires winget to be installed
-- Installation requires administrator privileges (via UAC)
-- Configuration modifies user-level Claude settings
-
-### Edge Cases and Error Handling
-
-| Scenario | Handling |
-|----------|----------|
-| Winget not installed | Display error with installation instructions |
-| Already installed | Skip installation, show status |
-| Installation failed | Display error with exit code |
-| Configuration file not found | Create new configuration |
 
 ---
 
-## Feature 5: OpenCode Integration
+## Feature 4: OpenCode Integration
 
 ### Objective
 
-Install and configure OpenCode CLI tool.
-
-### Detailed Description
-
-Manages OpenCode installation and configuration for development workflows.
-
-### Sub-Features
-
-#### 4.1 Install OpenCode
-
-Install OpenCode via available package managers.
-
-#### 4.2 Check Status
-
-Verify OpenCode installation and version.
-
-#### 4.3 Configure
-
-Set up OpenCode configuration.
+Configure the OpenCode CLI tool.
 
 ### Usage Flow
 
 ```bash
-# Install OpenCode
-FurLab opencode install
+# Configure MCP database settings in OpenCode
+fur opencode settings mcp-database
 
-# Check status
-FurLab opencode status
-
-# Configure
-FurLab opencode config
+# Set default model for OpenCode
+fur opencode settings default-model claude-3-5-sonnet-20241022 --global
 ```
-
-### Edge Cases and Error Handling
-
-| Scenario | Handling |
-|----------|----------|
-| Already installed | Show version information |
-| Installation failed | Display error message |
-| Not found in PATH | Suggest PATH update |
 
 ---
 
-## Feature 6: Winget Package Manager
+## Feature 5: Winget Package Manager
 
 ### Objective
 
 Backup and restore Windows packages installed via winget.
 
-### Detailed Description
-
-Enables users to export their installed packages to a JSON file and restore them on different machines or after system reinstallation.
-
-### Sub-Features
-
-#### 5.1 Backup Packages
-
-Export all installed winget packages to a JSON file.
-
-#### 5.2 Restore Packages
-
-Import packages from a previously created backup.
-
 ### Usage Flow
 
 ```bash
-# Backup packages
-FurLab winget backup -o "C:\backups"
+# Package backup
+fur winget backup -o "C:\backups"
 
 # Restore packages
-FurLab winget restore -i "C:\backups\backup-winget.json"
+fur winget restore -i "C:\backups\winget-import.json"
 ```
-
-### Business Rules
-
-- Backup creates `backup-winget.json` in the specified directory
-- Restore uses winget import functionality
-- Only user-installed packages are backed up (not system packages)
-- Restore may require user confirmation for package installation
-
-### Output Format (backup-winget.json)
-
-```json
-{
-  "CreationDate": "2024-01-15T10:30:00",
-  "Packages": [
-    {
-      "Id": "Git.Git",
-      "Version": "2.43.0"
-    },
-    {
-      "Id": "Microsoft.VisualStudioCode",
-      "Version": "1.85.0"
-    }
-  ]
-}
-```
-
-### Edge Cases and Error Handling
-
-| Scenario | Handling |
-|----------|----------|
-| No packages installed | Create empty backup file |
-| Backup file already exists | Prompt for overwrite confirmation |
-| Restore file not found | Display "File not found" error |
-| Package not available | Skip package, continue with others |
-| Network unavailable | Display network error, allow retry |
 
 ---
 
-## Feature 7: SQL Query & CSV Exportation
+## Feature 6: SQL Query & Export
 
 ### Objective
-Execute SQL commands against a single database, multiple databases on a single server, or even across multiple servers defined in appsettings.json, automatically exporting the data to `.csv`.
+Execute SQL scripts on one or more databases/servers and export to CSV.
 
 ### Detailed Description
-Provides high flexibility for querying data with automated output generation supporting local, multi-database, and multi-server distribution modes for massive reporting routines.
+Supports parallel execution across multiple servers configured in `settings db-servers`.
 
 ### Usage Flow
 ```bash
-FurLab query run --input script.sql --output result.csv -h localhost -d mydb
-FurLab query run --all --input script.sql --output ./results
+# Execute on a specific database
+fur query run -f script.sql -d mydb -H localhost
+
+# Execute on ALL configured servers
+fur query run -f script.sql --all
 ```
 
 ---
 
-## Feature 8: Project Cleaner (.NET Clean)
+## Feature 7: Docker Utilities
 
 ### Objective
-Liberate disk space and resolve `.NET` build cache issues by fully deleting any `bin` and `obj` output directories found recursively.
+Manage Docker containers useful for development.
+
+### Sub-Features
+- **Postgres**: Starts a local PostgreSQL container with default settings.
 
 ### Usage Flow
 ```bash
-# Clean recursively starting from the current directory:
-FurLab clean
-
-# Clean a specific solution folder
-FurLab clean "C:\MyProjects"
+fur docker postgres
 ```
 
 ---
 
-## Feature 9: Windows Features Manager
+## Feature 8: Windows Features Manager
 
 ### Objective
-Export your activated Windows Optional Features to a JSON backup file using dism, and subsequently import/enable them on new environments.
+Backup and restore Windows optional Features.
 
 ### Usage Flow
 ```bash
-FurLab windowsfeatures list --enabled-only
-FurLab windowsfeatures export "C:\backups\windowsfeatures.json"
-FurLab windowsfeatures import "C:\backups\windowsfeatures.json"
+fur windowsfeatures list
+fur windowsfeatures export -o "C:\backups\features.json"
+fur windowsfeatures import -i "C:\backups\features.json"
 ```
 
 ---
 
-## Main Use Cases
+## Feature 9: Settings Management
 
-### Use Case 1: New Developer Setup
+### Objective
+Manage database servers configured for global use in FurLab.
 
-**Scenario:** Developer gets a new Windows machine and wants to set up their development environment.
+### Detailed Description
+Allows registering servers with encrypted credentials to facilitate use in `query` and `database` commands.
 
-**Flow:**
-1. Install FurLab via dotnet tool
-2. Run `FurLab winget restore` to restore packages from old machine
-3. Install Claude Code: `FurLab claude install`
-4. Install OpenCode: `FurLab opencode install`
+### Usage Flow
+```bash
+# List servers
+fur settings db-servers ls
 
-### Use Case 2: Database Class Generation
+# Add server
+fur settings db-servers add PROD --host 10.0.0.1 --username admin --database main
 
-**Scenario:** Developer needs to create C# classes for existing database tables.
+# Set password (encrypted)
+fur settings db-servers set-password PROD
 
-**Flow:**
-2. Copy generated class to project
-3. Modify as needed
-
-### Use Case 3: System Backup
-
-**Scenario:** Developer wants to backup installed applications before system reinstall.
-
-**Flow:**
-1. Run `FurLab winget backup -o D:\backups`
-2. Store backup file in safe location
-
----
-
-## Future Roadmap Ideas
-
-### Priority 1 - Near Term
-
-- [ ] Add configuration file for default options
-
-### Priority 2 - Medium Term
-
-- [ ] Add plugin system for custom commands
-- [ ] Add cloud sync for winget backups
-- [ ] Add macOS/Linux support
-- [ ] Add configuration web interface
-
-### Priority 3 - Long Term
-
-- [ ] Add AI-powered command suggestions
-- [ ] Add team collaboration features
-- [ ] Add custom script execution
-- [ ] Add integration with IDEs (VS Code, Visual Studio)
+# Test connection
+fur settings db-servers test PROD
+```
 
 ---
 
 ## Appendix: Command Reference
 
-### Quick Reference
-
-| Command | Shortcut | Description |
-|---------|----------|-------------|
-| `FurLab file` | - | File utilities |
-| `FurLab file combine` | - | Combine files into one |
-| `FurLab claude` | - | Claude Code commands |
-| `FurLab claude install` | - | Install Claude Code |
-| `FurLab claude status` | - | Check Claude status |
-| `FurLab claude config` | - | Configure Claude |
-| `FurLab opencode` | - | OpenCode commands |
-| `FurLab winget` | - | Winget commands |
-| `FurLab winget backup` | - | Backup packages |
-| `FurLab winget restore` | - | Restore packages |
-| `FurLab database` | - | Database commands |
-| `FurLab database backup` | - | Backup database |
-| `FurLab database restore` | - | Restore database |
-| `FurLab query run` | - | Run multi-database query and export CSV |
-| `FurLab clean` | - | Recursively clean bin/obj output folders |
-| `FurLab windowsfeatures` | - | Manage Windows Optional Features |
-
----
-
-## Glossary
-
-| Term | Definition |
-|------|------------|
-| CLI | Command Line Interface |
-| Winget | Windows Package Manager |
-| MCP | Model Context Protocol |
-| DTO | Data Transfer Object |
-| PostgreSQL | Open-source relational database |
+| Command | Description |
+|---------|-------------|
+| `fur database` | PostgreSQL utilities (backup, restore, pgpass) |
+| `fur file combine` | Combine text files |
+| `fur claude` | Claude Code installation and configuration |
+| `fur opencode` | OpenCode configuration |
+| `fur winget` | Winget package backup and restore |
+| `fur query run` | Multi-server SQL execution with CSV export |
+| `fur docker` | Docker utilities (postgres) |
+| `fur windowsfeatures` | Manage Windows features (dism) |
+| `fur settings db-servers` | Manage registered database servers |

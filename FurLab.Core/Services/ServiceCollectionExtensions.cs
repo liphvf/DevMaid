@@ -1,6 +1,5 @@
 using System.Runtime.Versioning;
 
-using FurLab.Core.HealthChecks;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Logging;
 
@@ -25,17 +24,11 @@ public static class ServiceCollectionExtensions
         _ = services.AddLogging(builder =>
         {
             _ = builder.AddConsole();
-            _ = builder.SetMinimumLevel(LogLevel.Information);
+            _ = builder.SetMinimumLevel(LogLevel.Warning);
         });
 
-        _ = services.AddHealthChecks()
-            .AddCheck<PostgresBinaryHealthCheck>("postgres_binaries", tags: ["infrastructure"])
-            .AddCheck<ConfigurationHealthCheck>("configuration", tags: ["core"]);
-
-        _ = services.AddSingleton<IConfigurationService, ConfigurationService>();
         _ = services.AddSingleton<IProcessExecutor, ProcessExecutor>();
         _ = services.AddSingleton<IDatabaseService, DatabaseService>();
-        _ = services.AddSingleton<IFileService, FileService>();
         _ = services.AddSingleton<IPgPassService, PgPassService>();
 
         services.AddSingleton<Logging.ILogger>(sp =>
@@ -59,6 +52,10 @@ public static class ServiceCollectionExtensions
             ProtectKeysWithDpapiOnWindows(dpBuilder);
 
         _ = services.AddSingleton<ICredentialService, CredentialService>();
+
+        _ = services.AddSingleton<IPostgresBinaryLocator, PostgresBinaryLocator>();
+        _ = services.AddSingleton<IPostgresPasswordHandler, PostgresPasswordHandler>();
+        _ = services.AddSingleton<IDockerService, Docker.DockerService>();
 
         return services;
     }

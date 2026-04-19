@@ -1,41 +1,23 @@
+using FurLab.Core.Interfaces;
 
 namespace FurLab.Core.Services;
 
 /// <summary>
 /// Provides methods to locate PostgreSQL binary executables.
 /// </summary>
-public static class PostgresBinaryLocator
+public class PostgresBinaryLocator : IPostgresBinaryLocator
 {
-    /// <summary>
-    /// Finds the pg_dump executable in the system PATH or common installation directories.
-    /// </summary>
-    /// <returns>The full path to pg_dump, or null if not found.</returns>
-    public static string? FindPgDump()
-    {
-        return FindExecutable("pg_dump");
-    }
+    /// <inheritdoc/>
+    public string? FindPgDump() => FindExecutable("pg_dump");
 
-    /// <summary>
-    /// Finds the pg_restore executable in the system PATH or common installation directories.
-    /// </summary>
-    /// <returns>The full path to pg_restore, or null if not found.</returns>
-    public static string? FindPgRestore()
-    {
-        return FindExecutable("pg_restore");
-    }
+    /// <inheritdoc/>
+    public string? FindPgRestore() => FindExecutable("pg_restore");
 
-    /// <summary>
-    /// Finds the psql executable in the system PATH or common installation directories.
-    /// </summary>
-    /// <returns>The full path to psql, or null if not found.</returns>
-    public static string? FindPsql()
-    {
-        return FindExecutable("psql");
-    }
+    /// <inheritdoc/>
+    public string? FindPsql() => FindExecutable("psql");
 
     private static string? FindExecutable(string executableName)
     {
-        // Try to find executable in PATH
         var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? [];
 
         foreach (var path in paths)
@@ -53,7 +35,6 @@ public static class PostgresBinaryLocator
             }
         }
 
-        // Try common PostgreSQL installation paths on Windows
         var commonPaths = new[]
         {
             @"C:\Program Files\PostgreSQL\*\bin",
@@ -73,7 +54,6 @@ public static class PostgresBinaryLocator
             }
         }
 
-        // Try common paths on Unix-like systems
         var unixPaths = new[]
         {
             "/usr/bin",

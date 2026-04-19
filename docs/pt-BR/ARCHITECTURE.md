@@ -4,7 +4,7 @@
 
 FurLab é uma ferramenta de interface de linha de comando (CLI) baseada em .NET projetada usando uma arquitetura modular baseada em comandos. O aplicativo segue os princípios de separação de preocupações, com limites claros entre parsing de CLI, lógica de negócio e camadas de acesso a dados.
 
-A arquitetura é construída sobre System.CommandLine para parsing de argumentos da CLI e Microsoft.Extensions.Configuration para gerenciamento flexível de configuração.
+A arquitetura é construída sobre **Spectre.Console.Cli** para parsing de argumentos da CLI e uma UI rica, e **Microsoft.Extensions.DependencyInjection** para gerenciamento de dependências.
 
 ## Design de Alto Nível
 
@@ -13,23 +13,24 @@ A arquitetura é construída sobre System.CommandLine para parsing de argumentos
 │                        FurLab CLI                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Ponto de Entrada (Program.cs)                                  │
-│  ├── Carregamento de Configuração                               │
-│  ├── Registro de Comandos                                       │
-│  └── Parsing de Argumentos                                     │
+│  ├── Configuração do Host (DI)                                  │
+│  ├── Registro de Comandos (CommandApp)                          │
+│  └── Tratamento Global de Exceções                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Camada de Comandos (Commands/)                                 │
-│  ├── FileCommand                                               │
-│  ├── ClaudeCodeCommand                                         │
-│  ├── OpenCodeCommand                                           │
-│  ├── WingetCommand                                             │
-│  ├── QueryCommand                                              │
-│  ├── CleanCommand                                              │
-│  └── WindowsFeaturesCommand                                    │
+│  ├── File/ (FileCombineCommand)                                │
+│  ├── Claude/ (Install, Settings)                                │
+│  ├── OpenCode/ (Settings)                                       │
+│  ├── Winget/ (Backup, Restore)                                  │
+│  ├── Database/ (Backup, Restore, PgPass)                        │
+│  ├── Docker/ (Postgres)                                         │
+│  ├── Query/ (QueryRunCommand)                                   │
+│  ├── WindowsFeatures/ (Export, Import, List)                    │
+│  └── Settings/ (DbServers)                                      │
 ├─────────────────────────────────────────────────────────────────┤
-│  Camadas de Suporte                                            │
-│  ├── CommandOptions (DTOs)                                     │
-│  ├── Database (Npgsql)                                         │
-│  └── Utils (Funções Auxiliares)                                │
+│  Infraestrutura (Infrastructure/)                               │
+│  ├── TypeRegistrar (Adapter para Spectre.Console.Cli)           │
+│  └── TypeResolver                                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -38,228 +39,79 @@ A arquitetura é construída sobre System.CommandLine para parsing de argumentos
 ### 1. Program.cs (Ponto de Entrada)
 
 **Responsabilidades:**
-- Inicializar a configuração do aplicativo
-- Registrar todos os comandos disponíveis
-- Fazer parsing dos argumentos da linha de comando
-- Invocar o manipulador de comando apropriado
-
-**Métodos Principais:**
-- `Main(string[] args)` - Ponto de entrada do aplicativo
-- ConfigurationBuilder com JSON, variáveis de ambiente e user secrets
+- Configurar o container de Injeção de Dependência (DI)
+- Configurar a aplicação `CommandApp` do Spectre.Console
+- Definir a hierarquia de comandos e subcomandos (branches)
+- Implementar o mapeamento global de exceções para códigos de saída (exit codes)
 
 ### 2. Camada de Comandos
 
-Cada comando segue o padrão builder com um método estático `Build()` que retorna um objeto `Command`.
+Cada comando é uma classe que herda de `Command<TSettings>` ou `AsyncCommand<TSettings>`.
 
-- Conecta ao banco de dados PostgreSQL usando Npgsql
-- Recupera metadados da tabela
-- Gera classe C# com propriedades baseadas nas definições de colunas
+- **Settings**: Classe aninhada `public sealed class Settings : CommandSettings` que define os argumentos e opções do comando usando atributos como `[CommandArgument]` e `[CommandOption]`.
+- **Injeção de Dependência**: Os comandos recebem serviços via construtor.
+- **Execução**: A lógica do comando reside no método `Execute` ou `ExecuteAsync`, que deve apenas validar os inputs (via Settings) e delegar a execução para os serviços apropriados no `FurLab.Core`.
 
-#### FileCommand (Combine)
-- Combina múltiplos arquivos em um único
-- Suporta padrões de arquivo com curingas
-- Preserva codificação dos arquivos de origem
+### 3. Camada de Infraestrutura
 
-#### ClaudeCodeCommand
-- Instala Claude Code via winget
-- Configura configurações de banco de dados MCP
-- Configura ambiente Windows para Claude
-
-#### OpenCodeCommand
-- Instala CLI do OpenCode
-- Verifica status de instalação
-- Gerenciamento de configuração
-
-#### WingetCommand
-- Exporta pacotes instalados para JSON
-- Importa pacotes do backup
-- Resolução de dependências entre pacotes
-
-#### QueryCommand
-- Executa consultas SQL e exporta os resultados para CSV
-- Suporta múltiplos bancos de dados e servidores via configuração
-- Integrado ao appsettings.json para servidores remotos
-
-#### CleanCommand
-- Exclui diretórios bin e obj do projeto ou solução selecionada
-- Útil para debugar problemas de compilação ou economizar espaço
-- Busca recursivamente os subdiretórios
-
-#### WindowsFeaturesCommand
-- Exporta as features opcionais do Windows atualmente ativadas em um JSON
-- Importa features de um arquivo JSON (via dism.exe)
-- Permite listar funcionalidades ativadas
-
-### 3. Camada CommandOptions
-
-Objetos de Transferência de Dados (DTOs) que representam opções da linha de comando:
-- Classes de opções fortemente tipadas
-- Atributos de validação
-- Tratamento de valores padrão
-
-## Fluxo de Dados
-
-### CLI Execution Flow
-
-### 1. Padrão Builder
-
-Cada comando implementa um método estático `Build()` que constrói e configura o objeto de comando:
-
-```csharp
-public static Command Build()
-{
-    var command = new Command("winget", "Gerenciar pacotes winget.");
-    // Adicionar opções e subcomandos
-    return command;
-}
-```
-
-### 2. Padrão Singleton (Configuração)
-
-A propriedade `Program.AppSettings` fornece acesso centralizado à configuração do aplicativo.
-
-### 3. Padrão Observador (Eventos de Processo)
-
-Captura de saída em tempo real usa manipuladores de eventos:
-- `OutputDataReceived`
-- `ErrorDataReceived`
+Fornece a ponte entre o container de DI do .NET (`IServiceCollection`) e o Spectre.Console.Cli através das classes `TypeRegistrar` e `TypeResolver`.
 
 ## Decisões Técnicas
 
-### 1. System.CommandLine para Parsing de CLI
+### 1. Spectre.Console.Cli para Parsing de CLI
 
-**Decisão:** Usar System.CommandLine em vez de parsing manual ou bibliotecas de terceiros.
-
-**Justificativa:**
-- Biblioteca .NET nativa
-- Opções fortemente tipadas
-- Geração de help integrada
-- Suporte a subcomandos
-
-### 2. Npgsql para Acesso a Banco de Dados
-
-**Decisão:** Usar Npgsql como provedor PostgreSQL.
+**Decisão:** Substituir `System.CommandLine` pelo `Spectre.Console.Cli`.
 
 **Justificativa:**
-- Driver .NET oficial do PostgreSQL
-- Alto desempenho
-- Suporte completo a recursos PostgreSQL
-- Manutenção ativa
+- Melhor suporte para interfaces TUI (Tabelas, Progresso, Status, Prompts interativos)
+- Integração nativa com injeção de dependência
+- Definição de comandos baseada em classes, facilitando a manutenção e testes
+- Formatação ANSI automática e simplificada
 
-### 3. Microsoft.Extensions.Configuration
+### 2. Injeção de Dependência Nativa
 
-**Decisão:** Usar as extensões de configuração para configurações flexíveis.
+**Decisão:** Usar `Microsoft.Extensions.DependencyInjection`.
 
 **Justificativa:**
-- Múltiplas fontes de configuração (JSON, variáveis de ambiente, user secrets)
-- Tipagem forte com binding de configuração
-- Padrão reconhecido pela indústria
+- Padrão oficial do .NET
+- Facilita o desacoplamento entre CLI e lógica de negócio
+- Permite a substituição de serviços por Mocks em testes unitários
 
-## Considerações de Escalabilidade
+### 3. Armazenamento Seguro de Credenciais
 
-### Extensibilidade de Comandos
+**Decisão:** Implementar `ICredentialService` para gerenciar senhas de banco de dados.
 
-A arquitetura suporta fácil adição de novos comandos:
-1. Criar nova classe de comando em `Commands/`
-2. Implementar o método `Build()`
-3. Registrar em `Program.cs`
-
-### Escalabilidade de Configuração
-
-O sistema de configuração suporta:
-- Arquivos de configuração específicos por ambiente
-- Substituições por variáveis de ambiente
-- User secrets para dados sensíveis
+**Justificativa:**
+- Evita o armazenamento de senhas em texto plano no `appsettings.json`
+- Protege dados sensíveis do usuário através de criptografia (Windows Data Protection API ou similar)
 
 ## Considerações de Segurança
 
-### 1. Manipulação de Senhas
+### 1. Validação de Input
 
-- Senhas podem ser fornecidas via linha de comando ou solicitadas com segurança
-- Nenhum registro ou persistência de senha
-- Suporte a user secrets para desenvolvimento
+- Uso rigoroso de `SecurityUtils` para validar caminhos de arquivo, identificadores de banco de dados, hosts e portas.
+- Prevenção contra Path Traversal e Injeção de comandos SQL através de sanitização de strings.
 
-### 2. Execução de Processos
+### 2. Manipulação de Senhas
 
-- Comandos são executados com os mesmos privilégios do usuário
-- Sem execução de shell (UseShellExecute = false)
-- Saída capturada e sanitizada
-
-### 3. Segurança de Configuração
-
-- Dados sensíveis armazenados em user secrets
-- Variáveis de ambiente para implantação
-- Sem credenciais hardcoded
-
-## Melhorias Arquiteturais Futuras
-
-### 1. Sistema de Plugins
-
-Implementar uma arquitetura de plugins para permitir extensões de comando de terceiros:
-- Assemblies separados para comandos
-- Descoberta dinâmica de comandos
-- Verificações de compatibilidade de versão
-
-### 2. API de Configuração
-
-Expor configuração via API para integração com outras ferramentas:
-- Endpoint REST para consultas de configuração
-- Recarregamento de configuração em tempo real
-
-### 3. Framework de Relatório de Progresso
-
-Criar um sistema unificado de relatório de progresso:
-- UI de progresso consistente entre comandos
-- Suporte a cancelamento
-- Cálculos de tempo estimado
-
-### 4. Framework de Logging
-
-Adicionar logging estruturado:
-- Logging baseado em arquivo
-- Níveis de log
-- Rotação de logs
-- Integração com agregadores de log externos
-
-### 5. Infraestrutura de Testes Unitários
-
-Melhorar cobertura de testes:
-- Testes unitários de comandos
-- Testes de integração para operações de banco de dados
-
-### 6. Suporte multiplataforma
-
-Expansão além do Windows:
-- Suporte a alternativas winget para macOS/Linux
-- Implementações de comandos específicas por plataforma
+- Senhas nunca são logadas ou exibidas em texto plano.
+- Prompts interativos mascaram a entrada do usuário.
+- Uso de `pgpass.conf` e `ICredentialService` para evitar a passagem de senhas via argumentos de linha de comando (que ficam visíveis no histórico do shell).
 
 ## Estrutura de Diretórios
 
 ```
 FurLab/
-├── FurLab.CLI/               # Projeto principal (Linha de Comando)
-│   ├── Program.cs             # Ponto de entrada
-│   ├── CommandOptions/        # Objetos DTOs de Options dos Comandos
-│   └── Services/              # Logging, Utilitarios, Componentes da Aplicação, Listadores
-├── FurLab.Core/              # Bibliotecas Centrais e Utilitários de Domínio
-│   ├── Interfaces/            # Contratos Injetáveis Compartilhados (ILogger, IFileService, etc.)
-│   └── Services/              # Implementação de Executores (WingetService, DatabaseService, etc.)
-├── FurLab.Tests/             # Projeto de Bateria de Testes Unidade e Integração (MSTest)
-└── docs/                      # Documentação
-    ├── en/
-    │   ├── ARCHITECTURE.md
-    │   └── FEATURE_SPECIFICATION.md
-    └── pt-BR/
-        ├── ARCHITECTURE.md
-        └── FEATURE_SPECIFICATION.md
+├── FurLab.CLI/               # Projeto de Interface (Spectre.Console)
+│   ├── Program.cs             # Configuração e Registro de Comandos
+│   ├── Commands/              # Classes de Comando (Organizadas por subdiretório)
+│   ├── Infrastructure/        # Adaptadores de DI para o CLI
+│   └── SecurityUtils.cs       # Validadores de Segurança
+├── FurLab.Core/              # Lógica de Negócio e Contratos
+│   ├── Interfaces/            # Interfaces de Serviço
+│   ├── Services/              # Implementações de Serviço
+│   ├── Models/                # DTOs e Modelos de Dados
+│   └── Logging/               # Abstração de Logging
+├── FurLab.Tests/             # Testes MSTest + Moq
+└── docs/                      # Documentação (pt-BR e en)
 ```
-
-## Conclusão
-
-A arquitetura do FurLab fornece uma base sólida para uma ferramenta CLI com:
-- Separação clara de preocupações
-- Extensibilidade fácil
-- Código manutenível
-- Gerenciamento de configuração flexível
-
-O design modular permite fácil adição de novos recursos enquanto mantém qualidade de código e testabilidade.

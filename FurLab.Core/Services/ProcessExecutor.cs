@@ -8,7 +8,7 @@ using FurLab.Core.Models;
 namespace FurLab.Core.Services;
 
 /// <summary>
-/// Provides methods for executing external processes with progress reporting.
+/// Provides methods for executing external processes.
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the <see cref="ProcessExecutor"/> class.
@@ -22,12 +22,10 @@ public class ProcessExecutor(ILogger logger) : IProcessExecutor
     /// Executes a process with the specified options.
     /// </summary>
     /// <param name="options">The execution options.</param>
-    /// <param name="progress">Optional progress reporter.</param>
     /// <param name="cancellationToken">Optional cancellation token.</param>
     /// <returns>A task representing the operation with the result.</returns>
     public async Task<ProcessExecutionResult> ExecuteAsync(
         ProcessExecutionOptions options,
-        IProgress<OperationProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -62,7 +60,6 @@ public class ProcessExecutor(ILogger logger) : IProcessExecutor
 
         var outputBuilder = new StringBuilder();
         var errorBuilder = new StringBuilder();
-        var lineCount = 0;
 
         if (options.RedirectStandardOutput)
         {
@@ -71,13 +68,6 @@ public class ProcessExecutor(ILogger logger) : IProcessExecutor
                 if (!string.IsNullOrEmpty(e.Data))
                 {
                     outputBuilder.AppendLine(e.Data);
-                    lineCount++;
-                    progress?.Report(new OperationProgress
-                    {
-                        CurrentOperation = e.Data,
-                        CurrentStep = lineCount,
-                        Details = $"Processing output line {lineCount}"
-                    });
                 }
             };
         }

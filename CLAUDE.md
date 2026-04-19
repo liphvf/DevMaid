@@ -1,6 +1,6 @@
 # FurLab Development Guidelines
 
-Auto-generated from codebase. Last updated: 2026-04-07
+Auto-generated from codebase. Last updated: 2026-04-19
 
 ## Idioma
 
@@ -13,10 +13,9 @@ Todas as **mensagens exibidas ao usuário pelo CLI** (output de comandos, prompt
 ## Active Technologies
 
 - C# 13 / .NET 10 (`net10.0`)
-- System.CommandLine 2.0.5 — CLI argument parsing and subcommand routing
+- Spectre.Console.Cli 0.55.0 — Interactive TUI prompts and CLI argument parsing
 - Npgsql 10.0.2 — PostgreSQL ADO.NET driver
 - CsvHelper 33.1.0 — CSV export for query results
-- Spectre.Console.Cli 0.55.0 — Interactive TUI prompts (selection menus, styled output)
 - Microsoft.Extensions.Hosting 10.0.5 — Generic host + DI container
 - Microsoft.Extensions.Configuration — JSON / env-var config pipeline
 - Microsoft.Extensions.Logging — Structured logging (wrapped by custom ILogger)
@@ -29,7 +28,7 @@ Todas as **mensagens exibidas ao usuário pelo CLI** (output de comandos, prompt
 ```text
 FurLab/
 ├── FurLab.Core/                  ← Business logic, interfaces, models (class library)
-│   ├── Interfaces/                ← IConfigurationService, IDatabaseService, IFileService,
+│   ├── Interfaces/                ← ICredentialService, IDatabaseService, IFileService,
 │   │                                 IProcessExecutor, IWingetService, IPgPassService
 │   ├── Models/                    ← OperationResult<T>, DatabaseConnectionConfig,
 │   │                                 OperationProgress, WingetOperationOptions,
@@ -41,21 +40,89 @@ FurLab/
 │   └── Resilience/                ← ResiliencePolicies (Polly retry pipelines)
 │
 ├── FurLab.CLI/                   ← CLI executable (depends on FurLab.Core)
-│   ├── Program.cs                 ← Host builder, DI setup, RootCommand registration
-│   ├── Commands/                  ← One static class per command, Build() factory method
-│   │   ├── FileCommand.cs
-│   │   ├── ClaudeCodeCommand.cs
-│   │   ├── OpenCodeCommand.cs
-│   │   ├── WingetCommand.cs
-│   │   ├── DatabaseCommand.cs
-│   │   ├── PgPassCommand.cs       ← Subcomando de DatabaseCommand (pgpass add/list/remove)
-│   │   ├── DockerCommand.cs       ← Docker utilities (postgres container)
-│   │   ├── QueryCommand.cs
-│   │   ├── CleanCommand.cs
-│   │   └── WindowsFeaturesCommand.cs
-│   ├── CommandOptions/            ← Strongly-typed options DTOs per command
-│   ├── Services/                  ← Static facade wrappers (ConfigurationService, Logger,
-│   │                                 DockerService, DockerConstants, PostgresPasswordHandler)
+│   ├── Program.cs                 ← Host builder, DI setup, CommandApp configuration
+│   ├── Infrastructure/            ← TypeRegistrar and TypeResolver for Spectre.Console.Cli
+│   ├── Commands/                  ← Command classes - each subcommand has its own folder
+│   │   ├── Files/
+│   │   │   └── Combine/
+│   │   │       ├── CombineCommand.cs
+│   │   │       └── CombineSettings.cs
+│   │   ├── Claude/
+│   │   │   ├── Install/
+│   │   │   │   ├── InstallCommand.cs
+│   │   │   │   └── InstallSettings.cs
+│   │   │   └── Settings/
+│   │   │       ├── McpDatabaseCommand.cs
+│   │   │       ├── McpDatabaseSettings.cs
+│   │   │       ├── WinEnvCommand.cs
+│   │   │       └── WinEnvSettings.cs
+│   │   ├── OpenCode/
+│   │   │   └── Settings/
+│   │   │       ├── McpDatabaseCommand.cs
+│   │   │       ├── McpDatabaseSettings.cs
+│   │   │       ├── DefaultModelCommand.cs
+│   │   │       └── DefaultModelSettings.cs
+│   │   ├── Winget/
+│   │   │   ├── Backup/
+│   │   │   │   ├── BackupCommand.cs
+│   │   │   │   └── BackupSettings.cs
+│   │   │   └── Restore/
+│   │   │       ├── RestoreCommand.cs
+│   │   │       └── RestoreSettings.cs
+│   │   ├── Database/
+│   │   │   ├── Backup/
+│   │   │   │   ├── BackupCommand.cs
+│   │   │   │   ├── BackupSettings.cs
+│   │   │   │   └── BackupConfig.cs
+│   │   │   ├── Restore/
+│   │   │   │   ├── RestoreCommand.cs
+│   │   │   │   ├── RestoreSettings.cs
+│   │   │   │   └── RestoreConfig.cs
+│   │   │   └── PgPass/
+│   │   │       ├── Add/
+│   │   │       │   ├── AddCommand.cs
+│   │   │       │   └── AddSettings.cs
+│   │   │       ├── List/
+│   │   │       │   ├── ListCommand.cs
+│   │   │       │   └── ListSettings.cs
+│   │   │       └── Remove/
+│   │   │           ├── RemoveCommand.cs
+│   │   │           └── RemoveSettings.cs
+│   │   ├── Docker/
+│   │   │   └── Postgres/
+│   │   │       ├── PostgresCommand.cs
+│   │   │       └── PostgresSettings.cs
+│   │   ├── Query/
+│   │   │   └── Run/
+│   │   │       ├── RunCommand.cs
+│   │   │       └── RunSettings.cs
+│   │   ├── WindowsFeatures/
+│   │   │   ├── Export/
+│   │   │   │   ├── ExportCommand.cs
+│   │   │   │   └── ExportSettings.cs
+│   │   │   ├── Import/
+│   │   │   │   ├── ImportCommand.cs
+│   │   │   │   └── ImportSettings.cs
+│   │   │   └── List/
+│   │   │       ├── ListCommand.cs
+│   │   │       └── ListSettings.cs
+│   │   └── Settings/
+│   │       └── DbServers/
+│   │           ├── List/
+│   │           │   ├── ListCommand.cs
+│   │           │   └── ListSettings.cs
+│   │           ├── Add/
+│   │           │   ├── AddCommand.cs
+│   │           │   └── AddSettings.cs
+│   │           ├── Remove/
+│   │           │   ├── RemoveCommand.cs
+│   │           │   └── RemoveSettings.cs
+│   │           ├── Test/
+│   │           │   ├── TestCommand.cs
+│   │           │   └── TestSettings.cs
+│   │           └── SetPassword/
+│   │               ├── SetPasswordCommand.cs
+│   │               └── SetPasswordSettings.cs
 │   └── SecurityUtils.cs           ← Input validation (path traversal, PostgreSQL identifiers,
 │                                     host/port, wildcard *)
 │
@@ -65,10 +132,6 @@ FurLab/
 ├── openspec/                      ← OpenSpec workflow (substituiu specs/ e .specify/)
 │   ├── config.yaml                ← Configuração do projeto (schema, idioma pt-BR)
 │   ├── specs/                     ← Especificações canônicas por feature
-│   │   ├── pgpass-cli-setup/
-│   │   ├── pgpass-wildcard-validation/
-│   │   ├── docker-postgres/
-│   │   └── opencode-default-model/
 │   └── changes/
 │       └── archive/               ← Changes implementados e arquivados
 │
@@ -81,6 +144,50 @@ FurLab/
 │   └── en/                        ← Secondary documentation (English)
 │
 └── opencode.json                  ← Configuração local do OpenCode (modelo padrão, etc.)
+```
+
+### Command File Organization Convention
+
+**Every subcommand has its own folder.** Commands and their settings follow a strict one-class-per-file structure:
+
+```
+Commands/
+├── CommandName/                           ← Command group folder (e.g., "Database")
+│   ├── SubCommand/                        ← Each subcommand gets its own folder
+│   │   ├── {Prefix}Command.cs             ← Command implementation with hierarchy prefix
+│   │   ├── {Prefix}Settings.cs            ← Settings class with hierarchy prefix
+│   │   └── {Prefix}Config.cs              ← Optional: config class with hierarchy prefix
+│   └── SharedHelper.cs                    ← Shared classes across subcommands stay in parent folder
+```
+
+**Naming Rules:**
+- **Folder structure**: `Commands/{Group}/{Subcommand}/` - every subcommand has its own folder
+- **File naming**: Files are prefixed with the hierarchy path (without "Commands" prefix)
+  - ✅ `Claude/Install/ClaudeInstallCommand.cs`
+  - ✅ `Claude/Install/ClaudeInstallSettings.cs`
+  - ✅ `Database/Backup/DatabaseBackupCommand.cs`
+  - ✅ `Database/Backup/DatabaseBackupSettings.cs`
+  - ✅ `Database/PgPass/Add/PgPassAddCommand.cs`
+  - ✅ `Database/PgPass/Add/PgPassAddSettings.cs`
+  - ✅ `Settings/DbServers/List/DbServersListCommand.cs`
+- **Class naming**: Classes use short names (implied by folder structure)
+  - ✅ `class InstallCommand` (in `ClaudeInstallCommand.cs`)
+  - ✅ `class BackupSettings` (in `DatabaseBackupSettings.cs`)
+  - ✅ `class AddCommand` (in `PgPassAddCommand.cs`)
+- **Config files**: Optional config records for internal use
+  - ✅ `Database/Backup/DatabaseBackupConfig.cs` → class `BackupConfig`
+- **Shared files**: Files used by multiple subcommands of the same group stay in the parent folder
+  - ✅ `Database/SharedHelper.cs` - shared across Database subcommands only
+
+**Examples:**
+```
+Commands/Database/Backup/DatabaseBackupCommand.cs       → class BackupCommand
+Commands/Database/Backup/DatabaseBackupSettings.cs      → class BackupSettings
+Commands/Database/Backup/DatabaseBackupConfig.cs        → class BackupConfig
+Commands/Claude/Settings/McpDatabase/ClaudeSettingsMcpDatabaseCommand.cs   → class McpDatabaseCommand
+Commands/Claude/Settings/McpDatabase/ClaudeSettingsMcpDatabaseSettings.cs  → class McpDatabaseSettings
+Commands/Settings/DbServers/List/DbServersListCommand.cs → class ListCommand
+Commands/Settings/DbServers/List/DbServersListSettings.cs → class ListSettings
 ```
 
 ## Commands
@@ -111,16 +218,14 @@ dotnet tool install --add-source bin/Release/net10.0/ FurLab --global
 
 # CLI usage
 FurLab --help
-FurLab database backup <dbname> [--host] [--port] [--username] [--password] [--output]
-FurLab database restore <dbname> --input <file> [connection options]
-FurLab database backup --all [connection options]
+FurLab database backup [database] [--host] [--port] [--username] [--password] [--output]
+FurLab database restore [database] [file] [connection options]
 FurLab database pgpass add <banco> [--host] [--port] [--username] [--password]
 FurLab database pgpass list
 FurLab database pgpass remove <banco> [--host] [--port] [--username]
 FurLab docker postgres
 FurLab file combine -i "<glob>" -o <output>
 FurLab query run -f <sql-file> -d <db> [--all] [--servers]
-FurLab clean [path]
 FurLab winget backup -o <dir>
 FurLab winget restore -i <json-file>
 FurLab claude install
@@ -131,102 +236,78 @@ FurLab opencode settings default-model [model-id] [--global]
 FurLab windowsfeatures export -o <file>
 FurLab windowsfeatures import -i <file>
 FurLab windowsfeatures list
+FurLab settings db-servers ls
+FurLab settings db-servers add <name> --host <host> --port <port> --username <user> --database <db>
+FurLab settings db-servers rm <name>
+FurLab settings db-servers test <name>
+FurLab settings db-servers set-password <name>
 ```
 
 ## Code Style
 
 - **Language**: C# 13, `<Nullable>enable</Nullable>`, `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`
-- **Primary constructors**: Use primary constructors in classes and records whenever possible (e.g., `public class Foo(ILogger logger) { }`) to reduce boilerplate and improve readability
+- **Primary constructors**: Use primary constructors in classes and records whenever possible (e.g., `public class Foo(ILogger logger) { }`)
 - **Naming**: PascalCase for types/methods/properties; camelCase for locals and parameters
-- **Command classes**: Always `static`, expose `static Build(): Command` factory — never inherit
+- **Command classes**: Inherit from `Command<TSettings>` or `AsyncCommand<TSettings>`.
+- **Command settings**: Define `Settings` classes in separate files within the same directory as the command, naming them `[CommandName]Settings.cs` (e.g., `DatabaseBackupSettings.cs`).
+- **Dependency Injection**: Use constructor injection in command classes. All services must be registered in `ServiceCollectionExtensions.cs`.
 - **Service classes**: Always implement a `IXxxService` interface in `FurLab.Core/Interfaces/`; concrete implementation in `FurLab.Core/Services/`
-- **No business logic in commands**: Commands parse input into a typed Options DTO, then call the service method. Never put logic inside the command handler lambda.
-- **One file per type**: Each `.cs` file should contain only one class, record, struct, or enum. Multiple types in the same file are discouraged; split into separate files with matching names (e.g., `DatabaseBackupConfig.cs`, `DatabaseRestoreConfig.cs`).
+- **No business logic in commands**: Commands parse input via `Settings`, then call the service method. Never put logic inside the `Execute` or `ExecuteAsync` method.
+- **One file per type**: Each `.cs` file should contain only one class, record, struct, or enum.
 - **Result pattern**: Return `OperationResult` / `OperationResult<T>` records — use `SuccessResult(...)` / `FailureResult(...)` factory methods
 - **External processes**: Always `UseShellExecute = false`, capture stdout/stderr via redirect — never shell out to `cmd.exe` or `powershell.exe`
-- **Test naming**: `<MethodName>_<StateUnderTest>_<ExpectedBehavior>` (e.g., `BackupAsync_ComOpcoesValidas_DeveCriarArquivoDump`)
-- **Unit test attributes**: Use `[TestMethod(DisplayName = "<short description>")]` and `[Description("<detailed description>")]` on all test methods for better reporting:
-  ```csharp
-  [TestMethod(DisplayName = "Backup with valid options should succeed")]
-  [Description("Verifies that when pg_dump is available and valid options are provided, the backup operation completes without throwing exceptions.")]
-  public void Backup_ValidOptions_DoesNotThrow()
-  ```
+- **Test naming**: `<MethodName>_<StateUnderTest>_<ExpectedBehavior>`
+- **Unit test attributes**: Use `[TestMethod(DisplayName = "<short description>")]` and `[Description("<detailed description>")]` on all test methods
 - **XML doc comments**: Required on all public members (enforced by `GenerateDocumentationFile true`)
-- **Configuration**: Read from `%LocalAppData%\FurLab\appsettings.json`; never hard-code connection strings; use `SecurityUtils.IsValidPath()` and `SecurityUtils.IsValidPostgreSQLIdentifier()` before using any user-supplied input; `SecurityUtils.IsValidHost()` and `SecurityUtils.IsValidPort()` para conexões; `*` é aceito como curinga em host/port/username no pgpass
+- **Configuration**: Read from `%LocalAppData%\FurLab\appsettings.json` via `IUserConfigService`.
+- **Security**: Use `SecurityUtils` for validation. Credentials should be handled via `ICredentialService` for secure storage.
 - **Async**: All service methods that touch I/O or external processes must be `async Task<T>` and accept `CancellationToken`
-- **Progress reporting**: Use `IProgress<OperationProgress>` for operations expected to take > 2s
-- **Logging**: Use `ILogger` from `FurLab.Core/Logging/ILogger.cs` — not `Microsoft.Extensions.Logging.ILogger` directly in Core
+- **Progress reporting**: Use `IProgress<OperationProgress>` or Spectre.Console's Status/Progress components for long-running operations
+- **Logging**: Use `ILogger<T>` (Microsoft.Extensions.Logging) in CLI and `ILogger` (custom) in Core.
 
 ## Architecture Constraints
 
 - Dependencies flow **downward only**: `Tests` → `CLI` → `Core`. Never reference a higher layer from a lower one.
-- New NuGet packages require justification in the feature spec's "Decisões Técnicas" section.
-- New features may introduce at most **one new project** — additional projects require explicit approval.
-- All inputs validated before use: paths via `SecurityUtils.IsValidPath()`, PostgreSQL identifiers via `SecurityUtils.IsValidPostgreSQLIdentifier()`.
-- Exit codes: `0` success, `1` general error, `2` invalid args, `3` external dependency not found, `130` user cancellation.
+- New NuGet packages require justification.
+- All inputs validated before use via `SecurityUtils`.
+- Exit codes: `0` success, `1` general error, `2` invalid args, `10-11` Database error, `20-22` I/O error, `30` Access error, `130` user cancellation.
 
 ## OpenSpec Workflow
 
 O projeto usa o workflow **OpenSpec** para gerenciar features e mudanças:
 
-- **`openspec/config.yaml`** — schema e configurações (idioma pt-BR obrigatório em todos os artefatos)
-- **`openspec/specs/<slug>/spec.md`** — especificações canônicas por feature (substituiu `specs/`)
-- **`openspec/changes/`** — mudanças em andamento (proposal, design, tasks)
+- **`openspec/config.yaml`** — schema e configurações (idioma pt-BR obrigatório)
+- **`openspec/specs/<slug>/spec.md`** — especificações canônicas por feature
+- **`openspec/changes/`** — mudanças em andamento
 - **`openspec/changes/archive/`** — mudanças implementadas e arquivadas
-
-Skills disponíveis em `.opencode/skills/`:
-- `openspec-propose` — cria proposta completa com todos os artefatos
-- `openspec-apply-change` — implementa tasks de uma mudança
-- `openspec-continue-change` — avança para o próximo artefato
-- `openspec-ff-change` — cria todos os artefatos de uma vez
-- `openspec-verify-change` — valida implementação antes de arquivar
-- `openspec-archive-change` — arquiva mudança concluída
-- `openspec-sync-specs` — sincroniza delta specs com specs principais
-- `openspec-explore` — modo de exploração / pensamento colaborativo
 
 ## Recent Changes
 
-- docker-postgres (2026-04-05): Added `DockerCommand` — `docker postgres` inicia/cria container PostgreSQL local via Docker
-- pgpass-wildcard-fields (2026-04-04): `SecurityUtils.IsValidHost/Port/Username` aceitam `*` como curinga; `database pgpass add/list/remove` suportam wildcard
-- pgpass-cli-setup (2026-04-04): Added `PgPassCommand` — gerenciamento de `pgpass.conf` com subcomandos `add`, `list`, `remove`; `IPgPassService` + `PgPassService`
-- opencode-default-model (2026-04-07): Added `opencode settings default-model` — define modelo padrão via argumento ou menu interativo (Spectre.Console); suporte a `--global`
-- 009-windows-features-manager: Added `WindowsFeaturesCommand` — dism.exe wrapper for export/import/list of Windows optional features
-- 008-project-cleaner: Added `CleanCommand` — recursive `bin/` and `obj/` directory deletion
-- 007-sql-query-csv-export: Added `QueryCommand` — SQL file execution with CSV export, multi-server support
+- migrate-cli-to-spectre-console-cli (2026-04-18): Migrated from `System.CommandLine` to `Spectre.Console.Cli` for better TUI support and cleaner command structure.
+- secure-credential-storage (2026-04-13): Implemented `ICredentialService` for encrypted storage of database passwords.
+- query-run-multi-server (2026-04-13): `query run` now supports executing scripts across multiple servers defined in settings.
+- docker-postgres (2026-04-05): Added `docker postgres` command.
+- opencode-default-model (2026-04-07): Define default model for OpenCode.
 
-## Guard Rails
+## Guard Rails (Agent Safety Protocol)
 
-### 🚨 CRITICAL: Git Safety
+> **Mandatory Rule:** This repository enforces a strict **Manual Confirmation Policy** for all state-changing Git operations.
 
-**NEVER** perform or suggest Git operations that modify repository state without **explicit user confirmation**.
+### 1. Restricted Mutations (Explicit Permission Required)
+AI Agents **MUST NOT** execute or suggest the following commands without prior, explicit user authorization:
+- **Index/Commit:** `git add`, `git commit`, `git rm`, `git mv`
+- **History/Sync:** `git push`, `git pull`, `git fetch`, `git merge`, `git rebase`, `git reset`, `git cherry-pick`
+- **Branching:** `git checkout` (if files are modified), `git branch -d`
+- **State:** `git stash`
+- **Filesystem:** Deletion or destructive modification of tracked files.
 
-#### Prohibited Operations (unless explicitly asked):
-- `git add`, `git commit`, `git push`
-- `git merge`, `git rebase`, `git reset`
-- `git checkout` (if it changes files)
-- `git stash`, `git cherry-pick`
-- Deleting or modifying tracked files
-- Force push to main/master branches
+### 2. Authorized Read-Only Operations
+Agents are permitted to run these commands autonomously for context discovery:
+- `git status`, `git log`, `git diff`, `git show`, `git branch -a`, `git rev-parse`
 
-#### Required Behavior:
-1. **Never run Git commands automatically**
-2. **Never assume permission** to modify version control
-3. **Always ask for confirmation** before suggesting any Git operation
-4. **Explain consequences** before executing any Git command
-
-#### Exception - Safe Read-Only Commands:
-These are allowed without confirmation:
-- `git status`
-- `git log`
-- `git diff`
-- `git show`
-- `git branch -a`
-
-#### If Git Action Is Required:
-```
-1. Explain what will happen
-2. Ask for explicit confirmation
-3. Only then proceed (if confirmed)
-```
-
----
+### 3. Execution Workflow
+When a Git mutation is necessary to fulfill a request:
+1. **Analyze:** Determine the exact commands needed.
+2. **Disclose:** Explain the command and its intended impact on the repository.
+3. **Prompt:** Request explicit confirmation (e.g., "Confirm execution of `git commit`? [y/N]").
+4. **Await:** Wait for positive user confirmation before invoking the tool.

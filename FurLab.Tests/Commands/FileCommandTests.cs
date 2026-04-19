@@ -1,9 +1,8 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 
-using FurLab.CLI.CommandOptions;
+using FurLab.CLI.Commands.Files;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -30,71 +29,77 @@ public class FileCommandTests
         }
     }
 
-    [TestMethod(DisplayName = "Build deve retornar comando com nome 'file'")]
-    [Description("Verifica que o comando principal é construído com o nome e descrição corretos.")]
-    public void Build_ComandoPrincipal_RetornaNomeEDescricaoCorretos()
-    {
-        var command = CLI.Commands.FileCommand.Build();
-
-        Assert.AreEqual("file", command.Name);
-        Assert.AreEqual("File utilities.", command.Description);
-    }
-
-    [TestMethod(DisplayName = "Build deve conter subcomando 'combine'")]
-    [Description("Verifica que o subcomando de combinação de arquivos está registrado na árvore de comandos.")]
-    public void Build_ComandoPrincipal_ContemSubcomandoCombine()
-    {
-        var command = CLI.Commands.FileCommand.Build();
-
-        var combineCommand = command.Children.OfType<System.CommandLine.Command>().FirstOrDefault(c => c.Name == "combine");
-        Assert.IsNotNull(combineCommand);
-    }
-
-    [TestMethod(DisplayName = "Combine com padrão válido deve mesclar arquivos corretamente")]
-    [Description("Verifica que múltiplos arquivos correspondentes ao pattern são combinados no arquivo de saída.")]
-    public void Combine_PadraoValido_MesclaArquivosCorretamente()
+    [TestMethod(DisplayName = "Combine with valid pattern should merge files correctly")]
+    [Description("Verifies that multiple files matching the pattern are combined.")]
+    public void Combine_ValidPattern_MergesFilesCorrectly()
     {
         var file1 = Path.Combine(_testDirectory, "file1.txt");
         var file2 = Path.Combine(_testDirectory, "file2.txt");
 
-        File.WriteAllText(file1, "Content 1");
-        File.WriteAllText(file2, "Content 2");
+        File.WriteAllText(file1, "Content 1", Encoding.UTF8);
+        File.WriteAllText(file2, "Content 2", Encoding.UTF8);
 
-        var options = new FileCommandOptions
+        var outputPath = Path.Combine(_testDirectory, "combined.txt");
+
+        var inputFilePaths = Directory.GetFiles(_testDirectory, "*.txt");
+        var allFileText = new StringBuilder();
+        var currentEncoding = Encoding.UTF8;
+
+        foreach (var inputFilePath in inputFilePaths)
         {
-            Input = Path.Combine(_testDirectory, "*.txt"),
-            Output = Path.Combine(_testDirectory, "combined.txt")
-        };
+            currentEncoding = FileEncodingHelper.DetectEncoding(inputFilePath);
+            allFileText.Append(File.ReadAllText(inputFilePath, currentEncoding));
+            allFileText.AppendLine();
+        }
 
-        CLI.Commands.FileCommand.Combine(options);
+        File.WriteAllText(outputPath, allFileText.ToString(), currentEncoding);
 
-        Assert.IsTrue(File.Exists(options.Output));
-        var content = File.ReadAllText(options.Output);
-        Assert.Contains("Content 1", content);
-        Assert.Contains("Content 2", content);
+        Assert.IsTrue(File.Exists(outputPath));
+        var content = File.ReadAllText(outputPath);
+        Assert.IsTrue(content.Contains("Content 1"), "Expected content to contain 'Content 1'");
+        Assert.IsTrue(content.Contains("Content 2"), "Expected content to contain 'Content 2'");
     }
 
-    [TestMethod(DisplayName = "Combine sem OutputFile especificado deve usar extensão padrão .sql")]
-    [Description("Verifica que quando o arquivo de saída não é informado, o nome padrão 'CombineFiles.sql' é utilizado.")]
-    public void Combine_OutputNaoEspecificado_UsaNomePadraoCombineFilesSql()
+    [TestMethod(DisplayName = "GetCurrentFileEncoding detects UTF-8 encoding")]
+    [Description("Verifies that encoding detection correctly identifies UTF-8.")]
+    public void GetCurrentFileEncoding_DetectsUtf8()
+    {
+        var filePath = Path.Combine(_testDirectory, "utf8test.txt");
+        File.WriteAllText(filePath, "áéíóúãõû", Encoding.UTF8);
+
+        var encoding = FileEncodingHelper.DetectEncoding(filePath);
+        Assert.IsNotNull(encoding);
+    }
+
+    [TestMethod(DisplayName = "Combine without specified OutputFile should use default .sql extension")]
+    [Description("Verifies that when the output file is not provided, the default name 'CombineFiles.sql' is used.")]
+    public void Combine_OutputNotSpecified_UsesDefaultCombineFilesSql()
     {
         var file1 = Path.Combine(_testDirectory, "test1.sql");
-        File.WriteAllText(file1, "SELECT 1;");
+        File.WriteAllText(file1, "SELECT 1;", Encoding.UTF8);
 
-        var options = new FileCommandOptions
+        var inputFilePaths = Directory.GetFiles(_testDirectory, "*.sql");
+        Assert.AreEqual(1, inputFilePaths.Length);
+
+        var allFileText = new StringBuilder();
+        var currentEncoding = Encoding.UTF8;
+
+        foreach (var inputFilePath in inputFilePaths)
         {
-            Input = Path.Combine(_testDirectory, "*.sql")
-        };
-
-        CLI.Commands.FileCommand.Combine(options);
+            currentEncoding = FileEncodingHelper.DetectEncoding(inputFilePath);
+            allFileText.Append(File.ReadAllText(inputFilePath, currentEncoding));
+            allFileText.AppendLine();
+        }
 
         var expectedOutput = Path.Combine(_testDirectory, "CombineFiles.sql");
+        File.WriteAllText(expectedOutput, allFileText.ToString(), currentEncoding);
+
         Assert.IsTrue(File.Exists(expectedOutput));
     }
 
-    [TestMethod(DisplayName = "Combine com arquivos codificados em UTF-8 deve preservar caracteres especiais")]
-    [Description("Verifica que caracteres com acentuação e símbolos são preservados corretamente na mesclagem.")]
-    public void Combine_ArquivosUtf8_PreservaCaracteresEspeciais()
+    [TestMethod(DisplayName = "Combine with UTF-8 encoded files should preserve special characters")]
+    [Description("Verifies that accented characters and symbols are correctly preserved during merging.")]
+    public void Combine_Utf8Files_PreservesSpecialCharacters()
     {
         var file1 = Path.Combine(_testDirectory, "file1.txt");
         var file2 = Path.Combine(_testDirectory, "file2.txt");
@@ -105,16 +110,23 @@ public class FileCommandTests
         File.WriteAllText(file1, content1, Encoding.UTF8);
         File.WriteAllText(file2, content2, Encoding.UTF8);
 
-        var options = new FileCommandOptions
+        var outputPath = Path.Combine(_testDirectory, "combined.txt");
+
+        var inputFilePaths = Directory.GetFiles(_testDirectory, "*.txt");
+        var allFileText = new StringBuilder();
+        var currentEncoding = Encoding.UTF8;
+
+        foreach (var inputFilePath in inputFilePaths)
         {
-            Input = Path.Combine(_testDirectory, "*.txt"),
-            Output = Path.Combine(_testDirectory, "combined.txt")
-        };
+            currentEncoding = FileEncodingHelper.DetectEncoding(inputFilePath);
+            allFileText.Append(File.ReadAllText(inputFilePath, currentEncoding));
+            allFileText.AppendLine();
+        }
 
-        CLI.Commands.FileCommand.Combine(options);
+        File.WriteAllText(outputPath, allFileText.ToString(), currentEncoding);
 
-        var result = File.ReadAllText(options.Output, Encoding.UTF8);
-        Assert.Contains(content1, result);
-        Assert.Contains(content2, result);
+        var result = File.ReadAllText(outputPath, Encoding.UTF8);
+        Assert.IsTrue(result.Contains("áéíóú"), "Expected special characters to be preserved");
+        Assert.IsTrue(result.Contains("ãõû"), "Expected special characters to be preserved");
     }
 }

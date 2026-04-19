@@ -6,6 +6,11 @@
   Uma poderosa ferramenta CLI .NET para automatizar tarefas comuns de desenvolvimento.
 </div>
 
+---
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K41AP4RO)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-yellow?logo=buy-me-a-coffee&logoColor=white)](https://www.buymeacoffee.com/liphvf)
+
 ## Descrição
 
 FurLab é uma interface de linha de comando (CLI) multiplataforma construída com .NET que ajuda desenvolvedores a automatizar tarefas repetitivas de desenvolvimento. Ela fornece comandos para operações de banco de dados, gerenciamento de arquivos, instalação de ferramentas de IA (Claude Code, OpenCode) e gerenciamento de pacotes Windows.
@@ -259,3 +264,8 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](./LI
 
 🇺🇸 English: [README.md](./README.md)  
 🇧🇷 Português (padrão)
+
+---
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K41AP4RO)
+<a href="https://www.buymeacoffee.com/liphvf"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="36" /></a>

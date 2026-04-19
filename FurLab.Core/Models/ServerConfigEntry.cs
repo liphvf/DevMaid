@@ -57,11 +57,6 @@ public class ServerConfigEntry
     public int Timeout { get; set; } = 30;
 
     /// <summary>
-    /// Command timeout in seconds.
-    /// </summary>
-    public int CommandTimeout { get; set; } = 300;
-
-    /// <summary>
     /// Maximum degree of parallelism for query execution on this server.
     /// </summary>
     public int MaxParallelism { get; set; } = 4;

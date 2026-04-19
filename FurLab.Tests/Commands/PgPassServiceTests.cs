@@ -11,8 +11,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace FurLab.Tests.Commands;
 
 /// <summary>
-/// Testes unitários para PgPassService (US1, US2, US3).
-/// Seguindo TDD: testes escritos antes da implementação.
+/// Unit tests for PgPassService (US1, US2, US3).
+/// Following TDD: tests written before implementation.
 /// </summary>
 [TestClass]
 public class PgPassServiceTests
@@ -42,10 +42,10 @@ public class PgPassServiceTests
     // US1 — AddEntry
     // =========================================================================
 
-    [TestMethod(DisplayName = "AddEntry com diretório inexistente deve criar diretório automaticamente")]
-    [Description("Verifica que o método AddEntry cria o diretório pai do arquivo pgpass.conf quando ele não existe.")]
+    [TestMethod(DisplayName = "AddEntry with non-existent directory should create directory automatically")]
+    [Description("Verifies that the AddEntry method creates the parent directory of the pgpass.conf file when it does not exist.")]
     [TestCategory("US1")]
-    public void AddEntry_DiretorioInexistente_CriaDiretorioAutomaticamente()
+    public void AddEntry_NonExistentDirectory_CreatesDirectoryAutomatically()
     {
         var entry = new PgPassEntry
         {
@@ -59,14 +59,14 @@ public class PgPassServiceTests
         var result = _service.AddEntry(entry, _tempFile);
 
         Assert.IsTrue(result.Success, result.Message);
-        Assert.IsTrue(Directory.Exists(_tempDir), "Diretório deve ser criado automaticamente.");
-        Assert.IsTrue(File.Exists(_tempFile), "Arquivo pgpass.conf deve ser criado.");
+        Assert.IsTrue(Directory.Exists(_tempDir), "Directory should be created automatically.");
+        Assert.IsTrue(File.Exists(_tempFile), "pgpass.conf file should be created.");
     }
 
-    [TestMethod(DisplayName = "AddEntry deve gravar entrada no formato host:porta:banco:usuario:senha")]
-    [Description("Verifica que a entrada é escrita no arquivo seguindo o formato padrão do pgpass.")]
+    [TestMethod(DisplayName = "AddEntry should record entry in host:port:database:username:password format")]
+    [Description("Verifies that the entry is written to the file following the standard pgpass format.")]
     [TestCategory("US1")]
-    public void AddEntry_EntradaValida_GravaFormatoCorreto()
+    public void AddEntry_ValidEntry_RecordsCorrectFormat()
     {
         var entry = new PgPassEntry
         {
@@ -81,13 +81,13 @@ public class PgPassServiceTests
 
         var conteudo = File.ReadAllText(_tempFile);
         Assert.IsTrue(conteudo.Contains("localhost:5432:meu_banco:postgres:senha123"),
-            $"Formato esperado não encontrado. Conteúdo: {conteudo}");
+            $"Expected format not found. Content: {conteudo}");
     }
 
-    [TestMethod(DisplayName = "AddEntry deve preservar entradas existentes ao adicionar nova")]
-    [Description("Verifica que adicionar uma nova entrada não remove as entradas já presentes no arquivo.")]
+    [TestMethod(DisplayName = "AddEntry should preserve existing entries when adding a new one")]
+    [Description("Verifies that adding a new entry does not remove entries already present in the file.")]
     [TestCategory("US1")]
-    public void AddEntry_EntradaNova_PreservaExistentes()
+    public void AddEntry_NewEntry_PreservesExisting()
     {
         Directory.CreateDirectory(_tempDir);
         File.WriteAllText(_tempFile, "localhost:5432:banco_existente:postgres:senha_antiga\n");
@@ -105,15 +105,15 @@ public class PgPassServiceTests
 
         var linhas = File.ReadAllLines(_tempFile);
         Assert.IsTrue(linhas.Any(l => l.Contains("banco_existente")),
-            "Entrada existente deve ser preservada.");
+            "Existing entry should be preserved.");
         Assert.IsTrue(linhas.Any(l => l.Contains("banco_novo")),
-            "Nova entrada deve ser adicionada.");
+            "New entry should be added.");
     }
 
-    [TestMethod(DisplayName = "AddEntry com entrada duplicada deve retornar IsDuplicate=true")]
-    [Description("Verifica que ao adicionar uma entrada idêntica a uma existente, o resultado indica duplicata sem erro.")]
+    [TestMethod(DisplayName = "AddEntry with duplicate entry should return IsDuplicate=true")]
+    [Description("Verifies that when adding an entry identical to an existing one, the result indicates a duplicate without error.")]
     [TestCategory("US1")]
-    public void AddEntry_EntradaDuplicata_RetornaIsDuplicateTrue()
+    public void AddEntry_DuplicateEntry_ReturnsIsDuplicateTrue()
     {
         var entry = new PgPassEntry
         {
@@ -127,17 +127,17 @@ public class PgPassServiceTests
         _service.AddEntry(entry, _tempFile);
         var resultado = _service.AddEntry(entry, _tempFile);
 
-        Assert.IsTrue(resultado.Success, "Duplicata não é erro — Success deve ser true.");
-        Assert.IsTrue(resultado.IsDuplicate, "IsDuplicate deve ser true para entrada duplicada.");
+        Assert.IsTrue(resultado.Success, "Duplicate is not an error — Success should be true.");
+        Assert.IsTrue(resultado.IsDuplicate, "IsDuplicate should be true for duplicate entry.");
 
         var linhas = File.ReadAllLines(_tempFile);
-        Assert.AreEqual(1, linhas.Length, "Apenas uma linha deve existir no arquivo.");
+        Assert.AreEqual(1, linhas.Length, "Only one line should exist in the file.");
     }
 
-    [TestMethod(DisplayName = "AddEntry deve escapar dois-pontos na senha")]
-    [Description("Verifica que caracteres ':' na senha são escapados com '\\' conforme o formato pgpass.")]
+    [TestMethod(DisplayName = "AddEntry should escape colons in the password")]
+    [Description("Verifies that ':' characters in the password are escaped with '\\' according to the pgpass format.")]
     [TestCategory("US1")]
-    public void AddEntry_SenhaComDoisPontos_EscapaCorretamente()
+    public void AddEntry_PasswordWithColons_EscapesCorrectly()
     {
         var entry = new PgPassEntry
         {
@@ -152,13 +152,13 @@ public class PgPassServiceTests
 
         var conteudo = File.ReadAllText(_tempFile);
         Assert.IsTrue(conteudo.Contains(@"senha\:com\:dois\:pontos"),
-            $"Dois-pontos devem ser escapados. Conteúdo: {conteudo}");
+            $"Colons must be escaped. Content: {conteudo}");
     }
 
-    [TestMethod(DisplayName = "AddEntry deve escapar barra invertida na senha")]
-    [Description("Verifica que caracteres '\\' na senha são escapados com '\\' adicional conforme o formato pgpass.")]
+    [TestMethod(DisplayName = "AddEntry should escape backslash in the password")]
+    [Description("Verifies that '\\' characters in the password are escaped with an additional '\\' according to the pgpass format.")]
     [TestCategory("US1")]
-    public void AddEntry_SenhaComBarraInvertida_EscapaCorretamente()
+    public void AddEntry_PasswordWithBackslash_EscapesCorrectly()
     {
         var entry = new PgPassEntry
         {
@@ -173,13 +173,13 @@ public class PgPassServiceTests
 
         var conteudo = File.ReadAllText(_tempFile);
         Assert.IsTrue(conteudo.Contains(@"senha\\invertida"),
-            $"Barras invertidas devem ser escapadas. Conteúdo: {conteudo}");
+            $"Backslashes must be escaped. Content: {conteudo}");
     }
 
-    [TestMethod(DisplayName = "AddEntry com senha vazia deve falhar sem criar arquivo")]
-    [Description("Verifica que entradas com senha vazia são rejeitadas e nenhum arquivo é criado.")]
+    [TestMethod(DisplayName = "AddEntry with empty password should fail without creating file")]
+    [Description("Verifies that entries with empty passwords are rejected and no file is created.")]
     [TestCategory("US1")]
-    public void AddEntry_SenhaVazia_FalhaSemCriarArquivo()
+    public void AddEntry_EmptyPassword_FailsWithoutCreatingFile()
     {
         var entry = new PgPassEntry
         {
@@ -192,33 +192,33 @@ public class PgPassServiceTests
 
         var resultado = _service.AddEntry(entry, _tempFile);
 
-        Assert.IsFalse(resultado.Success, "Senha vazia deve resultar em falha.");
-        Assert.IsFalse(File.Exists(_tempFile), "Arquivo não deve ser criado com senha vazia.");
+        Assert.IsFalse(resultado.Success, "Empty password should result in failure.");
+        Assert.IsFalse(File.Exists(_tempFile), "File should not be created with empty password.");
     }
 
-    [TestMethod(DisplayName = "AddEntry com parâmetros omitidos deve aplicar valores padrão")]
-    [Description("Verifica que campos não informados na entrada recebem os valores padrão do record PgPassEntry.")]
+    [TestMethod(DisplayName = "AddEntry with omitted parameters should apply default values")]
+    [Description("Verifies that fields not provided in the entry receive the default values from the PgPassEntry record.")]
     [TestCategory("US1")]
-    public void AddEntry_ParametrosOmitidos_AplicaValoresPadrao()
+    public void AddEntry_OmittedParameters_AppliesDefaultValues()
     {
         var entry = new PgPassEntry
         {
             Database = "meu_banco",
             Password = "senha123"
-            // Hostname, Port e Username usando valores padrão do record
+            // Hostname, Port e Username using default values from record
         };
 
         _service.AddEntry(entry, _tempFile);
 
         var conteudo = File.ReadAllText(_tempFile);
         Assert.IsTrue(conteudo.Contains("localhost:5432:meu_banco:postgres:senha123"),
-            $"Padrões devem ser aplicados. Conteúdo: {conteudo}");
+            $"Defaults should be applied. Content: {conteudo}");
     }
 
-    [TestMethod(DisplayName = "AddEntry com banco '*' deve gravar curinga literalmente")]
-    [Description("Verifica que o caractere '*' no campo Database é escrito sem escape no arquivo pgpass.")]
+    [TestMethod(DisplayName = "AddEntry with database '*' should record wildcard literally")]
+    [Description("Verifies that the '*' character in the Database field is written without escaping in the pgpass file.")]
     [TestCategory("US1")]
-    public void AddEntry_BancoComCuringa_GravaLiteralmente()
+    public void AddEntry_DatabaseWithWildcard_RecordsLiterally()
     {
         var entry = new PgPassEntry
         {
@@ -233,58 +233,58 @@ public class PgPassServiceTests
 
         var conteudo = File.ReadAllText(_tempFile);
         Assert.IsTrue(conteudo.Contains("localhost:5432:*:postgres:senha123"),
-            $"Curinga '*' deve ser escrito literalmente. Conteúdo: {conteudo}");
+            $"Wildcard '*' must be written literally. Content: {conteudo}");
     }
 
     // =========================================================================
     // US2 — ListEntries
     // =========================================================================
 
-    [TestMethod(DisplayName = "ListEntries com arquivo inexistente deve retornar lista vazia")]
-    [Description("Verifica que a listagem de entradas retorna coleção vazia quando o arquivo pgpass não existe.")]
+    [TestMethod(DisplayName = "ListEntries with non-existent file should return empty list")]
+    [Description("Verifies that the entry listing returns an empty collection when the pgpass file does not exist.")]
     [TestCategory("US2")]
-    public void ListEntries_ArquivoInexistente_RetornaListaVazia()
+    public void ListEntries_NonExistentFile_ReturnsEmptyList()
     {
         var entradas = _service.ListEntries(_tempFile).ToList();
 
-        Assert.AreEqual(0, entradas.Count, "Deve retornar lista vazia quando arquivo não existe.");
+        Assert.AreEqual(0, entradas.Count, "Should return empty list when file does not exist.");
     }
 
-    [TestMethod(DisplayName = "ListEntries com arquivo vazio deve retornar lista vazia")]
-    [Description("Verifica que a listagem de entradas retorna coleção vazia quando o arquivo pgpass existe mas está vazio.")]
+    [TestMethod(DisplayName = "ListEntries with empty file should return empty list")]
+    [Description("Verifies that the entry listing returns an empty collection when the pgpass file exists but is empty.")]
     [TestCategory("US2")]
-    public void ListEntries_ArquivoVazio_RetornaListaVazia()
+    public void ListEntries_EmptyFile_ReturnsEmptyList()
     {
         Directory.CreateDirectory(_tempDir);
         File.WriteAllText(_tempFile, string.Empty);
 
         var entradas = _service.ListEntries(_tempFile).ToList();
 
-        Assert.AreEqual(0, entradas.Count, "Deve retornar lista vazia quando arquivo está vazio.");
+        Assert.AreEqual(0, entradas.Count, "Should return empty list when file is empty.");
     }
 
-    [TestMethod(DisplayName = "ListEntries deve ignorar linhas de comentário")]
-    [Description("Verifica que linhas iniciadas com '#' são filtradas durante o parsing do arquivo pgpass.")]
+    [TestMethod(DisplayName = "ListEntries should ignore comment lines")]
+    [Description("Verifies that lines starting with '#' are filtered during pgpass file parsing.")]
     [TestCategory("US2")]
-    public void ListEntries_LinhasComentario_SaoIgnoradas()
+    public void ListEntries_CommentLines_AreIgnored()
     {
         Directory.CreateDirectory(_tempDir);
         File.WriteAllLines(_tempFile, new[]
         {
-            "# Comentário de exemplo",
+            "# Example comment",
             "localhost:5432:meu_banco:postgres:senha123",
-            "# Outro comentário"
+            "# Another comment"
         });
 
         var entradas = _service.ListEntries(_tempFile).ToList();
 
-        Assert.AreEqual(1, entradas.Count, "Linhas de comentário devem ser ignoradas.");
+        Assert.AreEqual(1, entradas.Count, "Comment lines should be ignored.");
     }
 
-    [TestMethod(DisplayName = "ListEntries deve retornar todas as entradas corretamente parsadas")]
-    [Description("Verifica que cada linha válida do arquivo é convertida em um PgPassEntry com os campos corretos.")]
+    [TestMethod(DisplayName = "ListEntries should return all entries correctly parsed")]
+    [Description("Verifies that each valid line of the file is converted into a PgPassEntry with the correct fields.")]
     [TestCategory("US2")]
-    public void ListEntries_MultiplasEntradas_RetornaTodasParsadas()
+    public void ListEntries_MultipleEntries_ReturnsAllParsed()
     {
         Directory.CreateDirectory(_tempDir);
         File.WriteAllLines(_tempFile, new[]
@@ -309,13 +309,13 @@ public class PgPassServiceTests
         Assert.AreEqual("senha2", entradas[1].Password);
     }
 
-    [TestMethod(DisplayName = "ListEntries deve aplicar unescape na senha ao ler")]
-    [Description("Verifica que sequências de escape '\\:' e '\\\\' são convertidas de volta para ':' e '\\' respectivamente.")]
+    [TestMethod(DisplayName = "ListEntries should apply unescape to password when reading")]
+    [Description("Verifies that escape sequences '\\:' and '\\\\' are converted back to ':' and '\\' respectively.")]
     [TestCategory("US2")]
-    public void ListEntries_SenhaComEscape_AplicaUnescape()
+    public void ListEntries_PasswordWithEscape_AppliesUnescape()
     {
         Directory.CreateDirectory(_tempDir);
-        // Arquivo contém senhas com escape aplicado
+        // File contains entries with escapes applied
         File.WriteAllLines(_tempFile, new[]
         {
             @"localhost:5432:meu_banco:postgres:senha\:com\:dois\:pontos",
@@ -325,19 +325,19 @@ public class PgPassServiceTests
         var entradas = _service.ListEntries(_tempFile).ToList();
 
         Assert.AreEqual("senha:com:dois:pontos", entradas[0].Password,
-            "Deve aplicar unescape de \\: → :");
+            "Should apply unescape from \\: → :");
         Assert.AreEqual(@"senha\invertida", entradas[1].Password,
-            @"Deve aplicar unescape de \\ → \");
+            @"Should apply unescape from \\ → \");
     }
 
     // =========================================================================
     // US3 — RemoveEntry
     // =========================================================================
 
-    [TestMethod(DisplayName = "RemoveEntry deve remover entrada correta e preservar demais")]
-    [Description("Verifica que a remoção por chave (host:porta:banco:usuario) elimina apenas a entrada correspondente.")]
+    [TestMethod(DisplayName = "RemoveEntry should remove correct entry and preserve others")]
+    [Description("Verifies that removal by key (host:port:database:username) eliminates only the corresponding entry.")]
     [TestCategory("US3")]
-    public void RemoveEntry_EntradaExistente_RemovePreservandoDemais()
+    public void RemoveEntry_ExistingEntry_RemovesWhilePreservingOthers()
     {
         Directory.CreateDirectory(_tempDir);
         File.WriteAllLines(_tempFile, new[]
@@ -360,16 +360,16 @@ public class PgPassServiceTests
 
         Assert.IsTrue(resultado.Success, resultado.Message);
         var linhas = File.ReadAllLines(_tempFile);
-        Assert.AreEqual(2, linhas.Length, "Apenas a entrada removida deve sumir.");
-        Assert.IsFalse(linhas.Any(l => l.Contains("banco2")), "banco2 deve ser removido.");
-        Assert.IsTrue(linhas.Any(l => l.Contains("banco1")), "banco1 deve ser preservado.");
-        Assert.IsTrue(linhas.Any(l => l.Contains("banco3")), "banco3 deve ser preservado.");
+        Assert.AreEqual(2, linhas.Length, "Only the removed entry should disappear.");
+        Assert.IsFalse(linhas.Any(l => l.Contains("banco2")), "banco2 should be removed.");
+        Assert.IsTrue(linhas.Any(l => l.Contains("banco1")), "banco1 should be preserved.");
+        Assert.IsTrue(linhas.Any(l => l.Contains("banco3")), "banco3 should be preserved.");
     }
 
-    [TestMethod(DisplayName = "RemoveEntry com entrada inexistente deve retornar resultado informativo")]
-    [Description("Verifica que a tentativa de remover uma entrada que não existe retorna um resultado com Success=false e mensagem descritiva.")]
+    [TestMethod(DisplayName = "RemoveEntry with non-existent entry should return informative result")]
+    [Description("Verifies that attempting to remove an entry that does not exist returns a result with Success=false and a descriptive message.")]
     [TestCategory("US3")]
-    public void RemoveEntry_EntradaInexistente_RetornaResultadoInformativo()
+    public void RemoveEntry_NonExistentEntry_ReturnsInformativeResult()
     {
         Directory.CreateDirectory(_tempDir);
         File.WriteAllLines(_tempFile, new[]
@@ -388,15 +388,15 @@ public class PgPassServiceTests
 
         var resultado = _service.RemoveEntry(chave, _tempFile);
 
-        Assert.IsFalse(resultado.Success, "Deve retornar falha informativa quando entrada não existe.");
+        Assert.IsFalse(resultado.Success, "Should return informative failure when entry does not exist.");
         var linhas = File.ReadAllLines(_tempFile);
-        Assert.AreEqual(1, linhas.Length, "Arquivo deve permanecer inalterado.");
+        Assert.AreEqual(1, linhas.Length, "File should remain unchanged.");
     }
 
-    [TestMethod(DisplayName = "RemoveEntry com entrada inexistente deve deixar arquivo inalterado")]
-    [Description("Verifica que a tentativa de remover uma entrada que não existe não modifica o conteúdo do arquivo.")]
+    [TestMethod(DisplayName = "RemoveEntry with non-existent entry should leave file unchanged")]
+    [Description("Verifies that attempting to remove an entry that does not exist does not modify the file content.")]
     [TestCategory("US3")]
-    public void RemoveEntry_EntradaInexistente_ArquivoInalterado()
+    public void RemoveEntry_NonExistentEntry_FileUnchanged()
     {
         Directory.CreateDirectory(_tempDir);
         var conteudoOriginal = "localhost:5432:banco1:postgres:senha1\n";
@@ -415,17 +415,17 @@ public class PgPassServiceTests
 
         var conteudoAtual = File.ReadAllText(_tempFile);
         Assert.AreEqual(conteudoOriginal, conteudoAtual,
-            "Conteúdo do arquivo não deve ser alterado quando entrada não encontrada.");
+            "File content should not be changed when entry is not found.");
     }
 
     // =========================================================================
-    // Curingas pgpass — suporte a * em host, porta, banco e usuário
+    // pgpass wildcards — support for * in host, port, database, and username
     // =========================================================================
 
-    [TestMethod(DisplayName = "AddEntry com curinga no host deve gravar entrada correta")]
-    [Description("Verifica que o caractere '*' no campo Hostname é aceito e gravado literalmente.")]
+    [TestMethod(DisplayName = "AddEntry with wildcard in host should record correct entry")]
+    [Description("Verifies that the '*' character in the Hostname field is accepted and recorded literally.")]
     [TestCategory("pgpass-wildcard")]
-    public void AddEntry_CuringaNoHost_GravaEntradaCorreta()
+    public void AddEntry_WildcardInHost_RecordsCorrectEntry()
     {
         var entry = new PgPassEntry
         {
@@ -441,13 +441,13 @@ public class PgPassServiceTests
         Assert.IsTrue(result.Success, result.Message);
         var conteudo = File.ReadAllText(_tempFile);
         Assert.IsTrue(conteudo.Contains("*:5432:meu_banco:postgres:senha123"),
-            "Entrada com curinga no host deve ser gravada corretamente.");
+            "Entry with wildcard in host should be recorded correctly.");
     }
 
-    [TestMethod(DisplayName = "AddEntry com curinga na porta deve gravar entrada correta")]
-    [Description("Verifica que o caractere '*' no campo Port é aceito e gravado literalmente.")]
+    [TestMethod(DisplayName = "AddEntry with wildcard in port should record correct entry")]
+    [Description("Verifies that the '*' character in the Port field is accepted and recorded literally.")]
     [TestCategory("pgpass-wildcard")]
-    public void AddEntry_CuringaNaPorta_GravaEntradaCorreta()
+    public void AddEntry_WildcardInPort_RecordsCorrectEntry()
     {
         var entry = new PgPassEntry
         {
@@ -463,13 +463,13 @@ public class PgPassServiceTests
         Assert.IsTrue(result.Success, result.Message);
         var conteudo = File.ReadAllText(_tempFile);
         Assert.IsTrue(conteudo.Contains("localhost:*:meu_banco:postgres:senha123"),
-            "Entrada com curinga na porta deve ser gravada corretamente.");
+            "Entry with wildcard in port should be recorded correctly.");
     }
 
-    [TestMethod(DisplayName = "AddEntry com curinga no usuário deve gravar entrada correta")]
-    [Description("Verifica que o caractere '*' no campo Username é aceito e gravado literalmente.")]
+    [TestMethod(DisplayName = "AddEntry with wildcard in username should record correct entry")]
+    [Description("Verifies that the '*' character in the Username field is accepted and recorded literally.")]
     [TestCategory("pgpass-wildcard")]
-    public void AddEntry_CuringaNoUsuario_GravaEntradaCorreta()
+    public void AddEntry_WildcardInUsername_RecordsCorrectEntry()
     {
         var entry = new PgPassEntry
         {
@@ -485,13 +485,13 @@ public class PgPassServiceTests
         Assert.IsTrue(result.Success, result.Message);
         var conteudo = File.ReadAllText(_tempFile);
         Assert.IsTrue(conteudo.Contains("localhost:5432:meu_banco:*:senha123"),
-            "Entrada com curinga no usuário deve ser gravada corretamente.");
+            "Entry with wildcard in username should be recorded correctly.");
     }
 
-    [TestMethod(DisplayName = "AddEntry com todos os campos como curinga deve gravar entrada correta")]
-    [Description("Verifica que múltiplos caracteres '*' em diferentes campos são aceitos e gravados literalmente.")]
+    [TestMethod(DisplayName = "AddEntry with all fields as wildcards should record correct entry")]
+    [Description("Verifies that multiple '*' characters in different fields are accepted and recorded literally.")]
     [TestCategory("pgpass-wildcard")]
-    public void AddEntry_TodosCuringas_GravaEntradaCorreta()
+    public void AddEntry_AllWildcards_RecordsCorrectEntry()
     {
         var entry = new PgPassEntry
         {
@@ -507,6 +507,6 @@ public class PgPassServiceTests
         Assert.IsTrue(result.Success, result.Message);
         var conteudo = File.ReadAllText(_tempFile);
         Assert.IsTrue(conteudo.Contains("*:*:*:*:senha123"),
-            "Entrada com todos os curingas deve ser gravada corretamente.");
+            "Entry with all wildcards should be recorded correctly.");
     }
 }
