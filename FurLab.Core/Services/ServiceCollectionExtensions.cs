@@ -57,6 +57,11 @@ public static class ServiceCollectionExtensions
         _ = services.AddSingleton<IPostgresPasswordHandler, PostgresPasswordHandler>();
         _ = services.AddSingleton<IDockerService, Docker.DockerService>();
 
+        // Update check services
+        _ = services.AddHttpClient();
+        _ = services.AddSingleton<IUpdateCheckService, UpdateCheckService>();
+        _ = services.AddSingleton<UpdateCheckNotifier>();
+
         return services;
     }
 

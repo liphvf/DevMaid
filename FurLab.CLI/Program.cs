@@ -15,9 +15,20 @@ internal class Program
 {
     private static async Task<int> Main(string[] args)
     {
+        // Handle background tasks before setting up DI
+        if (args.Length >= 2 && args[0] == "--background-task")
+        {
+            return await RunBackgroundTaskAsync(args[1]);
+        }
+
         var services = new ServiceCollection();
         services.AddFurLabServices();
         services.AddSingleton<CsvExporter>();
+
+        // Check for updates and show notification before running command
+        var serviceProvider = services.BuildServiceProvider();
+        var updateNotifier = serviceProvider.GetService<UpdateCheckNotifier>();
+        updateNotifier?.CheckAndNotify();
 
         var registrar = new TypeRegistrar(services);
         var app = new CommandApp(registrar);
@@ -135,8 +146,47 @@ internal class Program
                     dbs.AddCommand<Commands.Settings.DbServers.SetPassword.DbServersSetPasswordCommand>("set-password");
                 });
             });
+
+            config.AddCommand<Commands.CheckUpdate.CheckUpdateCommand>("check-update")
+                .WithDescription("Verifica se há atualizações disponíveis para o FurLab.");
         });
 
         return await app.RunAsync(args);
+    }
+
+    private static async Task<int> RunBackgroundTaskAsync(string taskName)
+    {
+        try
+        {
+            var services = new ServiceCollection();
+            services.AddFurLabServices();
+            var provider = services.BuildServiceProvider();
+
+            var runner = new BackgroundTaskRunner(
+                provider.GetRequiredService<Core.Logging.ILogger>(),
+                provider.GetRequiredService<Core.Interfaces.IUserConfigService>(),
+                provider.GetRequiredService<Core.Interfaces.IUpdateCheckService>()
+            );
+
+            switch (taskName.ToLowerInvariant())
+            {
+                case "detect-install-method":
+                    await runner.RunDetectInstallMethodTaskAsync();
+                    return 0;
+
+                case "check-update":
+                    await runner.RunCheckUpdateTaskAsync();
+                    return 0;
+
+                default:
+                    // Unknown task - exit silently
+                    return 1;
+            }
+        }
+        catch
+        {
+            // Background tasks should never fail loudly
+            return 1;
+        }
     }
 }

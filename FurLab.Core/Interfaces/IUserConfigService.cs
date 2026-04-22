@@ -60,4 +60,23 @@ public interface IUserConfigService
     /// <param name="encryptedPassword">The encrypted password blob to store.</param>
     /// <exception cref="ArgumentException">Thrown when the server is not found.</exception>
     void SetEncryptedPassword(string serverName, string encryptedPassword);
+
+    /// <summary>
+    /// Gets the update check configuration.
+    /// Returns default values if not configured.
+    /// </summary>
+    UpdateCheckConfig GetUpdateCheckConfig();
+
+    /// <summary>
+    /// Saves the update check configuration.
+    /// </summary>
+    void SaveUpdateCheckConfig(UpdateCheckConfig config);
+
+    /// <summary>
+    /// Sets the installation method and verification date.
+    /// Automatically enables/disables update checking based on method.
+    /// </summary>
+    /// <param name="method">The installation method: "winget", "dotnet-tool", or "manual".</param>
+    /// <param name="verifiedAt">The verification timestamp.</param>
+    void SetInstallationMethod(string method, DateTime verifiedAt);
 }

@@ -31,7 +31,8 @@ public sealed class TestableUserConfigService(Core.Logging.ILogger logger, strin
         var deserialized = JsonSerializer.Deserialize<UserConfig>(strippedJson, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            AllowTrailingCommas = true
         });
 
         if (deserialized == null)
@@ -88,6 +89,31 @@ public sealed class TestableUserConfigService(Core.Logging.ILogger logger, strin
         var server = config.Servers.FirstOrDefault(s => s.Name.Equals(serverName, StringComparison.OrdinalIgnoreCase));
         if (server == null) throw new ArgumentException($"Server '{serverName}' not found.", nameof(serverName));
         server.EncryptedPassword = encryptedPassword;
+        SaveConfig(config);
+    }
+
+    public UpdateCheckConfig GetUpdateCheckConfig()
+    {
+        var config = LoadConfig();
+        return config.UpdateCheck ?? new UpdateCheckConfig();
+    }
+
+    public void SaveUpdateCheckConfig(UpdateCheckConfig updateCheckConfig)
+    {
+        ArgumentNullException.ThrowIfNull(updateCheckConfig);
+        var config = LoadConfig();
+        config.UpdateCheck = updateCheckConfig;
+        SaveConfig(config);
+    }
+
+    public void SetInstallationMethod(string method, DateTime verifiedAt)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(method);
+        var config = LoadConfig();
+        config.UpdateCheck ??= new UpdateCheckConfig();
+        config.UpdateCheck.InstallationMethod = method;
+        config.UpdateCheck.MethodVerifiedAt = verifiedAt;
+        config.UpdateCheck.Enabled = method.Equals("winget", StringComparison.OrdinalIgnoreCase);
         SaveConfig(config);
     }
 

@@ -179,6 +179,53 @@ public partial class UserConfigService : IUserConfigService
         _logger.LogDebug($"Encrypted password updated for server '{serverName}'.");
     }
 
+    /// <inheritdoc/>
+    public UpdateCheckConfig GetUpdateCheckConfig()
+    {
+        var config = LoadConfig();
+        return config.UpdateCheck ?? CreateDefaultUpdateCheckConfig();
+    }
+
+    /// <inheritdoc/>
+    public void SaveUpdateCheckConfig(UpdateCheckConfig updateCheckConfig)
+    {
+        ArgumentNullException.ThrowIfNull(updateCheckConfig);
+
+        var config = LoadConfig();
+        config.UpdateCheck = updateCheckConfig;
+        SaveConfig(config);
+        _logger.LogDebug("Update check configuration saved.");
+    }
+
+    /// <inheritdoc/>
+    public void SetInstallationMethod(string method, DateTime verifiedAt)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(method);
+
+        var config = LoadConfig();
+        config.UpdateCheck ??= new UpdateCheckConfig();
+        config.UpdateCheck.InstallationMethod = method;
+        config.UpdateCheck.MethodVerifiedAt = verifiedAt;
+
+        // Enable for winget, disable for manual/dotnet-tool
+        config.UpdateCheck.Enabled = method.Equals("winget", StringComparison.OrdinalIgnoreCase);
+
+        SaveConfig(config);
+        _logger.LogDebug($"Installation method set to '{method}', enabled={config.UpdateCheck.Enabled}.");
+    }
+
+    private static UpdateCheckConfig CreateDefaultUpdateCheckConfig()
+    {
+        return new UpdateCheckConfig
+        {
+            Enabled = false,
+            InstallationMethod = null,
+            MethodVerifiedAt = null,
+            NextCheckDue = DateTime.UtcNow,
+            CheckInProgress = false
+        };
+    }
+
     private static UserConfig CreateDefaultConfig()
     {
         return new UserConfig
@@ -210,7 +257,8 @@ public partial class UserConfigService : IUserConfigService
         return new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            AllowTrailingCommas = true
         };
     }
 

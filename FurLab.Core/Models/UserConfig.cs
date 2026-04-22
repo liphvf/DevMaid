@@ -14,4 +14,9 @@ public class UserConfig
     /// Default settings for query execution and output.
     /// </summary>
     public UserDefaults? Defaults { get; set; }
+
+    /// <summary>
+    /// Configuration for automatic update checking.
+    /// </summary>
+    public UpdateCheckConfig? UpdateCheck { get; set; }
 }
