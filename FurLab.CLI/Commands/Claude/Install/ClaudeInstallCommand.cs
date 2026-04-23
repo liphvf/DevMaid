@@ -10,7 +10,10 @@ namespace FurLab.CLI.Commands.Claude.Install;
 /// </summary>
 public sealed class ClaudeInstallCommand : AsyncCommand<ClaudeInstallSettings>
 {
-    private const string WingetInstallArguments = "install --id Anthropic.ClaudeCode -e --accept-package-agreements --accept-source-agreements";
+    private static readonly List<string> WingetInstallArguments =
+    [
+        "install", "--id", "Anthropic.ClaudeCode", "-e", "--accept-package-agreements", "--accept-source-agreements"
+    ];
 
     /// <inheritdoc/>
     protected override Task<int> ExecuteAsync(CommandContext context, ClaudeInstallSettings settings, CancellationToken cancellation)
@@ -29,7 +32,7 @@ public sealed class ClaudeInstallCommand : AsyncCommand<ClaudeInstallSettings>
         return Task.FromResult(0);
     }
 
-    private static (int ExitCode, string Output, string Error) RunProcess(string fileName, string arguments)
+    private static (int ExitCode, string Output, string Error) RunProcess(string fileName, List<string> arguments)
     {
         try
         {
@@ -37,12 +40,15 @@ public sealed class ClaudeInstallCommand : AsyncCommand<ClaudeInstallSettings>
             process.StartInfo = new ProcessStartInfo
             {
                 FileName = fileName,
-                Arguments = arguments,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+            foreach (var arg in arguments)
+            {
+                process.StartInfo.ArgumentList.Add(arg);
+            }
 
             process.Start();
             var output = process.StandardOutput.ReadToEnd();

@@ -181,7 +181,7 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
             throw new PostgresBinaryNotFoundException(FurLabConstants.PgDumpExecutable);
         }
 
-        var argumentList = BuildPgDumpArgumentList(config, settings, outputPath ?? string.Empty);
+        var arguments = BuildPgDumpArguments(config, settings, outputPath ?? string.Empty);
 
         var startInfo = new ProcessStartInfo
         {
@@ -191,7 +191,7 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
             UseShellExecute = false,
             CreateNoWindow = true
         };
-        foreach (var arg in argumentList)
+        foreach (var arg in arguments)
         {
             startInfo.ArgumentList.Add(arg);
         }
@@ -327,7 +327,7 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
             throw new PostgresBinaryNotFoundException(FurLabConstants.PgDumpExecutable);
         }
 
-        var argumentList = BuildPgDumpArgumentList(config, settings, config.OutputPath ?? string.Empty);
+        var arguments = BuildPgDumpArguments(config, settings, config.OutputPath ?? string.Empty);
 
         var startInfo = new ProcessStartInfo
         {
@@ -337,7 +337,7 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
             UseShellExecute = false,
             CreateNoWindow = true
         };
-        foreach (var arg in argumentList)
+        foreach (var arg in arguments)
         {
             startInfo.ArgumentList.Add(arg);
         }
@@ -373,7 +373,7 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
         }
     }
 
-    private List<string> BuildPgDumpArgumentList(DatabaseBackupConfig config, DatabaseBackupSettings settings, string outputPath)
+    private List<string> BuildPgDumpArguments(DatabaseBackupConfig config, DatabaseBackupSettings settings, string outputPath)
     {
         var format = settings.Format ?? "c";
         var arguments = new List<string>

@@ -17,12 +17,12 @@ public class DockerService : IDockerService
             var startInfo = new ProcessStartInfo
             {
                 FileName = DockerConstants.DockerExecutable,
-                Arguments = "info",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+            startInfo.ArgumentList.Add("info");
 
             using var process = Process.Start(startInfo);
             if (process == null)
@@ -51,12 +51,17 @@ public class DockerService : IDockerService
             var startInfo = new ProcessStartInfo
             {
                 FileName = DockerConstants.DockerExecutable,
-                Arguments = $"ps -a --filter name=^{containerName}$ --format \"{{{{.Status}}}}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+            startInfo.ArgumentList.Add("ps");
+            startInfo.ArgumentList.Add("-a");
+            startInfo.ArgumentList.Add("--filter");
+            startInfo.ArgumentList.Add($"name=^{containerName}$");
+            startInfo.ArgumentList.Add("--format");
+            startInfo.ArgumentList.Add("{{.Status}}");
 
             using var process = Process.Start(startInfo);
             if (process == null)
@@ -86,12 +91,13 @@ public class DockerService : IDockerService
         var startInfo = new ProcessStartInfo
         {
             FileName = DockerConstants.DockerExecutable,
-            Arguments = $"start {containerName}",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        startInfo.ArgumentList.Add("start");
+        startInfo.ArgumentList.Add(containerName);
 
         using var process = Process.Start(startInfo);
         if (process == null)
@@ -117,12 +123,15 @@ public class DockerService : IDockerService
         var startInfo = new ProcessStartInfo
         {
             FileName = DockerConstants.DockerExecutable,
-            Arguments = BuildPostgresRunArguments(),
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        foreach (var arg in BuildPostgresRunArguments())
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
 
         using var process = Process.Start(startInfo) ?? throw new DockerOperationException("Failed to start docker process.");
 
@@ -138,23 +147,23 @@ public class DockerService : IDockerService
         return output.Trim();
     }
 
-    private static string BuildPostgresRunArguments()
+    private static List<string> BuildPostgresRunArguments()
     {
-        return string.Join(" ", new[]
-        {
+        return
+        [
             "run",
             "-d",
-            $"--name {DockerConstants.PostgresContainerName}",
-            "--restart always",
-            "-e POSTGRES_PASSWORD=dev",
-            "-e LANG=pt_BR.UTF-8",
-            "-e LC_ALL=pt_BR.UTF-8",
-            $"-p {DockerConstants.PostgresPort}:{DockerConstants.PostgresPort}",
-            $"-v {DockerConstants.PostgresVolumeName}:/var/lib/postgresql/data",
+            "--name", DockerConstants.PostgresContainerName,
+            "--restart", "always",
+            "-e", "POSTGRES_PASSWORD=dev",
+            "-e", "LANG=pt_BR.UTF-8",
+            "-e", "LC_ALL=pt_BR.UTF-8",
+            "-p", $"{DockerConstants.PostgresPort}:{DockerConstants.PostgresPort}",
+            "-v", $"{DockerConstants.PostgresVolumeName}:/var/lib/postgresql/data",
             DockerConstants.PostgresImage,
             "postgres",
-            "-c log_statement=all",
-            "-c log_min_duration_statement=0"
-        });
+            "-c", "log_statement=all",
+            "-c", "log_min_duration_statement=0"
+        ];
     }
 }

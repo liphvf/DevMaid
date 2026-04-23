@@ -259,7 +259,7 @@ FurLab settings db-servers set-password <name>
 - **No business logic in commands**: Commands parse input via `Settings`, then call the service method. Never put logic inside the `Execute` or `ExecuteAsync` method.
 - **One file per type**: Each `.cs` file should contain only one class, record, struct, or enum.
 - **Result pattern**: Return `OperationResult` / `OperationResult<T>` records — use `SuccessResult(...)` / `FailureResult(...)` factory methods
-- **External processes**: Always `UseShellExecute = false`, capture stdout/stderr via redirect — never shell out to `cmd.exe` or `powershell.exe`
+- **External processes**: Always `UseShellExecute = false`, capture stdout/stderr via redirect — never shell out to `cmd.exe` or `powershell.exe`. Pass arguments as `List<string>` (via `ProcessExecutionOptions.Arguments` or `ProcessStartInfo.ArgumentList`) — never as a single concatenated string and never via string interpolation (`$"..."`) to avoid command injection.
 - **Test naming**: `<MethodName>_<StateUnderTest>_<ExpectedBehavior>`
 - **Unit test attributes**: Use `[TestMethod(DisplayName = "<short description>")]` and `[Description("<detailed description>")]` on all test methods
 - **XML doc comments**: Required on all public members (enforced by `GenerateDocumentationFile true`)
@@ -284,14 +284,6 @@ O projeto usa o workflow **OpenSpec** para gerenciar features e mudanças:
 - **`openspec/specs/<slug>/spec.md`** — especificações canônicas por feature
 - **`openspec/changes/`** — mudanças em andamento
 - **`openspec/changes/archive/`** — mudanças implementadas e arquivadas
-
-## Recent Changes
-
-- migrate-cli-to-spectre-console-cli (2026-04-18): Migrated from `System.CommandLine` to `Spectre.Console.Cli` for better TUI support and cleaner command structure.
-- secure-credential-storage (2026-04-13): Implemented `ICredentialService` for encrypted storage of database passwords.
-- query-run-multi-server (2026-04-13): `query run` now supports executing scripts across multiple servers defined in settings.
-- docker-postgres (2026-04-05): Added `docker postgres` command.
-- opencode-default-model (2026-04-07): Define default model for OpenCode.
 
 ## Guard Rails (Agent Safety Protocol)
 

@@ -35,7 +35,7 @@ public sealed class WindowsFeaturesImportCommand : AsyncCommand<WindowsFeaturesI
         foreach (var feature in exportData.Features)
         {
             Console.Write($"Enabling {feature}... ");
-            var result = RunDismCommand($"/online /enable-feature /featurename:{feature} /All");
+            var result = RunDismCommand(["/online", "/enable-feature", $"/featurename:{feature}", "/All"]);
             if (result == 0)
             {
                 Console.WriteLine("OK");
@@ -57,20 +57,23 @@ public sealed class WindowsFeaturesImportCommand : AsyncCommand<WindowsFeaturesI
         return Task.FromResult(failCount > 0 ? 1 : 0);
     }
 
-    private static int RunDismCommand(string arguments)
+    private static int RunDismCommand(List<string> arguments)
     {
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dism.exe",
-                Arguments = arguments,
                 UseShellExecute = true,
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
                 CreateNoWindow = false
             }
         };
+        foreach (var arg in arguments)
+        {
+            process.StartInfo.ArgumentList.Add(arg);
+        }
 
         process.Start();
         process.WaitForExit();

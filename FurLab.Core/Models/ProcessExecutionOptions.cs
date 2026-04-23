@@ -13,13 +13,7 @@ public record ProcessExecutionOptions
     /// <summary>
     /// Gets or sets the command-line arguments.
     /// </summary>
-    public string? Arguments { get; init; }
-
-    /// <summary>
-    /// Gets or sets the command-line arguments as a list.
-    /// When provided, takes precedence over <see cref="Arguments"/>.
-    /// </summary>
-    public List<string>? ArgumentList { get; init; }
+    public List<string>? Arguments { get; init; }
 
     /// <summary>
     /// Gets or sets the working directory.

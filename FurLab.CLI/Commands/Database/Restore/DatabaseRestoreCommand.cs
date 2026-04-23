@@ -252,7 +252,7 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
 
         CreateDatabaseIfNeeded(config.Host, config.Port, config.Username ?? string.Empty, password, config.DatabaseName);
 
-        var argumentList = BuildPgRestoreArgumentList(config, settings, fullPath);
+        var arguments = BuildPgRestoreArguments(config, settings, fullPath);
 
         var startInfo = new ProcessStartInfo
         {
@@ -262,7 +262,7 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
             UseShellExecute = false,
             CreateNoWindow = true
         };
-        foreach (var arg in argumentList)
+        foreach (var arg in arguments)
         {
             startInfo.ArgumentList.Add(arg);
         }
@@ -410,7 +410,7 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
 
         CreateDatabaseIfNeeded(config.Host, config.Port, config.Username ?? string.Empty, config.Password ?? string.Empty, config.DatabaseName);
 
-        var argumentList = BuildPgRestoreArgumentList(config, settings, config.InputFile ?? string.Empty);
+        var arguments = BuildPgRestoreArguments(config, settings, config.InputFile ?? string.Empty);
 
         var startInfo = new ProcessStartInfo
         {
@@ -420,7 +420,7 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
             UseShellExecute = false,
             CreateNoWindow = true
         };
-        foreach (var arg in argumentList)
+        foreach (var arg in arguments)
         {
             startInfo.ArgumentList.Add(arg);
         }
@@ -578,7 +578,7 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
     /// <param name="settings">The command settings.</param>
     /// <param name="filePath">The path to the dump file.</param>
     /// <returns>The formatted argument string for pg_restore.</returns>
-    private List<string> BuildPgRestoreArgumentList(DatabaseRestoreConfig config, DatabaseRestoreSettings settings, string filePath)
+    private List<string> BuildPgRestoreArguments(DatabaseRestoreConfig config, DatabaseRestoreSettings settings, string filePath)
     {
         var arguments = new List<string>
         {

@@ -38,7 +38,7 @@ public class DatabaseService(IProcessExecutor processExecutor, IPostgresBinaryLo
             new ProcessExecutionOptions
             {
                 FileName = psqlPath,
-                ArgumentList =
+                Arguments =
                 [
                     "-h", options.Host ?? string.Empty,
                     "-p", options.Port ?? string.Empty,

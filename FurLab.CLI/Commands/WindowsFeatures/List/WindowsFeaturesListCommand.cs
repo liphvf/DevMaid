@@ -19,13 +19,15 @@ public sealed class WindowsFeaturesListCommand : AsyncCommand<WindowsFeaturesLis
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dism.exe",
-                Arguments = "/online /get-features /format:table",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = true
             }
         };
+        process.StartInfo.ArgumentList.Add("/online");
+        process.StartInfo.ArgumentList.Add("/get-features");
+        process.StartInfo.ArgumentList.Add("/format:table");
 
         process.Start();
 

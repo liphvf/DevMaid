@@ -30,7 +30,6 @@ public sealed class WingetRestoreCommand : AsyncCommand<WingetRestoreSettings>
             StartInfo = new ProcessStartInfo
             {
                 FileName = "winget",
-                Arguments = $"import -i \"{inputFile}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -38,6 +37,9 @@ public sealed class WingetRestoreCommand : AsyncCommand<WingetRestoreSettings>
                 StandardOutputEncoding = Encoding.UTF8
             }
         };
+        process.StartInfo.ArgumentList.Add("import");
+        process.StartInfo.ArgumentList.Add("-i");
+        process.StartInfo.ArgumentList.Add(inputFile);
 
         process.Start();
 

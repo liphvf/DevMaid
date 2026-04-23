@@ -41,16 +41,12 @@ public class ProcessExecutor(ILogger logger) : IProcessExecutor
             CreateNoWindow = options.CreateNoWindow
         };
 
-        if (options.ArgumentList is not null && options.ArgumentList.Count > 0)
+        if (options.Arguments is not null && options.Arguments.Count > 0)
         {
-            foreach (var arg in options.ArgumentList)
+            foreach (var arg in options.Arguments)
             {
                 startInfo.ArgumentList.Add(arg);
             }
-        }
-        else if (!string.IsNullOrWhiteSpace(options.Arguments))
-        {
-            startInfo.Arguments = options.Arguments;
         }
 
         if (!string.IsNullOrWhiteSpace(options.WorkingDirectory))

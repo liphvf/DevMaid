@@ -23,7 +23,6 @@ public sealed class WingetBackupCommand : AsyncCommand<WingetBackupSettings>
             StartInfo = new ProcessStartInfo
             {
                 FileName = "winget",
-                Arguments = $"export -o \"{backupPath}\" --source winget",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -31,6 +30,11 @@ public sealed class WingetBackupCommand : AsyncCommand<WingetBackupSettings>
                 StandardOutputEncoding = Encoding.UTF8
             }
         };
+        process.StartInfo.ArgumentList.Add("export");
+        process.StartInfo.ArgumentList.Add("-o");
+        process.StartInfo.ArgumentList.Add(backupPath);
+        process.StartInfo.ArgumentList.Add("--source");
+        process.StartInfo.ArgumentList.Add("winget");
 
         process.Start();
 

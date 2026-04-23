@@ -10,7 +10,10 @@ namespace FurLab.CLI.Commands.Claude.Settings.McpDatabase;
 /// </summary>
 public sealed class ClaudeSettingsMcpDatabaseCommand : AsyncCommand<ClaudeSettingsMcpDatabaseSettings>
 {
-    private const string McpDatabaseArguments = "mcp add --transport sse toolbox http://127.0.0.1:5000/mcp/sse --scope user";
+    private static readonly List<string> McpDatabaseArguments =
+    [
+        "mcp", "add", "--transport", "sse", "toolbox", "http://127.0.0.1:5000/mcp/sse", "--scope", "user"
+    ];
 
     /// <inheritdoc/>
     protected override Task<int> ExecuteAsync(CommandContext context, ClaudeSettingsMcpDatabaseSettings settings, CancellationToken cancellation)
@@ -19,7 +22,7 @@ public sealed class ClaudeSettingsMcpDatabaseCommand : AsyncCommand<ClaudeSettin
         return Task.FromResult(result.ExitCode);
     }
 
-    private static (int ExitCode, string Output, string Error) RunProcess(string fileName, string arguments)
+    private static (int ExitCode, string Output, string Error) RunProcess(string fileName, List<string> arguments)
     {
         try
         {
@@ -27,12 +30,15 @@ public sealed class ClaudeSettingsMcpDatabaseCommand : AsyncCommand<ClaudeSettin
             process.StartInfo = new ProcessStartInfo
             {
                 FileName = fileName,
-                Arguments = arguments,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+            foreach (var arg in arguments)
+            {
+                process.StartInfo.ArgumentList.Add(arg);
+            }
 
             process.Start();
             var output = process.StandardOutput.ReadToEnd();

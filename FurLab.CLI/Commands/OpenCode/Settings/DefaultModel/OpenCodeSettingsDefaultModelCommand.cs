@@ -152,25 +152,34 @@ public sealed class OpenCodeSettingsDefaultModelCommand : AsyncCommand<OpenCodeS
         try
         {
             using var process = new Process();
-            process.StartInfo = executable.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase)
-                ? new ProcessStartInfo
+            if (executable.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase))
+            {
+                process.StartInfo = new ProcessStartInfo
                 {
                     FileName = "pwsh.exe",
-                    Arguments = $"-NonInteractive -NoProfile -File \"{executable}\" models",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-                : new ProcessStartInfo
-                {
-                    FileName = executable,
-                    Arguments = "models",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
+                process.StartInfo.ArgumentList.Add("-NonInteractive");
+                process.StartInfo.ArgumentList.Add("-NoProfile");
+                process.StartInfo.ArgumentList.Add("-File");
+                process.StartInfo.ArgumentList.Add(executable);
+                process.StartInfo.ArgumentList.Add("models");
+            }
+            else
+            {
+                process.StartInfo = new ProcessStartInfo
+                {
+                    FileName = executable,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                process.StartInfo.ArgumentList.Add("models");
+            }
 
             process.Start();
             var output = process.StandardOutput.ReadToEnd();
