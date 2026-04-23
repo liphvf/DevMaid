@@ -21,5 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.6" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.6" />
     <PackageReference Include="Polly" Version="8.6.6" />
+    <PackageReference Include="UTF.Unknown" Version="2.6.0" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.6" />
   </ItemGroup>
 </Project>

@@ -133,10 +133,20 @@ FurLab database backup meubanco --host localhost --port 5432 --username postgres
 FurLab database backup meubanco -o "C:\backups\meubanco.backup"
 ```
 
-### Combinar Arquivos
+### Operações de Arquivo
 
 ```bash
+# Combinar múltiplos arquivos em um só
 FurLab file combine -i "C:\temp\*.sql" -o "C:\temp\resultado.sql"
+
+# Converter encoding de arquivos (detecção automática da origem)
+FurLab file convert-encoding -i "src/**/*.cs" --to UTF-8
+
+# Converter com encoding de origem explícito e criar backup
+FurLab file convert-encoding -i "*.txt" --from Latin1 --to UTF-8 --backup
+
+# Converter e salvar em um diretório diferente
+FurLab file convert-encoding -i "docs/*.md" --to UTF-8 -o "converted_docs/"
 ```
 
 ### Instalar Claude Code

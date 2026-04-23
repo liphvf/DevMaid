@@ -56,6 +56,7 @@ internal class Program
             {
                 file.SetDescription("File utilities.");
                 file.AddCommand<Commands.Files.Combine.FileCombineCommand>("combine");
+                file.AddCommand<Commands.Files.ConvertEncoding.FilesConvertEncodingCommand>("convert-encoding");
             });
 
             config.AddBranch("claude", claude =>

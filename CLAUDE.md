@@ -44,9 +44,12 @@ FurLab/
 │   ├── Infrastructure/            ← TypeRegistrar and TypeResolver for Spectre.Console.Cli
 │   ├── Commands/                  ← Command classes - each subcommand has its own folder
 │   │   ├── Files/
-│   │   │   └── Combine/
-│   │   │       ├── CombineCommand.cs
-│   │   │       └── CombineSettings.cs
+│   │   │   ├── Combine/
+│   │   │   │   ├── FileCombineCommand.cs
+│   │   │   │   └── FileCombineSettings.cs
+│   │   │   └── ConvertEncoding/
+│   │   │       ├── FilesConvertEncodingCommand.cs
+│   │   │       └── FilesConvertEncodingSettings.cs
 │   │   ├── Claude/
 │   │   │   ├── Install/
 │   │   │   │   ├── InstallCommand.cs
@@ -225,6 +228,7 @@ FurLab database pgpass list
 FurLab database pgpass remove <banco> [--host] [--port] [--username]
 FurLab docker postgres
 FurLab file combine -i "<glob>" -o <output>
+FurLab file convert-encoding -i "<glob>" --to <encoding> [--from <encoding>] [--backup] [--text-only]
 FurLab query run -f <sql-file> -d <db> [--all] [--servers]
 FurLab winget backup -o <dir>
 FurLab winget restore -i <json-file>

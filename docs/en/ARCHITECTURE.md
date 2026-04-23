@@ -18,7 +18,7 @@ The architecture is built on **Spectre.Console.Cli** for CLI argument parsing an
 │  └── Global Exception Handling                                  │
 ├─────────────────────────────────────────────────────────────────┤
 │  Command Layer (Commands/)                                      │
-│  ├── File/ (FileCombineCommand)                                │
+│  ├── File/ (FileCombineCommand, FilesConvertEncodingCommand)   │
 │  ├── Claude/ (Install, Settings)                                │
 │  ├── OpenCode/ (Settings)                                       │
 │  ├── Winget/ (Backup, Restore)                                  │

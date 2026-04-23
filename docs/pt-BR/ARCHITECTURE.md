@@ -18,7 +18,7 @@ A arquitetura é construída sobre **Spectre.Console.Cli** para parsing de argum
 │  └── Tratamento Global de Exceções                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Camada de Comandos (Commands/)                                 │
-│  ├── File/ (FileCombineCommand)                                │
+│  ├── File/ (FileCombineCommand, FilesConvertEncodingCommand)   │
 │  ├── Claude/ (Install, Settings)                                │
 │  ├── OpenCode/ (Settings)                                       │
 │  ├── Winget/ (Backup, Restore)                                  │

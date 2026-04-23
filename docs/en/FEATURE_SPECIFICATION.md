@@ -65,21 +65,37 @@ fur database pgpass list
 
 ---
 
-## Feature 2: File Utilities (Combine)
+## Feature 2: File Utilities (Combine & Convert)
 
 ### Objective
 
-Combine multiple files into a single output file.
+Provide utilities for manipulating text files, such as combining and converting encoding.
 
 ### Detailed Description
 
-The `file combine` command takes multiple input files matching a glob pattern and combines them into a single output file.
+The `file` command provides tools for batch file processing, supporting glob patterns for file selection.
+
+### Sub-Features
+
+#### 2.1 Combine Files (Combine)
+
+Takes multiple input files matching a glob pattern and combines them into a single output file.
+
+#### 2.2 Convert Encoding (ConvertEncoding)
+
+Converts text files between different encodings (e.g., Latin1 to UTF-8). Features automatic source encoding detection, backup support, and preservation of file metadata.
 
 ### Usage Flow
 
 ```bash
 # Combine all SQL files in a directory
 fur file combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
+
+# Convert all .cs files to UTF-8 (auto-detection)
+fur file convert-encoding -i "**/*.cs" --to UTF-8
+
+# Convert files with backup and text-only filtering
+fur file convert-encoding -i "docs/*" --from Windows-1252 --to UTF-8 --backup --text-only
 ```
 
 ---
@@ -219,7 +235,7 @@ fur settings db-servers test PROD
 | Command | Description |
 |---------|-------------|
 | `fur database` | PostgreSQL utilities (backup, restore, pgpass) |
-| `fur file combine` | Combine text files |
+| `fur file` | File utilities (combine, convert-encoding) |
 | `fur claude` | Claude Code installation and configuration |
 | `fur opencode` | OpenCode configuration |
 | `fur winget` | Winget package backup and restore |

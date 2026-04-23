@@ -135,10 +135,20 @@ FurLab database backup mydb --host localhost --port 5432 --username postgres --p
 FurLab database backup mydb -o "C:\backups\mydb.backup"
 ```
 
-### Combine Files
+### File Operations
 
 ```bash
+# Combine multiple files into one
 FurLab file combine -i "C:\temp\*.sql" -o "C:\temp\result.sql"
+
+# Convert file encoding (auto-detect source)
+FurLab file convert-encoding -i "src/**/*.cs" --to UTF-8
+
+# Convert with explicit source encoding and backup
+FurLab file convert-encoding -i "*.txt" --from Latin1 --to UTF-8 --backup
+
+# Convert and save to a different directory
+FurLab file convert-encoding -i "docs/*.md" --to UTF-8 -o "converted_docs/"
 ```
 
 ### Install Claude Code
