@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using FurLab.CLI.Exceptions.Database;
 using FurLab.Core.Constants;
 using FurLab.Core.Interfaces;
@@ -182,17 +181,20 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
             throw new PostgresBinaryNotFoundException(FurLabConstants.PgDumpExecutable);
         }
 
-        var arguments = BuildPgDumpArguments(config, settings, outputPath ?? string.Empty);
+        var argumentList = BuildPgDumpArgumentList(config, settings, outputPath ?? string.Empty);
 
         var startInfo = new ProcessStartInfo
         {
             FileName = pgDumpPath,
-            Arguments = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        foreach (var arg in argumentList)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
 
         startInfo.Environment["PGPASSWORD"] = password;
 
@@ -325,17 +327,20 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
             throw new PostgresBinaryNotFoundException(FurLabConstants.PgDumpExecutable);
         }
 
-        var arguments = BuildPgDumpArguments(config, settings, config.OutputPath ?? string.Empty);
+        var argumentList = BuildPgDumpArgumentList(config, settings, config.OutputPath ?? string.Empty);
 
         var startInfo = new ProcessStartInfo
         {
             FileName = pgDumpPath,
-            Arguments = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        foreach (var arg in argumentList)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
 
         startInfo.Environment["PGPASSWORD"] = config.Password;
 
@@ -368,14 +373,22 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
         }
     }
 
-    private string BuildPgDumpArguments(DatabaseBackupConfig config, DatabaseBackupSettings settings, string outputPath)
+    private List<string> BuildPgDumpArgumentList(DatabaseBackupConfig config, DatabaseBackupSettings settings, string outputPath)
     {
         var format = settings.Format ?? "c";
-        var arguments = new StringBuilder($"-F{format} -h \"{config.Host}\" -p {config.Port} -U \"{config.Username}\" -d \"{config.DatabaseName}\" -f \"{outputPath}\"");
+        var arguments = new List<string>
+        {
+            $"-F{format}",
+            "-h", config.Host,
+            "-p", config.Port,
+            "-U", config.Username ?? string.Empty,
+            "-d", config.DatabaseName,
+            "-f", outputPath
+        };
 
         if (settings.Verbose)
         {
-            arguments.Append(" -v");
+            arguments.Add("-v");
         }
 
         if (settings.Exclude != null && settings.Exclude.Length > 0)
@@ -384,7 +397,8 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
             {
                 if (!string.IsNullOrWhiteSpace(pattern))
                 {
-                    arguments.Append($" --exclude-table \"{pattern}\"");
+                    arguments.Add("--exclude-table");
+                    arguments.Add(pattern);
                     _logger.LogInformation("Excluding table matching pattern: {Pattern}", pattern);
                 }
             }
@@ -396,13 +410,14 @@ public sealed class DatabaseBackupCommand : AsyncCommand<DatabaseBackupSettings>
             {
                 if (!string.IsNullOrWhiteSpace(pattern))
                 {
-                    arguments.Append($" --exclude-table-data \"{pattern}\"");
+                    arguments.Add("--exclude-table-data");
+                    arguments.Add(pattern);
                     _logger.LogInformation("Excluding table data matching pattern: {Pattern}", pattern);
                 }
             }
         }
 
-        return arguments.ToString();
+        return arguments;
     }
 
     private void PrintBackupSummary(int successCount, int failureCount, int totalCount, string outputDirectory)

@@ -29,7 +29,6 @@ public class DatabaseService(IProcessExecutor processExecutor, IPostgresBinaryLo
         ArgumentNullException.ThrowIfNull(options);
 
         var psqlPath = _postgresBinaryLocator.FindPsql() ?? throw new InvalidOperationException("psql executable not found. Please ensure PostgreSQL is installed.");
-        var arguments = $"-h \"{options.Host}\" -p {options.Port} -U \"{options.Username}\" -d postgres -c \"SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;\"";
         var environmentVariables = new Dictionary<string, string>
         {
             ["PGPASSWORD"] = options.Password ?? string.Empty
@@ -39,7 +38,14 @@ public class DatabaseService(IProcessExecutor processExecutor, IPostgresBinaryLo
             new ProcessExecutionOptions
             {
                 FileName = psqlPath,
-                Arguments = arguments,
+                ArgumentList =
+                [
+                    "-h", options.Host ?? string.Empty,
+                    "-p", options.Port ?? string.Empty,
+                    "-U", options.Username ?? string.Empty,
+                    "-d", "postgres",
+                    "-c", "SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;"
+                ],
                 EnvironmentVariables = environmentVariables
             },
             cancellationToken: cancellationToken);

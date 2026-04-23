@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using FurLab.CLI.Exceptions.Database;
 using FurLab.CLI.Exceptions.File;
 using FurLab.CLI.Exceptions.Security;
@@ -253,17 +252,20 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
 
         CreateDatabaseIfNeeded(config.Host, config.Port, config.Username ?? string.Empty, password, config.DatabaseName);
 
-        var arguments = BuildPgRestoreArguments(config, settings, fullPath);
+        var argumentList = BuildPgRestoreArgumentList(config, settings, fullPath);
 
         var startInfo = new ProcessStartInfo
         {
             FileName = pgRestorePath,
-            Arguments = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        foreach (var arg in argumentList)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
 
         startInfo.Environment["PGPASSWORD"] = password;
 
@@ -408,17 +410,20 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
 
         CreateDatabaseIfNeeded(config.Host, config.Port, config.Username ?? string.Empty, config.Password ?? string.Empty, config.DatabaseName);
 
-        var arguments = BuildPgRestoreArguments(config, settings, config.InputFile ?? string.Empty);
+        var argumentList = BuildPgRestoreArgumentList(config, settings, config.InputFile ?? string.Empty);
 
         var startInfo = new ProcessStartInfo
         {
             FileName = pgRestorePath,
-            Arguments = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        foreach (var arg in argumentList)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
 
         startInfo.Environment["PGPASSWORD"] = config.Password;
 
@@ -491,12 +496,21 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
         var startInfo = new ProcessStartInfo
         {
             FileName = psqlPath,
-            Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"SELECT 1 FROM pg_database WHERE datname = '{databaseName}'\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        startInfo.ArgumentList.Add("-h");
+        startInfo.ArgumentList.Add(host);
+        startInfo.ArgumentList.Add("-p");
+        startInfo.ArgumentList.Add(port);
+        startInfo.ArgumentList.Add("-U");
+        startInfo.ArgumentList.Add(username);
+        startInfo.ArgumentList.Add("-d");
+        startInfo.ArgumentList.Add("postgres");
+        startInfo.ArgumentList.Add("-c");
+        startInfo.ArgumentList.Add($"SELECT 1 FROM pg_database WHERE datname = '{databaseName}'");
 
         startInfo.Environment["PGPASSWORD"] = password;
 
@@ -518,12 +532,21 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
                 var createStartInfo = new ProcessStartInfo
                 {
                     FileName = psqlPath,
-                    Arguments = $"-h \"{host}\" -p {port} -U \"{username}\" -d postgres -c \"CREATE DATABASE \\\"{databaseName}\\\"\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
+                createStartInfo.ArgumentList.Add("-h");
+                createStartInfo.ArgumentList.Add(host);
+                createStartInfo.ArgumentList.Add("-p");
+                createStartInfo.ArgumentList.Add(port);
+                createStartInfo.ArgumentList.Add("-U");
+                createStartInfo.ArgumentList.Add(username);
+                createStartInfo.ArgumentList.Add("-d");
+                createStartInfo.ArgumentList.Add("postgres");
+                createStartInfo.ArgumentList.Add("-c");
+                createStartInfo.ArgumentList.Add($"CREATE DATABASE \"{databaseName.Replace("\"", "\"\"")}\"");
 
                 createStartInfo.Environment["PGPASSWORD"] = password;
 
@@ -555,43 +578,50 @@ public sealed class DatabaseRestoreCommand : AsyncCommand<DatabaseRestoreSetting
     /// <param name="settings">The command settings.</param>
     /// <param name="filePath">The path to the dump file.</param>
     /// <returns>The formatted argument string for pg_restore.</returns>
-    private string BuildPgRestoreArguments(DatabaseRestoreConfig config, DatabaseRestoreSettings settings, string filePath)
+    private List<string> BuildPgRestoreArgumentList(DatabaseRestoreConfig config, DatabaseRestoreSettings settings, string filePath)
     {
-        var arguments = new StringBuilder($"-h \"{config.Host}\" -p {config.Port} -U \"{config.Username}\" -d \"{config.DatabaseName}\"");
+        var arguments = new List<string>
+        {
+            "-h", config.Host,
+            "-p", config.Port,
+            "-U", config.Username ?? string.Empty,
+            "-d", config.DatabaseName
+        };
 
         if (!settings.NoClean)
         {
-            arguments.Append(" -c");
+            arguments.Add("-c");
         }
 
         if (settings.Verbose)
         {
-            arguments.Append(" -v");
+            arguments.Add("-v");
         }
 
         if (settings.NoOwner)
         {
-            arguments.Append(" --no-owner");
+            arguments.Add("--no-owner");
         }
 
         if (settings.NoAcl)
         {
-            arguments.Append(" --no-acl");
+            arguments.Add("--no-acl");
         }
 
         if (settings.SingleTransaction)
         {
-            arguments.Append(" --single-transaction");
+            arguments.Add("--single-transaction");
         }
 
         if (settings.Jobs.HasValue && settings.Jobs.Value > 0)
         {
-            arguments.Append($" -j {settings.Jobs.Value}");
+            arguments.Add("-j");
+            arguments.Add(settings.Jobs.Value.ToString());
         }
 
-        arguments.Append($" \"{filePath}\"");
+        arguments.Add(filePath);
 
-        return arguments.ToString();
+        return arguments;
     }
 
     /// <summary>

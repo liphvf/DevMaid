@@ -16,6 +16,12 @@ public record ProcessExecutionOptions
     public string? Arguments { get; init; }
 
     /// <summary>
+    /// Gets or sets the command-line arguments as a list.
+    /// When provided, takes precedence over <see cref="Arguments"/>.
+    /// </summary>
+    public List<string>? ArgumentList { get; init; }
+
+    /// <summary>
     /// Gets or sets the working directory.
     /// </summary>
     public string? WorkingDirectory { get; init; }

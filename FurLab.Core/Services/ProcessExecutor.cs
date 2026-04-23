@@ -35,12 +35,23 @@ public class ProcessExecutor(ILogger logger) : IProcessExecutor
         var startInfo = new ProcessStartInfo
         {
             FileName = options.FileName,
-            Arguments = options.Arguments,
             RedirectStandardOutput = options.RedirectStandardOutput,
             RedirectStandardError = options.RedirectStandardError,
             UseShellExecute = false,
             CreateNoWindow = options.CreateNoWindow
         };
+
+        if (options.ArgumentList is not null && options.ArgumentList.Count > 0)
+        {
+            foreach (var arg in options.ArgumentList)
+            {
+                startInfo.ArgumentList.Add(arg);
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(options.Arguments))
+        {
+            startInfo.Arguments = options.Arguments;
+        }
 
         if (!string.IsNullOrWhiteSpace(options.WorkingDirectory))
         {
