@@ -37,19 +37,21 @@ public class PostgresBinaryLocator : IPostgresBinaryLocator
 
         var commonPaths = new[]
         {
-            @"C:\Program Files\PostgreSQL\*\bin",
-            @"C:\PostgreSQL\*\bin"
+            @"C:\Program Files\PostgreSQL",
+            @"C:\PostgreSQL"
         };
 
-        foreach (var pattern in commonPaths)
+        foreach (var basePath in commonPaths)
         {
-            var directory = Path.GetDirectoryName(pattern);
-            if (directory != null && Directory.Exists(directory))
+            if (Directory.Exists(basePath))
             {
-                var files = Directory.GetFiles(directory, $"{executableName}.exe", SearchOption.AllDirectories);
-                if (files.Length > 0)
+                foreach (var versionDir in Directory.GetDirectories(basePath))
                 {
-                    return files[0];
+                    var exePath = Path.Combine(versionDir, "bin", $"{executableName}.exe");
+                    if (File.Exists(exePath))
+                    {
+                        return exePath;
+                    }
                 }
             }
         }
