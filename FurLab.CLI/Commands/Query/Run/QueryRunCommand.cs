@@ -472,10 +472,13 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
                     csvExporter.WriteLogEntry(logFilePath, logEntry);
                 }
             }
-            finally
+            catch (Exception ex)
             {
-                writerCompleted.SetResult();
+                writerCompleted.TrySetException(ex);
+                return;
             }
+
+            writerCompleted.TrySetResult();
         });
 
         var resultsTable = new Table()
