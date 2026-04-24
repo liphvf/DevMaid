@@ -751,7 +751,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
     /// </summary>
     private string BuildConnectionStringForServer(ServerConfigEntry server, string database, QueryRunSettings? settings)
     {
-        var password = ResolvePassword(server);
+        var password = ResolvePassword(server, settings);
 
         var builder = new NpgsqlConnectionStringBuilder
         {
