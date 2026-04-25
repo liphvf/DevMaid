@@ -688,7 +688,7 @@ csharp_style_prefer_index_operator = true:suggestion
 #            int Local() => 1;
 #   false → usa função anônima
 #            Func<int> f = () => 1;
-csharp_style_prefer_local_over_anonymous_function = true:warning
+csharp_style_prefer_local_over_anonymous_function = true:silent
 
 # Descrição: Usa range operator (..) para fatiar sequências
 # Valores possíveis:
