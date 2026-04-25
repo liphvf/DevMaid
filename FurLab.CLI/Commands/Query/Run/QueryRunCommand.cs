@@ -395,6 +395,13 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
             cts.Cancel();
         };
 
+        // Resolve all passwords upfront, before any parallel work or I/O.
+        var passwordCache = new Dictionary<string, string>();
+        foreach (var server in selectedServers)
+        {
+            passwordCache[server.Name] = ResolvePassword(server, settings);
+        }
+
         var allDatabases = new List<(ServerConfigEntry Server, string Database)>();
         var hasAutoDiscover = selectedServers.Any(s => s.FetchAllDatabases);
 
@@ -408,7 +415,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
                     foreach (var server in selectedServers)
                     {
                         ctx.Status($"Discovering databases on [bold]{Markup.Escape(server.Name)}[/]...");
-                        var databases = await GetDatabasesForServerAsync(server, excludeNames, cts.Token);
+                        var databases = await GetDatabasesForServerAsync(server, excludeNames, cts.Token, passwordCache[server.Name]);
                         foreach (var db in databases)
                         {
                             allDatabases.Add((server, db));
@@ -420,7 +427,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
         {
             foreach (var server in selectedServers)
             {
-                var databases = await GetDatabasesForServerAsync(server, excludeNames, cts.Token);
+                var databases = await GetDatabasesForServerAsync(server, excludeNames, cts.Token, passwordCache[server.Name]);
                 foreach (var db in databases)
                 {
                     allDatabases.Add((server, db));
@@ -532,7 +539,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
                     {
                         try
                         {
-                            var connectionString = BuildConnectionStringForServer(server, database, settings);
+                            var connectionString = BuildConnectionStringForServer(server, database, settings, passwordCache[server.Name]);
                             var executedAt = DateTime.UtcNow;
                             var sw = Stopwatch.StartNew();
                             var queryResult = await ExecuteQueryWithRetryAsync(connectionString, sqlQuery, settings?.CommandTimeout ?? 300, dbCt);
@@ -663,7 +670,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
     /// Otherwise, returns the databases listed in the server configuration directly.
     /// Databases matching entries in <paramref name="excludeNames"/> are removed from the result.
     /// </summary>
-    private async Task<List<string>> GetDatabasesForServerAsync(ServerConfigEntry server, HashSet<string> excludeNames, CancellationToken ct)
+    private async Task<List<string>> GetDatabasesForServerAsync(ServerConfigEntry server, HashSet<string> excludeNames, CancellationToken ct, string password)
     {
         List<string> databases;
 
@@ -671,7 +678,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
         {
             try
             {
-                databases = await ListDatabasesAsync(server, ct);
+                databases = await ListDatabasesAsync(server, ct, password);
             }
             catch (Exception ex)
             {
@@ -710,9 +717,9 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
     /// <summary>
     /// Lists all databases on a server using <c>pg_database</c>, filtered by the server's exclude patterns.
     /// </summary>
-    private async Task<List<string>> ListDatabasesAsync(ServerConfigEntry server, CancellationToken ct)
+    private async Task<List<string>> ListDatabasesAsync(ServerConfigEntry server, CancellationToken ct, string password)
     {
-        var connectionString = BuildConnectionStringForServer(server, "postgres", null);
+        var connectionString = BuildConnectionStringForServer(server, "postgres", null, password);
         var databases = new List<string>();
 
         await using var connection = new NpgsqlConnection(connectionString);
@@ -748,14 +755,12 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
     /// <summary>
     /// Builds a connection string for a specific server and database, applying any connection
     /// setting overrides from the command line.
-    /// Resolves the password via <c>ICredentialService.TryDecrypt</c>; if unavailable, prompts interactively.
+    /// The password must already be resolved before calling this method.
     /// For ad-hoc connections created from <c>--npgsql-connection-string</c>, the password is embedded directly
-    /// into the connection string builder and the interactive fallback is skipped.
+    /// into the connection string builder.
     /// </summary>
-    private string BuildConnectionStringForServer(ServerConfigEntry server, string database, QueryRunSettings? settings)
+    private string BuildConnectionStringForServer(ServerConfigEntry server, string database, QueryRunSettings? settings, string password)
     {
-        var password = ResolvePassword(server, settings);
-
         var builder = new NpgsqlConnectionStringBuilder
         {
             Host = ResolveSetting(settings?.Host, server.Host),
