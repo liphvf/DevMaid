@@ -389,12 +389,16 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
         var logFilePath = Path.Combine(executionDirectory, $"{timestamp}_log.csv");
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        Console.CancelKeyPress += (_, e) =>
+
+        ConsoleCancelEventHandler cancelHandler = (_, e) =>
         {
             e.Cancel = true;
             cts.Cancel();
         };
+        Console.CancelKeyPress += cancelHandler;
 
+        try
+        {
         // Resolve all passwords upfront, before any parallel work or I/O.
         var passwordCache = new Dictionary<string, string>();
         foreach (var server in selectedServers)
@@ -612,6 +616,11 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
         if (successCount == 0 && failureCount > 0)
         {
             throw new InvalidOperationException("No server responded successfully. Please check the connections.");
+        }
+        }
+        finally
+        {
+            Console.CancelKeyPress -= cancelHandler;
         }
     }
 
