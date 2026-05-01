@@ -400,7 +400,10 @@ public class EncodingConversionServiceTests
         await _service.ConvertFilesAsync(options);
 
         // Verify timestamps are preserved
-        Assert.AreEqual(creationTime, File.GetCreationTime(filePath));
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.AreEqual(creationTime, File.GetCreationTime(filePath));
+        }
         Assert.AreEqual(lastWriteTime, File.GetLastWriteTime(filePath));
     }
 
