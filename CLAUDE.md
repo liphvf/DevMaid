@@ -275,6 +275,9 @@ FurLab settings db-servers set-password <name>
 - New NuGet packages require justification.
 - All inputs validated before use via `SecurityUtils`.
 - Exit codes: `0` success, `1` general error, `2` invalid args, `10-11` Database error, `20-22` I/O error, `30` Access error, `130` user cancellation.
+- **Service Naming Convention**: All service classes (orchestration or infrastructure abstractions registered in DI) must end with `Service`.
+  - Examples: `ExecutionRegistryService`, `CsvExporterService`, `QueryPlannerService`, `SseBroadcasterService`.
+  - This does not apply to static utilities, DTOs/records, domain models, or simple helper classes.
 
 ## OpenSpec Workflow
 
