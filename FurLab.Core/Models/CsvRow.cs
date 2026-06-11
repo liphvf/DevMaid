@@ -1,4 +1,4 @@
-namespace FurLab.CLI.Commands.Query;
+namespace FurLab.Core.Models;
 
 /// <summary>
 /// Represents a single query result produced by one server/database execution.

@@ -17,7 +17,7 @@ internal class Program
     {
         var services = new ServiceCollection();
         services.AddFurLabServices();
-        services.AddSingleton<CsvExporter>();
+        services.AddSingleton<ConsoleObserverService>();
 
         var registrar = new TypeRegistrar(services);
         var app = new CommandApp(registrar);

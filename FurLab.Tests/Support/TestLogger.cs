@@ -1,4 +1,3 @@
-using System;
 using FurLab.Core.Logging;
 
 namespace FurLab.Tests.Support;

@@ -1,7 +1,5 @@
 using FurLab.CLI;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace FurLab.Tests.Commands;
 
 /// <summary>

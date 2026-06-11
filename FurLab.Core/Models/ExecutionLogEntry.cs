@@ -1,4 +1,4 @@
-namespace FurLab.CLI.Commands.Query;
+namespace FurLab.Core.Models;
 
 /// <summary>
 /// Represents a single entry in the execution log CSV, written progressively after each query completes (success or failure).

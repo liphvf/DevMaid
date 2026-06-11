@@ -1,14 +1,9 @@
-using System;
-using System.IO;
-
 using FurLab.CLI.Commands.Query.Run;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Services;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FurLab.Tests.Commands;
 

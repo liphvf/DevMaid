@@ -58,6 +58,10 @@ public static class ServiceCollectionExtensions
         _ = services.AddSingleton<IDockerService, Docker.DockerService>();
         _ = services.AddSingleton<IEncodingConversionService, EncodingConversionService>();
 
+        _ = services.AddSingleton<QueryPlannerService>();
+        _ = services.AddSingleton<QueryExecutorService>();
+        _ = services.AddSingleton<CsvExporterService>();
+
         return services;
     }
 

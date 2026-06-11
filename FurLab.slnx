@@ -5,6 +5,7 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="FurLab.Core/FurLab.Core.csproj" />
+  <Project Path="FurLab.Api/FurLab.Api.csproj" />
   <Project Path="FurLab.CLI/FurLab.CLI.csproj" />
   <Project Path="FurLab.Tests/FurLab.Tests.csproj" />
 </Solution>

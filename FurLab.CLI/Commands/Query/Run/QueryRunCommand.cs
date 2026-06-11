@@ -1,16 +1,14 @@
-using System.Diagnostics;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Channels;
 using FurLab.Core.Constants;
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
+using FurLab.Core.Services;
 using Npgsql;
-using Polly;
-using Polly.Retry;
 using Spectre.Console;
 using Spectre.Console.Cli;
+
+using ExecutionContext = FurLab.Core.Models.ExecutionContext;
 
 namespace FurLab.CLI.Commands.Query.Run;
 
@@ -23,41 +21,32 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
 {
     private readonly IUserConfigService _userConfigService;
     private readonly ICredentialService _credentialService;
-    private readonly CsvExporter _csvExporter;
-
-    private static readonly ResiliencePipeline ResiliencePipeline = new ResiliencePipelineBuilder()
-        .AddRetry(new RetryStrategyOptions
-        {
-            MaxRetryAttempts = 3,
-            DelayGenerator = static args =>
-            {
-                var delay = TimeSpan.FromMilliseconds(Math.Pow(2, args.AttemptNumber) * 500);
-                return new ValueTask<TimeSpan?>(delay);
-            },
-            ShouldHandle = static args =>
-            {
-                var handled = args.Outcome.Exception is NpgsqlException or TimeoutException;
-                return new ValueTask<bool>(handled);
-            }
-        })
-        .Build();
+    private readonly CsvExporterService _csvExporter;
+    private readonly QueryPlannerService _queryPlanner;
+    private readonly QueryExecutorService _queryExecutor;
+    private readonly ConsoleObserverService _consoleObserver;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QueryRunCommand"/> class.
     /// </summary>
-    /// <param name="userConfigService">The user configuration service for server and defaults access.</param>
-    /// <param name="credentialService">The credential service for password decryption.</param>
-    /// <param name="csvExporter">The CSV exporter for writing query results.</param>
-    public QueryRunCommand(IUserConfigService userConfigService, ICredentialService credentialService, CsvExporter csvExporter)
+    public QueryRunCommand(
+        IUserConfigService userConfigService,
+        ICredentialService credentialService,
+        CsvExporterService csvExporter,
+        QueryPlannerService queryPlanner,
+        QueryExecutorService queryExecutor,
+        ConsoleObserverService consoleObserver)
     {
         _userConfigService = userConfigService;
         _credentialService = credentialService;
         _csvExporter = csvExporter;
+        _queryPlanner = queryPlanner;
+        _queryExecutor = queryExecutor;
+        _consoleObserver = consoleObserver;
     }
 
     /// <inheritdoc/>
     protected override async Task<int> ExecuteAsync(CommandContext context, QueryRunSettings settings, CancellationToken cancellation)
-
     {
         if (!string.IsNullOrWhiteSpace(settings.Command) && !string.IsNullOrWhiteSpace(settings.Input))
         {
@@ -103,8 +92,8 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
             return 1;
         }
 
-        var queryType = SqlQueryAnalyzer.AnalyzeQuery(sqlQuery);
-        var queryTypeDescription = SqlQueryAnalyzer.GetQueryTypeDescription(sqlQuery);
+        var queryType = SqlQueryAnalyzerService.AnalyzeQuery(sqlQuery);
+        var queryTypeDescription = SqlQueryAnalyzerService.GetQueryTypeDescription(sqlQuery);
 
         List<ServerConfigEntry> selectedServers;
 
@@ -357,11 +346,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
     }
 
     /// <summary>
-    /// Executes the query on all selected servers with parallel execution, progressive CSV output,
-    /// and a Spectre.Console progress bar with live activity feed.
-    /// Writes per-server partial CSVs progressively via a Channel-based single writer task,
-    /// then merges them into a consolidated CSV at the end. Errors and all executions are
-    /// also logged progressively to dedicated CSV files.
+    /// Executes the query on all selected servers by delegating to the core query services.
     /// </summary>
     private async Task ExecuteOnSelectedServers(
         List<ServerConfigEntry> selectedServers,
@@ -385,9 +370,6 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
             Directory.CreateDirectory(executionDirectory);
         }
 
-        var errorFilePath = Path.Combine(executionDirectory, $"{timestamp}_erros.csv");
-        var logFilePath = Path.Combine(executionDirectory, $"{timestamp}_log.csv");
-
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         Console.CancelKeyPress += (_, e) =>
         {
@@ -408,7 +390,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
                     foreach (var server in selectedServers)
                     {
                         ctx.Status($"Discovering databases on [bold]{Markup.Escape(server.Name)}[/]...");
-                        var databases = await GetDatabasesForServerAsync(server, excludeNames, cts.Token);
+                        var databases = await _queryPlanner.GetDatabasesForServerAsync(server, excludeNames, cts.Token);
                         foreach (var db in databases)
                         {
                             allDatabases.Add((server, db));
@@ -420,7 +402,7 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
         {
             foreach (var server in selectedServers)
             {
-                var databases = await GetDatabasesForServerAsync(server, excludeNames, cts.Token);
+                var databases = await _queryPlanner.GetDatabasesForServerAsync(server, excludeNames, cts.Token);
                 foreach (var db in databases)
                 {
                     allDatabases.Add((server, db));
@@ -436,156 +418,27 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
             return;
         }
 
-        var successCount = 0;
-        var failureCount = 0;
-        var totalRowCount = 0;
-
-        var channel = Channel.CreateBounded<CsvRow>(
-            new BoundedChannelOptions(defaults.MaxParallelism * 2)
-            {
-                FullMode = BoundedChannelFullMode.Wait,
-                SingleReader = true
-            });
-
-        var writerCompleted = new TaskCompletionSource();
-
-        var csvExporter = _csvExporter;
-
-        _ = Task.Run(async () =>
+        var executionContext = new ExecutionContext
         {
-            try
-            {
-                await foreach (var row in channel.Reader.ReadAllAsync())
-                {
-                    if (row.Status == "Success")
-                    {
-                        var serverFileName = csvExporter.SanitizeFilename(row.Server);
-                        var serverCsvPath = Path.Combine(executionDirectory, $"{serverFileName}_{timestamp}.csv");
-                        csvExporter.AppendToServerCsv(serverCsvPath, row);
-                    }
-                    else
-                    {
-                        csvExporter.WriteErrorEntry(errorFilePath, row.Server, row.Database, row.ExecutedAt, row.Error);
-                    }
+            ExecutionId = Guid.NewGuid(),
+            SqlQuery = sqlQuery,
+            QuerySource = querySource,
+            ServerDatabases = allDatabases,
+            OutputDirectory = executionDirectory,
+            Timestamp = timestamp,
+            QueryTypeDescription = queryTypeDescription,
+            IsDestructive = SqlQueryAnalyzerService.AnalyzeQuery(sqlQuery) == QueryType.Destructive,
+            CommandTimeout = settings?.CommandTimeout ?? 300,
+            Settings = MapSettings(settings),
+            CancellationTokenSource = cts
+        };
 
-                    var logEntry = new ExecutionLogEntry(row.Server, row.Database, row.ExecutedAt, row.Status, row.RowCount, row.DurationMs, row.Error);
-                    csvExporter.WriteLogEntry(logFilePath, logEntry);
-                }
-            }
-            catch (Exception ex)
-            {
-                writerCompleted.TrySetException(ex);
-                return;
-            }
+        await _queryExecutor.ExecuteAsync(executionContext, _consoleObserver, cts.Token);
 
-            writerCompleted.TrySetResult();
-        });
-
-        var resultsTable = new Table()
-            .Border(TableBorder.Rounded)
-            .AddColumn(new TableColumn("[grey]Status[/]").Centered().Width(8))
-            .AddColumn(new TableColumn("[grey]Server[/]"))
-            .AddColumn(new TableColumn("[grey]Database[/]"))
-            .AddColumn(new TableColumn("[grey]Rows[/]").RightAligned())
-            .AddColumn(new TableColumn("[grey]Duration[/]").RightAligned())
-            .AddColumn(new TableColumn("[grey]Detail[/]"));
-
-        var tableLock = new object();
-
-        await AnsiConsole.Live(resultsTable)
-            .AutoClear(false)
-            .Overflow(VerticalOverflow.Ellipsis)
-            .StartAsync(async ctx =>
-            {
-                ctx.Refresh();
-
-                var parallelOptions = new ParallelOptions
-                {
-                    MaxDegreeOfParallelism = defaults.MaxParallelism,
-                    CancellationToken = cts.Token
-                };
-
-                await Parallel.ForEachAsync(selectedServers, parallelOptions, async (server, ct) =>
-                {
-                    var databases = allDatabases
-                        .Where(d => d.Server.Name == server.Name)
-                        .Select(d => d.Database)
-                        .ToList();
-
-                    if (databases.Count == 0)
-                    {
-                        lock (tableLock)
-                        {
-                            resultsTable.AddRow("[yellow]—[/]", Markup.Escape(server.Name), "[grey]—[/]", "[grey]—[/]", "[grey]—[/]", "[yellow]no databases[/]");
-                            ctx.Refresh();
-                        }
-                        return;
-                    }
-
-                    var serverParallelOptions = new ParallelOptions
-                    {
-                        MaxDegreeOfParallelism = server.MaxParallelism,
-                        CancellationToken = ct
-                    };
-
-                    await Parallel.ForEachAsync(databases, serverParallelOptions, async (database, dbCt) =>
-                    {
-                        try
-                        {
-                            var connectionString = BuildConnectionStringForServer(server, database, settings);
-                            var executedAt = DateTime.UtcNow;
-                            var sw = Stopwatch.StartNew();
-                            var queryResult = await ExecuteQueryWithRetryAsync(connectionString, sqlQuery, settings?.CommandTimeout ?? 300, dbCt);
-                            sw.Stop();
-
-                            var row = new CsvRow(server.Name, database, executedAt, "Success", queryResult.Data.Count, string.Empty, sw.Elapsed.TotalMilliseconds, queryResult.ColumnNames, queryResult.Data);
-                            await channel.Writer.WriteAsync(row, dbCt);
-
-                            Interlocked.Increment(ref successCount);
-                            Interlocked.Add(ref totalRowCount, queryResult.Data.Count);
-
-                            lock (tableLock)
-                            {
-                                resultsTable.AddRow(
-                                    "[green]✓[/]",
-                                    Markup.Escape(server.Name),
-                                    Markup.Escape(database),
-                                    queryResult.Data.Count.ToString(CultureInfo.InvariantCulture),
-                                    $"{sw.Elapsed.TotalSeconds:F1}s",
-                                    "[grey]—[/]");
-                                ctx.Refresh();
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            var executedAt = DateTime.UtcNow;
-                            var row = new CsvRow(server.Name, database, executedAt, "Error", 0, ex.Message, 0, [], []);
-                            await channel.Writer.WriteAsync(row, dbCt);
-
-                            Interlocked.Increment(ref failureCount);
-
-                            lock (tableLock)
-                            {
-                                resultsTable.AddRow(
-                                    "[red]✗[/]",
-                                    Markup.Escape(server.Name),
-                                    Markup.Escape(database),
-                                    "[grey]—[/]",
-                                    "[grey]—[/]",
-                                    $"[red]{Markup.Escape(ex.Message)}[/]");
-                                ctx.Refresh();
-                            }
-                        }
-                    });
-                });
-            });
-
-        channel.Writer.Complete();
-        await writerCompleted.Task.WaitAsync(cts.Token);
-
-        _csvExporter.MergeServerCsvsToConsolidated(executionDirectory, timestamp, selectedServers.Select(s => s.Name).ToList());
-
+        var errorFilePath = Path.Combine(executionDirectory, $"{timestamp}_erros.csv");
+        var logFilePath = Path.Combine(executionDirectory, $"{timestamp}_log.csv");
         var consolidatedPath = Path.Combine(executionDirectory, $"consolidated_{timestamp}.csv");
+
         AnsiConsole.WriteLine();
 
         if (File.Exists(consolidatedPath))
@@ -600,230 +453,28 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
 
         AnsiConsole.MarkupLine($"[grey]Log           →[/] {Markup.Escape(logFilePath)}");
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine($"Servers: [bold]{selectedServers.Count}[/] | [green]Success: {successCount}[/] | [red]Failed: {failureCount}[/] | Total rows: {totalRowCount}");
-
-        if (successCount == 0 && failureCount > 0)
-        {
-            throw new InvalidOperationException("No server responded successfully. Please check the connections.");
-        }
     }
 
-    /// <summary>
-    /// Executes a query with Polly retry logic for transient failures (up to 3 retries with exponential backoff).
-    /// </summary>
-    private static async Task<(List<string> ColumnNames, List<Dictionary<string, string>> Data)> ExecuteQueryWithRetryAsync(string connectionString, string sqlQuery, int commandTimeout, CancellationToken ct)
+    private static QueryExecutionSettings? MapSettings(QueryRunSettings? settings)
     {
-        return await ResiliencePipeline.ExecuteAsync(async (innerCt) =>
-        {
-            innerCt.ThrowIfCancellationRequested();
-            return await ExecuteQueryAsync(connectionString, sqlQuery, commandTimeout, innerCt);
-        }, ct);
-    }
+        if (settings == null) return null;
 
-    /// <summary>
-    /// Executes a query and returns column names and all data rows as string dictionaries.
-    /// </summary>
-    private static async Task<(List<string> ColumnNames, List<Dictionary<string, string>> Data)> ExecuteQueryAsync(string connectionString, string sqlQuery, int commandTimeout, CancellationToken ct)
-    {
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync(ct);
-
-        await using var command = new NpgsqlCommand(sqlQuery, connection)
+        return new QueryExecutionSettings
         {
-            CommandTimeout = commandTimeout
+            Host = settings.Host,
+            Port = settings.Port,
+            Database = settings.Database,
+            Username = settings.Username,
+            Password = settings.Password,
+            SslMode = settings.SslMode,
+            Timeout = settings.Timeout,
+            CommandTimeout = settings.CommandTimeout,
+            All = settings.All,
+            Exclude = settings.Exclude,
+            NoConfirm = settings.NoConfirm
         };
-
-        await using var reader = await command.ExecuteReaderAsync(ct);
-
-        var columnNames = new List<string>();
-        for (var i = 0; i < reader.FieldCount; i++)
-        {
-            columnNames.Add(reader.GetName(i));
-        }
-
-        var data = new List<Dictionary<string, string>>();
-        while (await reader.ReadAsync(ct))
-        {
-            var row = new Dictionary<string, string>();
-            for (var i = 0; i < reader.FieldCount; i++)
-            {
-                var value = reader.IsDBNull(i) ? string.Empty : reader.GetValue(i)?.ToString() ?? string.Empty;
-                row[columnNames[i]] = value;
-            }
-            data.Add(row);
-        }
-
-        return (columnNames, data);
     }
 
-    /// <summary>
-    /// Gets the list of databases for a server.
-    /// When <c>FetchAllDatabases</c> is true, auto-discovers via <c>pg_database</c> query,
-    /// falling back to configured databases if discovery fails.
-    /// Otherwise, returns the databases listed in the server configuration directly.
-    /// Databases matching entries in <paramref name="excludeNames"/> are removed from the result.
-    /// </summary>
-    private async Task<List<string>> GetDatabasesForServerAsync(ServerConfigEntry server, HashSet<string> excludeNames, CancellationToken ct)
-    {
-        List<string> databases;
-
-        if (server.FetchAllDatabases)
-        {
-            try
-            {
-                databases = await ListDatabasesAsync(server, ct);
-            }
-            catch (Exception ex)
-            {
-                AnsiConsole.MarkupLine($"[yellow]Warning: Auto-discovery failed for '{server.Name.EscapeMarkup()}': {ex.Message.EscapeMarkup()}[/]");
-                if (server.Databases.Count > 0)
-                {
-                    AnsiConsole.MarkupLine("[yellow]Falling back to configured databases.[/]");
-                    databases = server.Databases;
-                }
-                else
-                {
-                    return [];
-                }
-            }
-        }
-        else
-        {
-            if (server.Databases.Count > 0)
-            {
-                databases = server.Databases;
-            }
-            else
-            {
-                return [];
-            }
-        }
-
-        if (excludeNames.Count > 0)
-        {
-            databases = databases.Where(db => !excludeNames.Contains(db)).ToList();
-        }
-
-        return databases;
-    }
-
-    /// <summary>
-    /// Lists all databases on a server using <c>pg_database</c>, filtered by the server's exclude patterns.
-    /// </summary>
-    private async Task<List<string>> ListDatabasesAsync(ServerConfigEntry server, CancellationToken ct)
-    {
-        var connectionString = BuildConnectionStringForServer(server, "postgres", null);
-        var databases = new List<string>();
-
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync(ct);
-
-        await using var command = new NpgsqlCommand(
-            "SELECT datname FROM pg_database WHERE datistemplate = false AND datallowconn = true",
-            connection);
-
-        await using var reader = await command.ExecuteReaderAsync(ct);
-        while (await reader.ReadAsync(ct))
-        {
-            var dbName = reader.GetString(0);
-            if (!server.ExcludePatterns.Any(pattern => MatchesPattern(dbName, pattern)))
-            {
-                databases.Add(dbName);
-            }
-        }
-
-        return databases;
-    }
-
-    /// <summary>
-    /// Checks if a database name matches a wildcard pattern (supports <c>*</c> as a multi-character wildcard).
-    /// Matching is case-insensitive.
-    /// </summary>
-    private static bool MatchesPattern(string dbName, string pattern)
-    {
-        var regexPattern = "^" + System.Text.RegularExpressions.Regex.Escape(pattern).Replace("\\*", ".*") + "$";
-        return System.Text.RegularExpressions.Regex.IsMatch(dbName, regexPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-    }
-
-    /// <summary>
-    /// Builds a connection string for a specific server and database, applying any connection
-    /// setting overrides from the command line.
-    /// Resolves the password via <c>ICredentialService.TryDecrypt</c>; if unavailable, prompts interactively.
-    /// For ad-hoc connections created from <c>--npgsql-connection-string</c>, the password is embedded directly
-    /// into the connection string builder and the interactive fallback is skipped.
-    /// </summary>
-    private string BuildConnectionStringForServer(ServerConfigEntry server, string database, QueryRunSettings? settings)
-    {
-        var password = ResolvePassword(server, settings);
-
-        var builder = new NpgsqlConnectionStringBuilder
-        {
-            Host = ResolveSetting(settings?.Host, server.Host),
-            Port = ResolvePort(settings?.Port, server.Port),
-            Database = database,
-            Username = ResolveSetting(settings?.Username, server.Username),
-            Password = password,
-            SslMode = ParseSslMode(ResolveSetting(settings?.SslMode, server.SslMode)),
-            Timeout = settings?.Timeout ?? server.Timeout,
-            Pooling = settings?.Pooling ?? true,
-            MinPoolSize = settings?.MinPoolSize ?? 1,
-            MaxPoolSize = settings?.MaxPoolSize ?? 100
-        };
-
-        if (settings?.Keepalive.HasValue == true)
-        {
-            builder["keepalive"] = settings.Keepalive.Value;
-        }
-
-        if (settings?.ConnectionLifetime.HasValue == true)
-        {
-            builder["connection lifetime"] = settings.ConnectionLifetime.Value;
-        }
-
-        return builder.ConnectionString;
-    }
-
-    /// <summary>
-    /// Resolves the password for a server, using the <c>--password</c> setting override if provided,
-    /// then <c>ICredentialService.TryDecrypt</c>, and finally falling back to interactive input.
-    /// </summary>
-    private string ResolvePassword(ServerConfigEntry server, QueryRunSettings? settings = null)
-    {
-        if (!string.IsNullOrWhiteSpace(settings?.Password))
-        {
-            return settings.Password;
-        }
-
-        var decrypted = _credentialService.TryDecrypt(server.EncryptedPassword);
-        if (decrypted != null)
-        {
-            return decrypted;
-        }
-
-        AnsiConsole.MarkupLine($"[yellow]No password found for server '[bold]{Markup.Escape(server.Name)}[/]'. Use 'fur settings db-servers set-password' to save it permanently.[/]");
-        return ReadPasswordInteractive(server.Name);
-    }
-
-    /// <summary>
-    /// Resolves a setting value, preferring the CLI override when provided, falling back to the server config value.
-    /// </summary>
-    private static string? ResolveSetting(string? overrideValue, string configValue)
-    {
-        return string.IsNullOrWhiteSpace(overrideValue) ? configValue : overrideValue;
-    }
-
-    /// <summary>
-    /// Resolves a port number, preferring the CLI override when provided, falling back to the server config value.
-    /// </summary>
-    private static int ResolvePort(string? overrideValue, int configValue)
-    {
-        return int.TryParse(overrideValue, out var port) ? port : configValue;
-    }
-
-    /// <summary>
-    /// Parses an SSL mode string into an <see cref="SslMode"/> enum value.
-    /// Returns <see cref="SslMode.Prefer"/> if the value cannot be parsed.
-    /// </summary>
     private static SslMode ParseSslMode(string? sslMode)
     {
         if (!string.IsNullOrWhiteSpace(sslMode) && Enum.TryParse<SslMode>(sslMode, true, out var result))
@@ -834,43 +485,13 @@ public sealed class QueryRunCommand : AsyncCommand<QueryRunSettings>
         return SslMode.Prefer;
     }
 
-    /// <summary>
-    /// Reads a password interactively from the console with masked input.
-    /// Used as fallback when the encrypted password is unavailable and no CLI override was provided.
-    /// </summary>
-    private static string ReadPasswordInteractive(string serverName)
+    private static string? ResolveSetting(string? overrideValue, string configValue)
     {
-        AnsiConsole.Markup($"[dim]Password for '{Markup.Escape(serverName)}': [/]");
-        var securePassword = new System.Security.SecureString();
-        while (true)
-        {
-            var key = Console.ReadKey(true);
-            if (key.Key == ConsoleKey.Enter)
-            {
-                Console.WriteLine();
-                break;
-            }
+        return string.IsNullOrWhiteSpace(overrideValue) ? configValue : overrideValue;
+    }
 
-            if (key.Key == ConsoleKey.Backspace && securePassword.Length > 0)
-            {
-                securePassword.RemoveAt(securePassword.Length - 1);
-                Console.Write("\b \b");
-            }
-            else if (key.Key != ConsoleKey.Backspace)
-            {
-                securePassword.AppendChar(key.KeyChar);
-                Console.Write("*");
-            }
-        }
-
-        var ptr = Marshal.SecureStringToBSTR(securePassword);
-        try
-        {
-            return Marshal.PtrToStringBSTR(ptr) ?? string.Empty;
-        }
-        finally
-        {
-            Marshal.ZeroFreeBSTR(ptr);
-        }
+    private static int ResolvePort(string? overrideValue, int configValue)
+    {
+        return int.TryParse(overrideValue, out var port) ? port : configValue;
     }
 }

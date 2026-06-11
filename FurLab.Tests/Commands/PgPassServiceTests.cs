@@ -1,12 +1,6 @@
-using System;
-using System.IO;
-using System.Linq;
-
 using FurLab.Core.Interfaces;
 using FurLab.Core.Models;
 using FurLab.Core.Services;
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FurLab.Tests.Commands;
 

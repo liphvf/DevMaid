@@ -1,10 +1,6 @@
-using System;
-using System.IO;
 using System.Text;
 
 using FurLab.CLI.Commands.Files;
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FurLab.Tests.Commands;
 

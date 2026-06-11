@@ -1,11 +1,7 @@
-using System;
-using System.IO;
 using System.Text.Json;
 
 using FurLab.Core.Models;
 using FurLab.Tests.Support;
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FurLab.Tests.Commands;
 

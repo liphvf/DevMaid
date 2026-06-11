@@ -1,23 +1,16 @@
-#pragma warning disable IDE0005
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using CsvHelper;
-using FurLab.CLI.Commands.Query;
-#pragma warning restore IDE0005
-
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+using FurLab.Core.Models;
+using FurLab.Core.Services;
 using IO = System.IO.Path;
-using IOFile = System.IO.File;
 using IODir = System.IO.Directory;
+using IOFile = System.IO.File;
 
 namespace FurLab.Tests.Commands;
 
 [TestClass]
 public class CsvExportTests
 {
-    private readonly CsvExporter _exporter = new();
+    private readonly CsvExporterService _exporter = new();
     private string _testDirectory = null!;
 
     [TestInitialize]
@@ -138,7 +131,7 @@ public class CsvExportTests
             [new Dictionary<string, string> { ["id"] = "2" }]),
         };
 
-        using var writer = new System.IO.StringWriter();
+        using var writer = new StringWriter();
         using var csv = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
         _exporter.WriteConsolidatedCsv(csv, results);
         csv.Flush();

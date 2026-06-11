@@ -1,8 +1,6 @@
 using FurLab.CLI;
 using FurLab.Core.Models;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace FurLab.Tests.Commands;
 
 [TestClass]
